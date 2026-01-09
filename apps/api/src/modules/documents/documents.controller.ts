@@ -145,6 +145,19 @@ export class DocumentsController {
     return this.documentsService.getDownloadUrl(id, user.organizationId!);
   }
 
+  @Post(':id/confirm')
+  @AuditDocument(AuditAction.DOCUMENT_UPDATE)
+  @ApiOperation({ summary: 'Confirm document upload completed' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Upload confirmed successfully' })
+  @ApiResponse({ status: 404, description: 'Document not found' })
+  async confirmUpload(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.documentsService.confirmUpload(id, user.organizationId!);
+  }
+
   @Post(':id/process')
   @AuditDocument(AuditAction.DOCUMENT_PROCESS, { includeBody: true })
   @ApiOperation({ summary: 'Trigger document processing' })
