@@ -10,6 +10,7 @@ export * from './components/badge.js';
 export * from './components/progress.js';
 export * from './components/toast.js';
 export * from './components/tooltip.js';
+export * from './components/switch.js';
 
 // Utilities
 export { cn } from './utils.js';
