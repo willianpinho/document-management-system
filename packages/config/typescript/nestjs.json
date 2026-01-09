@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "incremental": false,
+    "composite": false,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
+  }
+}
