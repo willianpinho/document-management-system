@@ -21,7 +21,7 @@ import { useFolderTree, useCreateFolder } from '@/hooks/useFolders';
 import { cn, formatBytes, getStoragePercentage } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Search', href: '/search', icon: Search },
 ];
@@ -103,10 +103,8 @@ export function Sidebar() {
         {/* Main navigation */}
         <nav className="space-y-1 p-2">
           {navigation.map((item) => {
-            const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
+            const isActive = pathname === item.href ||
+              (item.href !== '/dashboard' && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.name}

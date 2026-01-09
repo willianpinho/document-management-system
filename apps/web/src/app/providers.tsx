@@ -4,6 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider } from 'next-auth/react';
 import { useState } from 'react';
 import { TooltipProvider } from '@dms/ui';
+import { useAuthSync } from '@/hooks/useAuthSync';
+
+// Component that syncs NextAuth session with localStorage
+function AuthSyncProvider({ children }: { children: React.ReactNode }) {
+  useAuthSync();
+  return <>{children}</>;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -31,9 +38,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider delayDuration={300}>
-          {children}
-        </TooltipProvider>
+        <AuthSyncProvider>
+          <TooltipProvider delayDuration={300}>
+            {children}
+          </TooltipProvider>
+        </AuthSyncProvider>
       </QueryClientProvider>
     </SessionProvider>
   );
