@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.s3.amazonaws.com"
+    />
+    <title>DMS Upload Agent</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Header -->
+      <header class="header" id="titlebar">
+        <div class="header-title">
+          <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <line x1="10" y1="9" x2="8" y2="9"></line>
+          </svg>
+          <span>Upload Agent</span>
+        </div>
+        <div class="header-controls">
+          <button id="minimize-btn" class="control-btn" title="Minimize">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <button id="close-btn" class="control-btn" title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Auth Section (shown when not authenticated) -->
+        <section id="auth-section" class="section hidden">
+          <h2>Connect to DMS</h2>
+          <form id="auth-form">
+            <div class="form-group">
+              <label for="server-url">Server URL</label>
+              <input type="url" id="server-url" placeholder="https://dms.yourdomain.com" required />
+            </div>
+            <div class="form-group">
+              <label for="api-key">API Key</label>
+              <input type="text" id="api-key" placeholder="dms_..." required />
+            </div>
+            <div class="form-group">
+              <label for="api-secret">API Secret</label>
+              <input type="password" id="api-secret" placeholder="Your API secret" required />
+            </div>
+            <div class="form-group">
+              <label for="org-id">Organization ID</label>
+              <input type="text" id="org-id" placeholder="org_..." required />
+            </div>
+            <button type="submit" class="btn btn-primary">Connect</button>
+          </form>
+        </section>
+
+        <!-- Upload Section (shown when authenticated) -->
+        <section id="upload-section" class="section">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-indicator connected"></span>
+            <span id="status-text">Connected</span>
+            <button id="disconnect-btn" class="btn btn-small btn-secondary">Disconnect</button>
+          </div>
+
+          <!-- Drop Zone -->
+          <div id="drop-zone" class="drop-zone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17,8 12,3 7,8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drag & drop files here</p>
+            <span>or</span>
+            <button id="browse-btn" class="btn btn-secondary">Browse Files</button>
+            <input type="file" id="file-input" multiple hidden />
+          </div>
+
+          <!-- Upload Queue -->
+          <div id="queue-section" class="queue-section">
+            <div class="queue-header">
+              <h3>Upload Queue</h3>
+              <div class="queue-actions">
+                <button id="pause-btn" class="btn btn-small btn-secondary">Pause</button>
+                <button id="clear-btn" class="btn btn-small btn-secondary">Clear Completed</button>
+              </div>
+            </div>
+            <ul id="upload-queue" class="upload-queue">
+              <!-- Upload items will be inserted here -->
+            </ul>
+            <div id="empty-queue" class="empty-state">
+              <p>No uploads in queue</p>
+            </div>
+          </div>
+
+          <!-- Watch Folders Section -->
+          <div class="watch-section">
+            <div class="watch-header">
+              <h3>Watch Folders</h3>
+              <button id="add-watch-btn" class="btn btn-small btn-primary">+ Add Folder</button>
+            </div>
+            <ul id="watch-list" class="watch-list">
+              <!-- Watch folder items will be inserted here -->
+            </ul>
+            <div id="empty-watch" class="empty-state">
+              <p>No folders being watched</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <span id="version">v0.0.0</span>
+        <a href="#" id="settings-link">Settings</a>
+      </footer>
+    </div>
+
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

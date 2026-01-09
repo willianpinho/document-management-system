@@ -1,0 +1,28 @@
+{
+  "name": "@dms/upload-agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Desktop Upload Agent for DMS",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron .",
+    "lint": "eslint src/",
+    "type-check": "echo 'Type checking handled by electron-vite'",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@dms/shared": "workspace:*",
+    "chokidar": "^4.0.0",
+    "electron-store": "^10.0.0"
+  },
+  "devDependencies": {
+    "@dms/eslint-config": "workspace:*",
+    "@dms/typescript-config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "electron": "^33.2.0",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.9.0-beta"
+  }
+}
