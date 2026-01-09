@@ -62,29 +62,45 @@ function clearAuthTokens(): void {
   clearCurrentOrganizationId();
 }
 
+// Mutex to prevent concurrent refresh requests
+let refreshPromise: Promise<string | null> | null = null;
+
 async function refreshAccessToken(): Promise<string | null> {
+  // If a refresh is already in progress, wait for it
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
   const refreshToken = localStorage.getItem('refreshToken');
   if (!refreshToken) return null;
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
+  // Create and store the refresh promise
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        clearAuthTokens();
+        return null;
+      }
+
+      const data = await response.json();
+      setAuthTokens(data.data?.accessToken || data.accessToken, data.data?.refreshToken || data.refreshToken);
+      return data.data?.accessToken || data.accessToken;
+    } catch {
       clearAuthTokens();
       return null;
+    } finally {
+      // Clear the mutex after refresh completes
+      refreshPromise = null;
     }
+  })();
 
-    const data = await response.json();
-    setAuthTokens(data.accessToken, data.refreshToken);
-    return data.accessToken;
-  } catch {
-    clearAuthTokens();
-    return null;
-  }
+  return refreshPromise;
 }
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
@@ -259,6 +275,9 @@ export const documentsApi = {
 
   getDownloadUrl: (id: string) =>
     request<{ url: string; expiresIn: number }>(`/documents/${id}/download`),
+
+  confirmUpload: (id: string) =>
+    request<DocumentListItem>(`/documents/${id}/confirm`, { method: 'POST' }),
 
   process: (id: string, operations: string[]) =>
     request<{ jobId: string }>(`/documents/${id}/process`, {

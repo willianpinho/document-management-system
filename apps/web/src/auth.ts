@@ -132,6 +132,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
       session.error = token.error as string | undefined;
       return session;
     },
@@ -152,6 +153,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 declare module 'next-auth' {
   interface Session {
     accessToken: string;
+    refreshToken?: string;
     error?: string;
   }
 }

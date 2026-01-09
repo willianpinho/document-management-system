@@ -25,6 +25,8 @@ interface Organization {
   name: string;
   slug: string;
   role: 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+  createdAt?: string;
+  memberCount?: number;
 }
 
 interface AuthState {
@@ -106,15 +108,16 @@ export function useAuth() {
       setOrganizations(orgs);
 
       // Auto-select first organization if none selected
-      if (orgs.length > 0 && !getCurrentOrganizationId()) {
-        setCurrentOrganization(orgs[0]);
+      const firstOrg = orgs[0];
+      if (firstOrg && !getCurrentOrganizationId()) {
+        setCurrentOrganization(firstOrg);
       } else if (getCurrentOrganizationId()) {
         // Restore previously selected organization
         const savedOrg = orgs.find((o) => o.id === getCurrentOrganizationId());
         if (savedOrg) {
           setCurrentOrganization(savedOrg);
-        } else if (orgs.length > 0) {
-          setCurrentOrganization(orgs[0]);
+        } else if (firstOrg) {
+          setCurrentOrganization(firstOrg);
         }
       }
 

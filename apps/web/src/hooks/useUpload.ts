@@ -61,30 +61,17 @@ export function useUpload(folderId?: string) {
           folderId,
         });
 
-        const { document, uploadUrl, uploadFields } = createResponse.data;
+        const { document, uploadUrl } = createResponse.data;
 
         updateUpload(uploadId, { progress: 20, documentId: document.id });
 
-        // Step 2: Upload file to S3
-        const formData = new FormData();
-
-        // Add presigned fields first (required for S3)
-        if (uploadFields) {
-          Object.entries(uploadFields).forEach(([key, value]) => {
-            formData.append(key, value);
-          });
-        }
-
-        // Add file last
-        formData.append('file', file);
-
-        // Create XMLHttpRequest for progress tracking
+        // Step 2: Upload file to S3 using presigned PUT URL
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
 
           xhr.upload.addEventListener('progress', (event) => {
             if (event.lengthComputable) {
-              const progress = 20 + Math.round((event.loaded / event.total) * 70);
+              const progress = 20 + Math.round((event.loaded / event.total) * 60);
               updateUpload(uploadId, { progress });
             }
           });
@@ -101,15 +88,17 @@ export function useUpload(folderId?: string) {
             reject(new Error('Upload failed'));
           });
 
-          xhr.open('POST', uploadUrl);
-          xhr.send(formData);
+          // Use PUT method for presigned URLs (not POST with form data)
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+          xhr.send(file);
         });
 
-        // Step 3: Mark as processing (server will process the file)
-        updateUpload(uploadId, { status: 'processing', progress: 95 });
+        updateUpload(uploadId, { progress: 85 });
 
-        // Short delay to simulate processing acknowledgment
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Step 3: Confirm upload with backend
+        updateUpload(uploadId, { status: 'processing', progress: 90 });
+        await documentsApi.confirmUpload(document.id);
 
         // Step 4: Complete
         updateUpload(uploadId, { status: 'completed', progress: 100 });
