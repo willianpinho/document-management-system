@@ -1,0 +1,195 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: e2e-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+
+jobs:
+  e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: dms_e2e
+        options: >-
+          --health-cmd "pg_isready -U test -d dms_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run database migrations
+        run: pnpm --filter @dms/api exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/dms_e2e
+
+      - name: Seed database
+        run: pnpm --filter @dms/api exec tsx prisma/seed.ts
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/dms_e2e
+
+      - name: Setup MinIO bucket
+        run: |
+          # Install mc (MinIO Client)
+          curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc
+          chmod +x /tmp/mc
+
+          # Configure and create bucket
+          /tmp/mc alias set myminio http://localhost:9000 minioadmin minioadmin
+          /tmp/mc mb myminio/dms-documents-e2e --ignore-existing
+          /tmp/mc anonymous set download myminio/dms-documents-e2e
+
+      - name: Build applications
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @dms/web exec playwright install --with-deps chromium
+
+      - name: Start API server
+        run: |
+          pnpm --filter @dms/api start:prod &
+          echo "Waiting for API to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/health > /dev/null 2>&1; then
+              echo "API is ready"
+              break
+            fi
+            echo "Attempt $i: Waiting for API..."
+            sleep 2
+          done
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/dms_e2e
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+          PORT: 4000
+          JWT_SECRET: e2e-test-secret-key
+          JWT_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
+          S3_ENDPOINT: http://localhost:9000
+          S3_BUCKET: dms-documents-e2e
+          S3_ACCESS_KEY_ID: minioadmin
+          S3_SECRET_ACCESS_KEY: minioadmin
+          S3_REGION: us-east-1
+          S3_FORCE_PATH_STYLE: "true"
+
+      - name: Start Web server
+        run: |
+          pnpm --filter @dms/web start &
+          echo "Waiting for Web to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null 2>&1; then
+              echo "Web is ready"
+              break
+            fi
+            echo "Attempt $i: Waiting for Web..."
+            sleep 2
+          done
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NODE_ENV: test
+          PORT: 3000
+
+      - name: Run Playwright tests
+        run: pnpm --filter @dms/web test:e2e
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          API_URL: http://localhost:4000
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: apps/web/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-results-${{ github.run_id }}
+          path: apps/web/test-results/
+          retention-days: 7
+
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-screenshots-${{ github.run_id }}
+          path: apps/web/test-results/**/*.png
+          retention-days: 7
+
+  e2e-status:
+    name: E2E Status
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+    steps:
+      - name: Check E2E test result
+        run: |
+          if [[ "${{ needs.e2e-tests.result }}" != "success" ]]; then
+            echo "E2E tests failed"
+            exit 1
+          fi
+          echo "E2E tests passed"

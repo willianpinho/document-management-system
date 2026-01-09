@@ -1,0 +1,294 @@
+name: Dependency Security Scan
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      severity_threshold:
+        description: "Minimum severity to report"
+        required: false
+        default: "medium"
+        type: choice
+        options:
+          - low
+          - medium
+          - high
+          - critical
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  snyk-scan:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: >-
+            --all-projects
+            --severity-threshold=${{ inputs.severity_threshold || 'medium' }}
+            --json-file-output=snyk-results.json
+
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+        continue-on-error: true
+
+      - name: Process and create issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let snykResults;
+            try {
+              const resultsPath = path.join(process.env.GITHUB_WORKSPACE, 'snyk-results.json');
+              snykResults = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+            } catch (e) {
+              console.log('No Snyk results file found or error parsing:', e.message);
+              return;
+            }
+
+            // Handle both single project and multi-project results
+            const results = Array.isArray(snykResults) ? snykResults : [snykResults];
+
+            let criticalCount = 0;
+            let highCount = 0;
+            let mediumCount = 0;
+            let lowCount = 0;
+            let vulnerabilities = [];
+
+            for (const result of results) {
+              if (!result.vulnerabilities) continue;
+
+              for (const vuln of result.vulnerabilities) {
+                const severity = vuln.severity.toLowerCase();
+                if (severity === 'critical') criticalCount++;
+                else if (severity === 'high') highCount++;
+                else if (severity === 'medium') mediumCount++;
+                else if (severity === 'low') lowCount++;
+
+                // Only track high and critical for detailed reporting
+                if (severity === 'critical' || severity === 'high') {
+                  vulnerabilities.push({
+                    title: vuln.title,
+                    severity: severity,
+                    package: `${vuln.packageName}@${vuln.version}`,
+                    fixedIn: vuln.fixedIn ? vuln.fixedIn.join(', ') : 'No fix available',
+                    path: result.displayTargetFile || 'Unknown',
+                    cvss: vuln.cvssScore || 'N/A'
+                  });
+                }
+              }
+            }
+
+            const totalVulnerabilities = criticalCount + highCount + mediumCount + lowCount;
+
+            if (totalVulnerabilities === 0) {
+              console.log('No vulnerabilities found!');
+              return;
+            }
+
+            // Create or update issue
+            const issueTitle = `[Security] Dependency Vulnerabilities Report - ${new Date().toISOString().split('T')[0]}`;
+
+            let body = `## Dependency Security Scan Results\n\n`;
+            body += `**Scan Date:** ${new Date().toISOString()}\n`;
+            body += `**Repository:** ${context.repo.owner}/${context.repo.repo}\n\n`;
+
+            body += `### Summary\n\n`;
+            body += `| Severity | Count |\n`;
+            body += `|----------|-------|\n`;
+            body += `| Critical | ${criticalCount} |\n`;
+            body += `| High | ${highCount} |\n`;
+            body += `| Medium | ${mediumCount} |\n`;
+            body += `| Low | ${lowCount} |\n`;
+            body += `| **Total** | **${totalVulnerabilities}** |\n\n`;
+
+            if (vulnerabilities.length > 0) {
+              body += `### Critical and High Severity Vulnerabilities\n\n`;
+
+              for (const vuln of vulnerabilities.slice(0, 20)) {
+                body += `#### ${vuln.severity.toUpperCase()}: ${vuln.title}\n`;
+                body += `- **Package:** \`${vuln.package}\`\n`;
+                body += `- **Fixed in:** ${vuln.fixedIn}\n`;
+                body += `- **CVSS Score:** ${vuln.cvss}\n`;
+                body += `- **Location:** ${vuln.path}\n\n`;
+              }
+
+              if (vulnerabilities.length > 20) {
+                body += `\n> Showing 20 of ${vulnerabilities.length} critical/high vulnerabilities. See full Snyk report for details.\n`;
+              }
+            }
+
+            body += `\n### Recommended Actions\n\n`;
+            body += `1. Run \`pnpm audit\` locally to see all vulnerabilities\n`;
+            body += `2. Update vulnerable packages: \`pnpm update <package-name>\`\n`;
+            body += `3. Check if updates introduce breaking changes\n`;
+            body += `4. Test thoroughly after updates\n\n`;
+
+            body += `---\n`;
+            body += `*This issue was automatically generated by the dependency security scan workflow.*`;
+
+            // Check for existing open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,dependencies'
+            });
+
+            const existingIssue = issues.find(i => i.title.startsWith('[Security] Dependency Vulnerabilities Report'));
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else if (criticalCount > 0 || highCount > 0) {
+              // Only create new issue if there are critical or high vulnerabilities
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: body,
+                labels: ['security', 'dependencies']
+              });
+              console.log('Created new security issue');
+            }
+
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        run: pnpm audit --audit-level=moderate || true
+        id: audit
+
+      - name: Generate audit report
+        run: |
+          echo "## NPM Audit Report" > audit-report.md
+          echo "" >> audit-report.md
+          echo "\`\`\`" >> audit-report.md
+          pnpm audit --audit-level=moderate 2>&1 || true >> audit-report.md
+          echo "\`\`\`" >> audit-report.md
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit-report.md
+          retention-days: 30
+
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install license-checker
+        run: pnpm add -g license-checker
+
+      - name: Check licenses
+        run: |
+          npx license-checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense;0BSD;CC-BY-3.0;CC-BY-4.0;Python-2.0;BlueOak-1.0.0" --excludePrivatePackages || {
+            echo "::warning::Some dependencies have licenses that may need review"
+            exit 0
+          }
+
+      - name: Generate license report
+        run: |
+          npx license-checker --production --csv > license-report.csv
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: license-report.csv
+          retention-days: 30
+
+  dependency-review:
+    name: Dependency Review (PR Only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, CC0-1.0

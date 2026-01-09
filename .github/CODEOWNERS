@@ -1,0 +1,85 @@
+# ==============================================================================
+# CODEOWNERS - Document Management System
+# ==============================================================================
+# This file defines who reviews code changes in different parts of the codebase.
+# Order matters - the last matching pattern takes precedence.
+#
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Default Owners
+# ------------------------------------------------------------------------------
+# These owners will be requested for review when someone opens a pull request.
+*                                   @willianpinho
+
+# ------------------------------------------------------------------------------
+# Documentation
+# ------------------------------------------------------------------------------
+*.md                                @willianpinho
+/docs/                              @willianpinho
+LICENSE                             @willianpinho
+
+# ------------------------------------------------------------------------------
+# Configuration & Infrastructure
+# ------------------------------------------------------------------------------
+# Root configuration files
+package.json                        @willianpinho
+pnpm-lock.yaml                      @willianpinho
+pnpm-workspace.yaml                 @willianpinho
+turbo.json                          @willianpinho
+tsconfig.base.json                  @willianpinho
+docker-compose.yml                  @willianpinho
+
+# CI/CD Workflows - require senior review
+/.github/                           @willianpinho
+/.github/workflows/                 @willianpinho
+
+# Infrastructure as Code - require infrastructure review
+/infrastructure/                    @willianpinho
+
+# Database schema changes - require careful review
+/prisma/                            @willianpinho
+/prisma/migrations/                 @willianpinho
+
+# ------------------------------------------------------------------------------
+# Applications
+# ------------------------------------------------------------------------------
+# API Backend
+/apps/api/                          @willianpinho
+/apps/api/src/modules/auth/         @willianpinho
+/apps/api/src/modules/documents/    @willianpinho
+/apps/api/src/common/guards/        @willianpinho
+
+# Web Frontend
+/apps/web/                          @willianpinho
+/apps/web/src/app/                  @willianpinho
+/apps/web/src/components/           @willianpinho
+
+# Upload Agent (Desktop)
+/apps/upload-agent/                 @willianpinho
+
+# ------------------------------------------------------------------------------
+# Shared Packages
+# ------------------------------------------------------------------------------
+/packages/                          @willianpinho
+/packages/shared/                   @willianpinho
+/packages/ui/                       @willianpinho
+/packages/config/                   @willianpinho
+
+# ------------------------------------------------------------------------------
+# Security-Sensitive Files
+# ------------------------------------------------------------------------------
+# These files require extra scrutiny
+.env*                               @willianpinho
+**/auth/**                          @willianpinho
+**/security/**                      @willianpinho
+**/*secret*                         @willianpinho
+**/*credential*                     @willianpinho
+
+# ------------------------------------------------------------------------------
+# Build & Deployment
+# ------------------------------------------------------------------------------
+Dockerfile                          @willianpinho
+**/Dockerfile                       @willianpinho
+.dockerignore                       @willianpinho
