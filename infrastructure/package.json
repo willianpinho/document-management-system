@@ -1,0 +1,37 @@
+{
+  "name": "@dms/infrastructure",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy:staging": "cdk deploy --all -c environment=staging --require-approval never",
+    "deploy:prod": "cdk deploy --all -c environment=production --require-approval broadening",
+    "diff:staging": "cdk diff --all -c environment=staging",
+    "diff:prod": "cdk diff --all -c environment=production",
+    "destroy:staging": "cdk destroy --all -c environment=staging --force",
+    "bootstrap": "cdk bootstrap",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.175.0",
+    "constructs": "^10.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "aws-cdk": "^2.175.0",
+    "eslint": "^9.18.0",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.9.0-dev.20250108",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
