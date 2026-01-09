@@ -1,0 +1,150 @@
+-- Migration: Add pgvector extension and vector index for semantic search
+-- Created: 2026-01-08
+-- Description: Enables pgvector extension, adds content_vector column to documents,
+--              and creates IVFFlat index for fast similarity search.
+
+-- =============================================================================
+-- STEP 1: Enable pgvector extension
+-- =============================================================================
+-- The pgvector extension provides vector similarity search capabilities.
+-- This must be installed on the PostgreSQL server first.
+-- For AWS RDS, enable the pgvector extension in the parameter group.
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- =============================================================================
+-- STEP 2: Add content_vector column if it doesn't exist
+-- =============================================================================
+-- The column stores 1536-dimensional vectors (OpenAI text-embedding-3-small output).
+-- Using Prisma's Unsupported type for this column in the schema.
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'documents' AND column_name = 'content_vector'
+    ) THEN
+        ALTER TABLE documents ADD COLUMN content_vector vector(1536);
+    END IF;
+END $$;
+
+-- =============================================================================
+-- STEP 3: Create IVFFlat index for cosine similarity search
+-- =============================================================================
+-- IVFFlat (Inverted File with Flat compression) index:
+-- - Good for approximate nearest neighbor search
+-- - Balances speed and recall
+-- - lists = 100 is suitable for up to ~1M documents
+-- - Use lists = sqrt(n) for larger datasets
+--
+-- The index uses cosine distance (vector_cosine_ops) which is most appropriate
+-- for text embeddings where direction matters more than magnitude.
+
+-- Drop existing index if it exists (for idempotency)
+DROP INDEX IF EXISTS idx_documents_content_vector;
+
+-- Create the IVFFlat index
+-- Note: IVFFlat requires training data, so this will be more effective
+-- after initial documents have embeddings generated.
+CREATE INDEX idx_documents_content_vector
+ON documents
+USING ivfflat (content_vector vector_cosine_ops)
+WITH (lists = 100);
+
+-- =============================================================================
+-- STEP 4: Create partial index for efficient filtering
+-- =============================================================================
+-- Partial index that only includes documents with embeddings
+-- This speeds up queries that filter on organization_id
+
+CREATE INDEX IF NOT EXISTS idx_documents_org_with_vector
+ON documents (organization_id)
+WHERE content_vector IS NOT NULL AND status != 'DELETED';
+
+-- =============================================================================
+-- STEP 5: Create index for full-text search on extracted_text
+-- =============================================================================
+-- GIN index with trigram support for faster LIKE queries
+
+-- Enable pg_trgm extension for trigram-based search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Create GIN trigram index on document name
+CREATE INDEX IF NOT EXISTS idx_documents_name_trgm
+ON documents
+USING gin (name gin_trgm_ops);
+
+-- Create GIN trigram index on extracted_text for full-text search
+-- Note: This can be large for documents with lots of text
+CREATE INDEX IF NOT EXISTS idx_documents_extracted_text_trgm
+ON documents
+USING gin (extracted_text gin_trgm_ops)
+WHERE extracted_text IS NOT NULL;
+
+-- =============================================================================
+-- STEP 6: Create function for vector search with filters
+-- =============================================================================
+-- This function encapsulates the common vector search pattern with organization filtering.
+
+CREATE OR REPLACE FUNCTION search_documents_by_vector(
+    p_organization_id UUID,
+    p_query_vector vector(1536),
+    p_threshold FLOAT DEFAULT 0.7,
+    p_limit INT DEFAULT 10
+)
+RETURNS TABLE (
+    document_id UUID,
+    document_name VARCHAR,
+    similarity FLOAT
+)
+LANGUAGE SQL
+STABLE
+AS $$
+    SELECT
+        d.id as document_id,
+        d.name as document_name,
+        (1 - (d.content_vector <=> p_query_vector))::FLOAT as similarity
+    FROM documents d
+    WHERE d.organization_id = p_organization_id
+      AND d.status != 'DELETED'
+      AND d.content_vector IS NOT NULL
+      AND (1 - (d.content_vector <=> p_query_vector)) >= p_threshold
+    ORDER BY d.content_vector <=> p_query_vector ASC
+    LIMIT p_limit;
+$$;
+
+-- =============================================================================
+-- STEP 7: Add comment for documentation
+-- =============================================================================
+
+COMMENT ON COLUMN documents.content_vector IS
+'1536-dimensional vector embedding generated by OpenAI text-embedding-3-small model. Used for semantic similarity search via pgvector.';
+
+COMMENT ON INDEX idx_documents_content_vector IS
+'IVFFlat index for approximate nearest neighbor search using cosine distance. Configured with 100 lists for up to ~1M documents.';
+
+COMMENT ON FUNCTION search_documents_by_vector IS
+'Performs vector similarity search on documents within an organization. Returns documents sorted by cosine similarity above the threshold.';
+
+-- =============================================================================
+-- VERIFICATION QUERIES (for manual testing)
+-- =============================================================================
+--
+-- Check if pgvector is installed:
+-- SELECT * FROM pg_extension WHERE extname = 'vector';
+--
+-- Check column exists:
+-- SELECT column_name, data_type FROM information_schema.columns
+-- WHERE table_name = 'documents' AND column_name = 'content_vector';
+--
+-- Check index exists:
+-- SELECT indexname, indexdef FROM pg_indexes
+-- WHERE tablename = 'documents' AND indexname LIKE '%vector%';
+--
+-- Test vector search (replace with actual vector):
+-- SELECT * FROM search_documents_by_vector(
+--     '00000000-0000-0000-0000-000000000000'::uuid,
+--     '[0.1, 0.2, ...]'::vector(1536),
+--     0.7,
+--     10
+-- );

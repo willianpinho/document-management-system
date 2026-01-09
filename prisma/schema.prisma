@@ -1,0 +1,379 @@
+// Document Management System - Prisma Schema
+// PostgreSQL with pgvector for semantic search
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [uuid_ossp(map: "uuid-ossp"), pgvector(map: "vector")]
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  MICROSOFT
+  GITHUB
+}
+
+enum OrganizationPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum MemberRole {
+  VIEWER
+  EDITOR
+  ADMIN
+  OWNER
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  ERROR
+  DELETED
+}
+
+enum ProcessingStatus {
+  PENDING
+  OCR_IN_PROGRESS
+  OCR_COMPLETE
+  EMBEDDING_IN_PROGRESS
+  COMPLETE
+  FAILED
+}
+
+enum ProcessingJobType {
+  OCR
+  PDF_SPLIT
+  PDF_MERGE
+  THUMBNAIL
+  AI_CLASSIFY
+  EMBEDDING
+}
+
+enum ProcessingJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  STALLED
+}
+
+enum AuditAction {
+  // Auth actions
+  USER_LOGIN
+  USER_LOGOUT
+  USER_REGISTERED
+
+  // Document actions
+  DOCUMENT_CREATED
+  DOCUMENT_VIEWED
+  DOCUMENT_UPDATED
+  DOCUMENT_DELETED
+  DOCUMENT_DOWNLOADED
+  DOCUMENT_MOVED
+  DOCUMENT_COPIED
+  DOCUMENT_RESTORED
+
+  // Folder actions
+  FOLDER_CREATED
+  FOLDER_UPDATED
+  FOLDER_DELETED
+  FOLDER_MOVED
+
+  // Processing actions
+  PROCESSING_STARTED
+  PROCESSING_COMPLETED
+  PROCESSING_FAILED
+
+  // Organization actions
+  ORGANIZATION_CREATED
+  ORGANIZATION_UPDATED
+  MEMBER_INVITED
+  MEMBER_REMOVED
+  MEMBER_ROLE_CHANGED
+
+  // Settings actions
+  SETTINGS_UPDATED
+  API_KEY_CREATED
+  API_KEY_REVOKED
+}
+
+enum ResourceType {
+  USER
+  ORGANIZATION
+  FOLDER
+  DOCUMENT
+  DOCUMENT_VERSION
+  PROCESSING_JOB
+  API_KEY
+}
+
+// =============================================================================
+// MODELS
+// =============================================================================
+
+/// User accounts with OAuth support
+model User {
+  id         String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email      String       @unique @db.VarChar(255)
+  name       String?      @db.VarChar(255)
+  avatarUrl  String?      @map("avatar_url") @db.VarChar(512)
+  provider   AuthProvider @default(EMAIL)
+  providerId String?      @map("provider_id") @db.VarChar(255)
+  password   String?      @db.VarChar(255) // Hashed, only for EMAIL provider
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  memberships      OrganizationMember[]
+  createdDocuments Document[]           @relation("CreatedDocuments")
+  createdFolders   Folder[]             @relation("CreatedFolders")
+  documentVersions DocumentVersion[]    @relation("CreatedVersions")
+  auditLogs        AuditLog[]           @relation("UserAuditLogs")
+
+  @@index([email])
+  @@index([provider, providerId])
+  @@map("users")
+}
+
+/// Multi-tenant organizations
+model Organization {
+  id                String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name              String           @db.VarChar(255)
+  slug              String           @unique @db.VarChar(100)
+  plan              OrganizationPlan @default(FREE)
+  storageQuotaBytes BigInt           @default(5368709120) @map("storage_quota_bytes") // 5GB default
+  storageUsedBytes  BigInt           @default(0) @map("storage_used_bytes")
+  settings          Json             @default("{}")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  members   OrganizationMember[]
+  folders   Folder[]
+  documents Document[]
+  auditLogs AuditLog[]
+  apiKeys   ApiKey[]
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+/// User-organization relationships with roles
+model OrganizationMember {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  userId         String     @map("user_id") @db.Uuid
+  role           MemberRole @default(VIEWER)
+  invitedAt      DateTime   @default(now()) @map("invited_at")
+  joinedAt       DateTime?  @map("joined_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+/// Hierarchical folder structure with materialized path
+model Folder {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  parentId       String?  @map("parent_id") @db.Uuid
+  name           String   @db.VarChar(255)
+  path           String   @db.VarChar(2048) // Materialized path: /root/parent/child
+  depth          Int      @default(0)
+  createdById    String   @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Folder?      @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Folder[]     @relation("FolderHierarchy")
+  documents    Document[]
+  createdBy    User         @relation("CreatedFolders", fields: [createdById], references: [id])
+
+  @@unique([organizationId, parentId, name])
+  @@index([organizationId])
+  @@index([parentId])
+  @@index([path])
+  @@index([createdById])
+  @@map("folders")
+}
+
+/// Document metadata and S3 references
+model Document {
+  id               String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String           @map("organization_id") @db.Uuid
+  folderId         String?          @map("folder_id") @db.Uuid
+  name             String           @db.VarChar(255)
+  originalName     String?          @map("original_name") @db.VarChar(255)
+  mimeType         String           @map("mime_type") @db.VarChar(127)
+  sizeBytes        BigInt           @map("size_bytes")
+  s3Key            String           @map("s3_key") @db.VarChar(1024)
+  s3VersionId      String?          @map("s3_version_id") @db.VarChar(255)
+  checksum         String?          @db.VarChar(64) // SHA-256
+  status           DocumentStatus   @default(UPLOADED)
+  processingStatus ProcessingStatus @default(PENDING) @map("processing_status")
+  metadata         Json             @default("{}")
+  extractedText    String?          @map("extracted_text") // OCR result
+  thumbnailKey     String?          @map("thumbnail_key") @db.VarChar(1024)
+  createdById      String           @map("created_by_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  deletedAt        DateTime?        @map("deleted_at")
+
+  // Vector embedding for semantic search (1536 dimensions for OpenAI ada-002)
+  // Using Unsupported type for pgvector
+  contentVector Unsupported("vector(1536)")? @map("content_vector")
+
+  // Relations
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  folder         Folder?           @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdBy      User              @relation("CreatedDocuments", fields: [createdById], references: [id])
+  versions       DocumentVersion[]
+  processingJobs ProcessingJob[]
+
+  @@index([organizationId])
+  @@index([folderId])
+  @@index([status])
+  @@index([processingStatus])
+  @@index([mimeType])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("documents")
+}
+
+/// Document version history
+model DocumentVersion {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId    String   @map("document_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  s3Key         String   @map("s3_key") @db.VarChar(1024)
+  s3VersionId   String?  @map("s3_version_id") @db.VarChar(255)
+  sizeBytes     BigInt   @map("size_bytes")
+  checksum      String?  @db.VarChar(64)
+  changeNote    String?  @map("change_note") @db.VarChar(500)
+  createdById   String   @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  document  Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy User     @relation("CreatedVersions", fields: [createdById], references: [id])
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+  @@index([createdById])
+  @@map("document_versions")
+}
+
+/// Background processing job tracking
+model ProcessingJob {
+  id           String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String              @map("document_id") @db.Uuid
+  jobType      ProcessingJobType   @map("job_type")
+  status       ProcessingJobStatus @default(PENDING)
+  priority     Int                 @default(0)
+  attempts     Int                 @default(0)
+  maxAttempts  Int                 @default(3) @map("max_attempts")
+  inputParams  Json                @default("{}") @map("input_params")
+  outputData   Json?               @map("output_data")
+  errorMessage String?             @map("error_message") @db.Text
+  errorStack   String?             @map("error_stack") @db.Text
+  scheduledAt  DateTime?           @map("scheduled_at")
+  startedAt    DateTime?           @map("started_at")
+  completedAt  DateTime?           @map("completed_at")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([status])
+  @@index([jobType])
+  @@index([scheduledAt])
+  @@index([createdAt])
+  @@map("processing_jobs")
+}
+
+/// Complete activity logging for compliance
+model AuditLog {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String?      @map("user_id") @db.Uuid
+  action         AuditAction
+  resourceType   ResourceType @map("resource_type")
+  resourceId     String?      @map("resource_id") @db.Uuid
+  metadata       Json         @default("{}")
+  ipAddress      String?      @map("ip_address") @db.VarChar(45) // IPv6 max length
+  userAgent      String?      @map("user_agent") @db.VarChar(512)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// API keys for machine-to-machine authentication
+model ApiKey {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  name           String    @db.VarChar(255)
+  keyPrefix      String    @map("key_prefix") @db.VarChar(8) // First 8 chars for identification
+  keyHash        String    @map("key_hash") @db.VarChar(255) // SHA-256 hash of full key
+  scopes         String[]  @default([]) // Array of permission scopes
+  lastUsedAt     DateTime? @map("last_used_at")
+  expiresAt      DateTime? @map("expires_at")
+  revokedAt      DateTime? @map("revoked_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([keyPrefix])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+/// Refresh tokens for session management
+model RefreshToken {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  userId    String    @map("user_id") @db.Uuid
+  deviceId  String?   @map("device_id") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
