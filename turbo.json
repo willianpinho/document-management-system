@@ -1,0 +1,122 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [
+    ".env",
+    ".env.local",
+    "tsconfig.base.json"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI"
+  ],
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "build/**"
+      ],
+      "cache": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "**/*.test.ts",
+        "**/*.spec.ts"
+      ],
+      "outputs": [
+        "coverage/**"
+      ],
+      "cache": true
+    },
+    "test:unit": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "**/*.test.ts"
+      ],
+      "outputs": [
+        "coverage/**"
+      ],
+      "cache": true
+    },
+    "test:integration": {
+      "dependsOn": [
+        "build"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "REDIS_URL"
+      ],
+      "cache": false
+    },
+    "test:e2e": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".eslintrc*",
+        "eslint.config.*"
+      ],
+      "outputs": [],
+      "cache": true
+    },
+    "lint:fix": {
+      "cache": false
+    },
+    "type-check": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig.json"
+      ],
+      "outputs": [],
+      "cache": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:seed": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

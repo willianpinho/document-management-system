@@ -1,0 +1,76 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+out
+.turbo
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+playwright-report
+test-results
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# AWS CDK
+cdk.out
+cdk.context.json
+
+# Misc
+*.pem
+*.key
+.cache
+tmp
+temp
+
+# Sentry
+.sentryclirc
+
+# Vercel
+.vercel
+
+# Electron
+*.asar
+
+# Debug
+.debug
+
+# Local development
+.localstack
