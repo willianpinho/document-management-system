@@ -1,0 +1,28 @@
+0:00 Hi, my name is Iñaki, I'm the CTO and, ah, thanks for applying for the role by the way. I would like you to, ah, you know, do a little exercise with us that is about designing, ah, a document management system.
+0:13 What we would like to understand from you is your ability to to, you know, design software, ah, to be able to make decisions on a fast-paced company like we are.
+0:23 Um, and for that, I think, you know, it's always nice to be able to sit and discuss something that is concrete instead of just, ah, general questions.
+0:31 So, for this, exercise, what we have is something that you're probably familiar with, uhm, a typical OneDrive, Google Drive solution.
+0:39 We would like you to, you know, come up with an architect that can actually, uhm, you know, provide that solution or a similar solution to that.
+0:48 So in practice, something that can, uhm, document and store files in a secure way, that can also process those files, this is something that OneDrive or, uhm, Google Drive don't have, but we would like you to think about how that could work, uh, which is doing things like this.
+1:04 Like pdf splitting or doing AI based OCR recognition, or in principle anything else, so you don't need to really think of maybe, uhm, some super specific case in detail, but just allow the system to be able to introduce that functionality.
+1:19 We also would like it to have a web UI, so, uhm, that is kind of the product that we're trying to, uh, well, not the real product we're trying to build, but the one that we want you to, uhm, do this exercise together with us, and I think there are a couple of different things that for me are interesting
+1:36 . Umm, interesting, uhm, in this solution. So, the first one is independently of the details and the actual solution is how would you go about developing this solution?
+1:45 Umm, what are the things that you would do regarding, uhm, choice of technology and so on, but also, So, which you use tools, um, especially around AI to be able to develop this, um, and, you know, how would you go about that?
+2:00 And then there is a bunch of different things that are actually related to the software architecture, like the choice of, um, cloud providers.
+2:08 But the choice of compute platform, what do you do for CICD? Do you define your infrastructure as code or in another way?
+2:16 What do you do for observability and metrics, choice of stack for the front and back end? Any other service that you think, um, should be?
+2:24 Uh, make system for the solution, architecture for file processing, authentication and choice of, um, database. So, obviously, such a solution, if you go into detail, will be massive.
+2:36 We're not trying to, um, ask you to, you know, develop it. A Google Drive solution is more to keep it high level.
+2:43 And this is about, you know, in principle, going into a few of these directions, which is something that you would normally do in any application that you develop, right?
+2:52 All these questions that are there, you would have to take in any kind of software that you develop. Whether it's simple or not.
+2:58 Um, and maybe some of the choices depend on the complexity of the software. But, uh, yeah, it's for us to have a playground and discuss these things in a nice way.
+3:10 Regarding the deliverables, I think is, uh, somewhat simple. Before the interview, we would like to have a short, um, let's say, less than five minutes, um, high-level presentation of how you would go about this.
+3:23 I think a video, uh, maybe going through some architectural diagram or whatever you think. It makes sense to present the solution, uh, will be the nicest way to, for, for us to evaluate that.
+3:35 And if we would have the interview, then that will be somewhere around a 15-minute, um, overview of the solution. Um, again, this is now meant to be, like, a, you know, a teacher, student kind of discussion.
+3:47 This would be, um, a pretty relaxed conversation that we have around, um, all of these different topics that, that I just mentioned.
+3:55 Um, yeah. And, you know, if you're in doubt, whether you have to- . . and, um, some particular thing that's up to you, um, there is no requirement from our side that you need to have slides or that you need to have this or that is, you know, whatever you think, um, can convey the information, uh, in 
+4:14 the best way, feel free to- Do that and in principle, it's always, um, quality rather than quantity. So I guess now, days we all know you could put this into chat P.T., and get a very nice list of 10 pages of suggestions.
+4:28 Um, that's not really what we're looking for. We're looking for, you know, ability- ability to think, ability to condense information, uh, which is, um, something that is very useful when you communicate with your colleagues, when you're trying to make decisions and discuss it with somebody else.
+4:43 Um, so yeah, keep that in mind when you think of, um, the information. They want to present on how, right?
+4:50 Um, yeah. And I guess that's it for, um, the take-home assignment. Um, I wish you luck and hope to hear back from you.
+4:59 Thank you.
