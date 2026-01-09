@@ -1,0 +1,2 @@
+# This directory contains document-related entities
+# Currently using Prisma schema instead of TypeORM entities
