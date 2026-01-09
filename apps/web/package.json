@@ -1,0 +1,50 @@
+{
+  "name": "@dms/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "clean": "rm -rf .next .turbo coverage"
+  },
+  "dependencies": {
+    "@dms/shared": "workspace:*",
+    "@dms/ui": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.1.0",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.0",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@dms/eslint-config": "workspace:*",
+    "@dms/tailwind-config": "workspace:*",
+    "@dms/typescript-config": "workspace:*",
+    "@playwright/test": "^1.49.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.0-beta",
+    "vitest": "^2.1.0"
+  }
+}
