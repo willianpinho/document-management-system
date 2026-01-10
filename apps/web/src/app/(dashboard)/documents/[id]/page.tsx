@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,6 +13,11 @@ import {
   FileText,
   Tag,
   Eye,
+  MessageCircle,
+  Users,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   Button,
@@ -20,16 +26,34 @@ import {
   CardHeader,
   CardTitle,
   Badge,
+  Progress,
 } from '@dms/ui';
 import { DocumentActions } from '@/components/documents/DocumentActions';
-import { FolderBreadcrumb } from '@/components/folders/FolderBreadcrumb';
+import { ShareDialog, type SharePermission } from '@/components/documents/ShareDialog';
+import { VersionHistoryModal } from '@/components/documents/VersionHistoryModal';
+import { PresenceAvatars } from '@/components/documents/PresenceAvatars';
+import { FolderBreadcrumb, FolderPickerDialog } from '@/components/folders';
+import { CommentsPanel } from '@/components/comments/CommentsPanel';
+import { useAuth, usePresence } from '@/hooks';
 import {
   useDocument,
   useUpdateDocument,
   useDeleteDocument,
   useDocumentDownloadUrl,
   useProcessDocument,
+  useDocumentShares,
+  useShareDocument,
+  useRemoveShare,
+  useUpdateSharePermission,
+  useCreateShareLink,
+  useDeleteShareLink,
+  useDocumentVersions,
+  useDownloadVersion,
+  useRestoreVersion,
+  useMoveDocument,
+  useCopyDocument,
 } from '@/hooks/useDocuments';
+import { useDocumentProcessing } from '@/hooks/useDocumentProcessing';
 import {
   formatBytes,
   formatDateTime,
@@ -43,11 +67,59 @@ export default function DocumentDetailPage() {
   const router = useRouter();
   const documentId = params.id as string;
 
+  // Auth state
+  const { user, currentOrganization } = useAuth();
+
+  // Real-time presence tracking
+  const { viewers, isConnected } = usePresence({
+    documentId,
+    enabled: !!documentId,
+  });
+
+  // Dialog states
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
+
+  // Document data hooks
   const { data: document, isLoading, error } = useDocument(documentId);
   const { data: downloadUrlData } = useDocumentDownloadUrl(documentId);
   const updateDocument = useUpdateDocument();
   const deleteDocument = useDeleteDocument();
   const processDocument = useProcessDocument();
+
+  // Sharing hooks
+  const { data: sharesData } = useDocumentShares(documentId);
+  const shareDocument = useShareDocument();
+  const removeShare = useRemoveShare();
+  const updateSharePermission = useUpdateSharePermission();
+  const createShareLink = useCreateShareLink();
+  const deleteShareLink = useDeleteShareLink();
+
+  // Version hooks
+  const { data: versions = [] } = useDocumentVersions(documentId);
+  const downloadVersion = useDownloadVersion();
+  const restoreVersion = useRestoreVersion();
+
+  // Move/Copy hooks
+  const moveDocument = useMoveDocument();
+  const copyDocument = useCopyDocument();
+
+  // Processing hook for tracking document processing status
+  const {
+    jobStatuses,
+    hasActiveJobs,
+    overallProgress,
+    pendingJobs,
+    processingJobs,
+    completedJobs,
+    failedActiveJobs,
+  } = useDocumentProcessing({
+    documentId,
+    enabled: document?.processingStatus === 'processing',
+  });
 
   const handleDownload = async () => {
     if (downloadUrlData?.url && document) {
@@ -67,27 +139,95 @@ export default function DocumentDetailPage() {
     });
   };
 
-  const handleMove = () => {
-    // Open move dialog - for now just redirect
-    router.push(`/documents/${documentId}?move=true`);
-  };
+  const handleMove = useCallback(() => {
+    setIsMoveDialogOpen(true);
+  }, []);
 
-  const handleCopy = () => {
-    // Open copy dialog - for now just redirect
-    router.push(`/documents/${documentId}?copy=true`);
-  };
+  const handleCopy = useCallback(() => {
+    setIsCopyDialogOpen(true);
+  }, []);
+
+  const handleMoveToFolder = useCallback(
+    async (folderId: string | null) => {
+      await moveDocument.mutateAsync({ id: documentId, folderId });
+    },
+    [documentId, moveDocument]
+  );
+
+  const handleCopyToFolder = useCallback(
+    async (folderId: string | null) => {
+      await copyDocument.mutateAsync({ id: documentId, folderId });
+    },
+    [documentId, copyDocument]
+  );
 
   const handleProcess = async (operations: string[]) => {
     await processDocument.mutateAsync({ id: documentId, operations });
   };
 
-  const handleViewHistory = () => {
-    // Open version history dialog
-  };
+  const handleViewHistory = useCallback(() => {
+    setIsVersionHistoryOpen(true);
+  }, []);
 
-  const handleShare = () => {
-    // Open share dialog
-  };
+  const handleShare = useCallback(() => {
+    setIsShareDialogOpen(true);
+  }, []);
+
+  const handleOpenComments = useCallback(() => {
+    setIsCommentsOpen(true);
+  }, []);
+
+  // Share handlers
+  const handleShareWithUser = useCallback(
+    async (email: string, permission: SharePermission) => {
+      await shareDocument.mutateAsync({ documentId, email, permission });
+    },
+    [documentId, shareDocument]
+  );
+
+  const handleRemoveUser = useCallback(
+    async (userId: string) => {
+      await removeShare.mutateAsync({ documentId, userId });
+    },
+    [documentId, removeShare]
+  );
+
+  const handleUpdatePermission = useCallback(
+    async (userId: string, permission: SharePermission) => {
+      await updateSharePermission.mutateAsync({ documentId, userId, permission });
+    },
+    [documentId, updateSharePermission]
+  );
+
+  const handleCreateLink = useCallback(
+    async (permission: SharePermission) => {
+      await createShareLink.mutateAsync({ documentId, permission });
+    },
+    [documentId, createShareLink]
+  );
+
+  const handleDeleteLink = useCallback(async () => {
+    await deleteShareLink.mutateAsync(documentId);
+  }, [documentId, deleteShareLink]);
+
+  // Version handlers
+  const handleDownloadVersion = useCallback(
+    async (versionId: string) => {
+      const result = await downloadVersion.mutateAsync({ documentId, versionId });
+      if (result.url) {
+        const version = versions.find((v) => v.id === versionId);
+        downloadFile(result.url, `${document?.name || 'document'}_v${version?.versionNumber || ''}`);
+      }
+    },
+    [documentId, downloadVersion, versions, document?.name]
+  );
+
+  const handleRestoreVersion = useCallback(
+    async (versionId: string) => {
+      await restoreVersion.mutateAsync({ documentId, versionId });
+    },
+    [documentId, restoreVersion]
+  );
 
   if (isLoading) {
     return (
@@ -163,18 +303,45 @@ export default function DocumentDetailPage() {
             </div>
           </div>
 
-          <DocumentActions
-            document={document}
-            onDownload={handleDownload}
-            onDelete={handleDelete}
-            onRename={handleRename}
-            onMove={handleMove}
-            onCopy={handleCopy}
-            onProcess={handleProcess}
-            onViewHistory={handleViewHistory}
-            onShare={handleShare}
-            isProcessing={processDocument.isPending}
-          />
+          <div className="flex items-center gap-3">
+            {/* Real-time presence indicators */}
+            {viewers.length > 0 && (
+              <div className="flex items-center gap-2 border-r pr-3">
+                <PresenceAvatars
+                  viewers={viewers}
+                  currentUserId={user?.id}
+                  maxVisible={4}
+                />
+                {isConnected && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span>{viewers.length} viewing</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenComments}
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Comments
+            </Button>
+            <DocumentActions
+              document={document}
+              onDownload={handleDownload}
+              onDelete={handleDelete}
+              onRename={handleRename}
+              onMove={handleMove}
+              onCopy={handleCopy}
+              onProcess={handleProcess}
+              onViewHistory={handleViewHistory}
+              onShare={handleShare}
+              isProcessing={processDocument.isPending}
+            />
+          </div>
         </div>
       </div>
 
@@ -286,6 +453,68 @@ export default function DocumentDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Processing Status */}
+            {(document.processingStatus === 'processing' || hasActiveJobs) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Overall Progress</span>
+                      <span className="font-medium">{Math.round(overallProgress)}%</span>
+                    </div>
+                    <Progress value={overallProgress} className="h-2" />
+                  </div>
+
+                  {jobStatuses && jobStatuses.length > 0 && (
+                    <div className="space-y-2 border-t pt-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase">Active Jobs</p>
+                      {jobStatuses.slice(0, 3).map((job) => (
+                        <div key={job.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            {job.status === 'processing' && (
+                              <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                            )}
+                            {job.status === 'completed' && (
+                              <CheckCircle2 className="h-3 w-3 text-green-500" />
+                            )}
+                            {job.status === 'failed' && (
+                              <AlertCircle className="h-3 w-3 text-destructive" />
+                            )}
+                            {job.status === 'pending' && (
+                              <Clock className="h-3 w-3 text-yellow-500" />
+                            )}
+                            <span className="capitalize">{job.type.replace('_', ' ')}</span>
+                          </div>
+                          <Badge
+                            variant={
+                              job.status === 'completed'
+                                ? 'default'
+                                : job.status === 'failed'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                            className="text-xs"
+                          >
+                            {job.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground">
+                    Processing continues in the background. This page will update automatically.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* AI Classification */}
             {document.metadata?.classification && (
               <Card>
@@ -355,11 +584,14 @@ export default function DocumentDetailPage() {
                         </span>
                       </div>
                     ))}
-                    {document.versions.length > 5 && (
-                      <Button variant="ghost" size="sm" className="w-full">
-                        View all {document.versions.length} versions
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleViewHistory}
+                    >
+                      View all versions
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -367,6 +599,64 @@ export default function DocumentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Share Dialog */}
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        documentId={documentId}
+        documentName={document.name}
+        sharedUsers={sharesData?.users || []}
+        shareLink={sharesData?.link}
+        onShareWithUser={handleShareWithUser}
+        onRemoveUser={handleRemoveUser}
+        onUpdatePermission={handleUpdatePermission}
+        onCreateLink={handleCreateLink}
+        onDeleteLink={handleDeleteLink}
+        isLoading={shareDocument.isPending || createShareLink.isPending}
+      />
+
+      {/* Version History Modal */}
+      <VersionHistoryModal
+        open={isVersionHistoryOpen}
+        onOpenChange={setIsVersionHistoryOpen}
+        documentId={documentId}
+        documentName={document.name}
+        currentVersionNumber={Math.max(...(document.versions?.map((v) => v.versionNumber) || [1]))}
+        versions={versions}
+        onDownloadVersion={handleDownloadVersion}
+        onRestoreVersion={handleRestoreVersion}
+        isLoading={downloadVersion.isPending || restoreVersion.isPending}
+      />
+
+      {/* Comments Panel */}
+      <CommentsPanel
+        documentId={documentId}
+        currentUserId={user?.id || ''}
+        isAdmin={currentOrganization?.role === 'OWNER' || currentOrganization?.role === 'ADMIN'}
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+      />
+
+      {/* Move Dialog */}
+      <FolderPickerDialog
+        open={isMoveDialogOpen}
+        onOpenChange={setIsMoveDialogOpen}
+        onSelect={handleMoveToFolder}
+        title="Move Document"
+        description={`Select a destination folder for "${document.name}"`}
+        currentFolderId={document.folderId}
+      />
+
+      {/* Copy Dialog */}
+      <FolderPickerDialog
+        open={isCopyDialogOpen}
+        onOpenChange={setIsCopyDialogOpen}
+        onSelect={handleCopyToFolder}
+        title="Copy Document"
+        description={`Select a destination folder for the copy of "${document.name}"`}
+        currentFolderId={document.folderId}
+      />
     </div>
   );
 }

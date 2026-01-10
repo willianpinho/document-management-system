@@ -5,8 +5,6 @@ import {
   FileText,
   Folder,
   Upload,
-  Clock,
-  TrendingUp,
   HardDrive,
   ArrowRight,
   Wand2,
@@ -14,7 +12,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   Button,
@@ -22,21 +19,9 @@ import {
 } from '@dms/ui';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useFolders } from '@/hooks/useFolders';
+import { useStorageStats } from '@/hooks/useStorage';
 import { DocumentCard } from '@/components/documents/DocumentCard';
 import { formatBytes, formatRelativeTime, getStoragePercentage } from '@/lib/utils';
-
-// Mock storage stats - in real app, fetch from API
-const storageStats = {
-  usedBytes: 2.5 * 1024 * 1024 * 1024,
-  limitBytes: 10 * 1024 * 1024 * 1024,
-};
-
-// Mock activity stats - in real app, fetch from API
-const activityStats = {
-  documentsUploaded: 12,
-  documentsProcessed: 8,
-  storageUsedThisMonth: 500 * 1024 * 1024,
-};
 
 export default function DashboardPage() {
   const { data: documentsData, isLoading: isLoadingDocuments } = useDocuments({
@@ -51,12 +36,18 @@ export default function DashboardPage() {
     sortOrder: 'desc',
   });
 
+  const { data: storageStats, isLoading: isLoadingStorage } = useStorageStats();
+
   const documents = documentsData?.data || [];
   const folders = foldersData?.data || [];
-  const storagePercentage = getStoragePercentage(
-    storageStats.usedBytes,
-    storageStats.limitBytes
-  );
+
+  // Calculate storage percentage from real data
+  const usedBytes = storageStats?.usedBytes ?? 0;
+  const quotaBytes = storageStats?.quotaBytes ?? 10 * 1024 * 1024 * 1024; // Default 10GB
+  const storagePercentage = getStoragePercentage(usedBytes, quotaBytes);
+
+  // Count documents processed (with status COMPLETED)
+  const processedCount = documents.filter(doc => doc.status === 'COMPLETED').length;
 
   return (
     <div className="p-6">
@@ -80,7 +71,7 @@ export default function DashboardPage() {
               {documentsData?.meta?.pagination?.total || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              +{activityStats.documentsUploaded} this month
+              Across all folders
             </p>
           </CardContent>
         </Card>
@@ -107,10 +98,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {activityStats.documentsProcessed}
+              {processedCount}
             </div>
             <p className="text-xs text-muted-foreground">
-              Documents analyzed this month
+              Documents analyzed
             </p>
           </CardContent>
         </Card>
@@ -121,12 +112,17 @@ export default function DashboardPage() {
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{storagePercentage}%</div>
-            <Progress value={storagePercentage} className="mt-2 h-1.5" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatBytes(storageStats.usedBytes)} of{' '}
-              {formatBytes(storageStats.limitBytes)}
-            </p>
+            {isLoadingStorage ? (
+              <div className="h-16 animate-pulse bg-muted rounded" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{storagePercentage}%</div>
+                <Progress value={storagePercentage} className="mt-2 h-1.5" />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatBytes(usedBytes)} of {formatBytes(quotaBytes)}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

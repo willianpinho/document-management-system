@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Folder, Upload, X } from 'lucide-react';
 import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle } from '@dms/ui';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { BulkActionsBar } from '@/components/documents/BulkActionsBar';
 import { CreateFolderDialog } from '@/components/folders/CreateFolderDialog';
 import {
   useDocuments,
@@ -16,7 +17,9 @@ import {
   type DocumentDetail,
 } from '@/hooks/useDocuments';
 import { useCreateFolder } from '@/hooks/useFolders';
+import { useBulkSelection, type SelectableItem } from '@/hooks/useBulkSelection';
 import { downloadFile } from '@/lib/utils';
+import { documentsApi, ApiError } from '@/lib/api';
 
 function DocumentsPageContent() {
   const router = useRouter();
@@ -54,6 +57,35 @@ function DocumentsPageContent() {
   const deleteDocument = useDeleteDocument();
   const createFolder = useCreateFolder();
 
+  // Bulk selection
+  const {
+    selectedItems,
+    selectedCount,
+    hasSelection,
+    isSelectionMode,
+    toggleItem,
+    selectAll,
+    clearSelection,
+    isSelected,
+    enterSelectionMode,
+    bulkDelete,
+    bulkMove,
+    bulkCopy,
+    bulkDownload,
+    isDeleting,
+    isMoving,
+    isCopying,
+    isDownloading,
+    isProcessing,
+  } = useBulkSelection({
+    onSuccess: () => {
+      // Bulk operation completed successfully
+    },
+    onError: (error) => {
+      console.error('Bulk operation failed:', error);
+    },
+  });
+
   // Handlers
   const handleSortChange = useCallback(
     (newSortBy: string, newSortOrder: 'asc' | 'desc') => {
@@ -88,18 +120,14 @@ function DocumentsPageContent() {
   const handleDownload = useCallback(
     async (id: string) => {
       try {
-        const response = await fetch(`/api/v1/documents/${id}/download`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        });
-        const data = await response.json();
-        if (data.data?.url) {
+        const response = await documentsApi.getDownloadUrl(id);
+        if (response.data?.url) {
           const doc = documentsData?.data?.find((d) => d.id === id);
-          downloadFile(data.data.url, doc?.name || 'download');
+          downloadFile(response.data.url, doc?.name || 'download');
         }
       } catch (error) {
-        console.error('Download failed:', error);
+        const apiError = error as ApiError;
+        console.error('Download failed:', apiError.message || 'Unknown error');
       }
     },
     [documentsData]
@@ -145,6 +173,17 @@ function DocumentsPageContent() {
   }, [createFolder]);
 
   const documents = documentsData?.data || [];
+
+  // Convert documents to selectable format for bulk operations
+  const selectableDocuments: SelectableItem[] = useMemo(
+    () =>
+      documents.map((doc) => ({
+        id: doc.id,
+        type: 'document' as const,
+        name: doc.name,
+      })),
+    [documents]
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -251,6 +290,22 @@ function DocumentsPageContent() {
         isOpen={!!previewDocumentId}
         onClose={() => setPreviewDocumentId(null)}
         onDownload={() => previewDocumentId && handleDownload(previewDocumentId)}
+      />
+
+      {/* Bulk actions bar */}
+      <BulkActionsBar
+        selectedItems={selectedItems}
+        selectedCount={selectedCount}
+        isProcessing={isProcessing}
+        isDeleting={isDeleting}
+        isMoving={isMoving}
+        isCopying={isCopying}
+        isDownloading={isDownloading}
+        onDelete={(options) => bulkDelete(options ?? {})}
+        onMove={bulkMove}
+        onCopy={bulkCopy}
+        onDownload={bulkDownload}
+        onClearSelection={clearSelection}
       />
     </div>
   );
