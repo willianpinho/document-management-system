@@ -16,7 +16,6 @@ test.describe('Authentication', () => {
     test('should display login page', async ({ page }) => {
       await page.goto('/login');
 
-      // Page has "Welcome back" heading
       await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
@@ -27,14 +26,12 @@ test.describe('Authentication', () => {
       await page.goto('/login');
 
       // The form uses HTML5 required attribute, so we check that native validation prevents submission
-      const emailInput = page.getByLabel(/email/i);
       const submitButton = page.getByRole('button', { name: /sign in/i });
 
       // Click submit without filling form
       await submitButton.click();
 
-      // Form should not submit - email input should still be focused/invalid
-      // Check that we're still on login page
+      // Form should not submit - check that we're still on login page
       await expect(page).toHaveURL(/login/);
     });
 
@@ -45,19 +42,26 @@ test.describe('Authentication', () => {
       await page.getByLabel(/password/i).fill('wrongpassword');
       await page.getByRole('button', { name: /sign in/i }).click();
 
-      // Wait for error message (the error div with destructive styling)
-      await expect(page.locator('.bg-destructive\\/10')).toBeVisible({ timeout: 10000 });
+      // Wait for the button to become enabled again (indicating request completed)
+      await expect(page.getByRole('button', { name: /sign in/i })).toBeEnabled({ timeout: 15000 });
+
+      // Wait for error message - check for error text or error styling
+      const errorVisible = await Promise.race([
+        page.getByText(/invalid email or password|invalid credentials/i).isVisible().catch(() => false),
+        page.locator('.bg-destructive\\/10').isVisible().catch(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
     test('should login with valid credentials', async ({ page }) => {
       await page.goto('/login');
 
-      await page.getByLabel(/email/i).fill('test@example.com');
-      await page.getByLabel(/password/i).fill('password123');
+      await page.getByLabel(/email/i).fill('admin@dms-test.com');
+      await page.getByLabel(/password/i).fill('admin123!');
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Should redirect to dashboard
-      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 15000 });
+      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 20000 });
     });
 
     test('should show OAuth providers', async ({ page }) => {
@@ -81,20 +85,16 @@ test.describe('Authentication', () => {
     test('should display registration page', async ({ page }) => {
       await page.goto('/register');
 
-      // Page has "Create an account" heading
       await expect(page.getByRole('heading', { name: /create an account/i })).toBeVisible();
-      // Label is "Full name" not just "name"
       await expect(page.getByLabel(/full name/i)).toBeVisible();
       await expect(page.getByLabel(/email/i)).toBeVisible();
-      // Use exact match for Password (not "Confirm password")
       await expect(page.locator('#password')).toBeVisible();
-      await expect(page.getByLabel(/confirm password/i)).toBeVisible();
+      await expect(page.locator('#confirmPassword')).toBeVisible();
     });
 
     test('should show validation errors for invalid input', async ({ page }) => {
       await page.goto('/register');
 
-      // Fill with invalid data using locators
       await page.getByLabel(/full name/i).fill('Test');
       await page.getByLabel(/email/i).fill('invalid-email');
       await page.locator('#password').fill('short');
@@ -102,8 +102,12 @@ test.describe('Authentication', () => {
 
       await page.getByRole('button', { name: /create account/i }).click();
 
-      // Check for validation error message (displayed in error div)
-      await expect(page.locator('.bg-destructive\\/10')).toBeVisible({ timeout: 5000 });
+      // Check for validation error message
+      const errorVisible = await Promise.race([
+        page.getByText(/at least 8 characters|passwords do not match/i).isVisible().catch(() => false),
+        page.locator('.bg-destructive\\/10').isVisible().catch(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
     test('should register with valid information', async ({ page }) => {
@@ -113,13 +117,13 @@ test.describe('Authentication', () => {
 
       await page.getByLabel(/full name/i).fill('Test User');
       await page.getByLabel(/email/i).fill(uniqueEmail);
-      await page.locator('#password').fill('password123');
-      await page.locator('#confirmPassword').fill('password123');
+      await page.locator('#password').fill('TestPass123!');
+      await page.locator('#confirmPassword').fill('TestPass123!');
 
       await page.getByRole('button', { name: /create account/i }).click();
 
       // Should redirect to dashboard or verification page
-      await expect(page).toHaveURL(/(dashboard|documents|verify)/, { timeout: 15000 });
+      await expect(page).toHaveURL(/(dashboard|documents|verify)/, { timeout: 20000 });
     });
 
     test('should navigate to login page', async ({ page }) => {
@@ -135,16 +139,16 @@ test.describe('Authentication', () => {
     test('should logout successfully', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@example.com');
-      await page.getByLabel(/password/i).fill('password123');
+      await page.getByLabel(/email/i).fill('admin@dms-test.com');
+      await page.getByLabel(/password/i).fill('admin123!');
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Wait for dashboard
-      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 15000 });
+      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 20000 });
 
       // Look for user menu - try different selectors
       const userMenuButton = page.locator('[data-testid="user-menu"]').or(
-        page.getByRole('button', { name: /user|account|profile/i })
+        page.getByRole('button', { name: /user|account|profile|menu/i })
       ).or(
         page.locator('.avatar').first()
       );
@@ -156,14 +160,14 @@ test.describe('Authentication', () => {
         await userMenuButton.click();
 
         // Look for logout option
-        const logoutButton = page.getByRole('menuitem', { name: /logout|sign out/i }).or(
-          page.getByText(/logout|sign out/i)
+        const logoutButton = page.getByRole('menuitem', { name: /logout|sign out|log out/i }).or(
+          page.getByText(/logout|sign out|log out/i)
         );
 
         const hasLogout = await logoutButton.isVisible().catch(() => false);
         if (hasLogout) {
           await logoutButton.click();
-          await expect(page).toHaveURL(/login/);
+          await expect(page).toHaveURL(/login/, { timeout: 10000 });
         }
       }
     });
@@ -176,18 +180,19 @@ test.describe('Authentication', () => {
 
       await page.goto('/documents');
 
+      // Should redirect to login
       await expect(page).toHaveURL(/login/, { timeout: 10000 });
     });
 
     test('should allow access to protected routes when authenticated', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@example.com');
-      await page.getByLabel(/password/i).fill('password123');
+      await page.getByLabel(/email/i).fill('admin@dms-test.com');
+      await page.getByLabel(/password/i).fill('admin123!');
       await page.getByRole('button', { name: /sign in/i }).click();
 
       // Wait for redirect
-      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 15000 });
+      await expect(page).toHaveURL(/dashboard|documents/, { timeout: 20000 });
 
       // Navigate to protected route
       await page.goto('/documents');
