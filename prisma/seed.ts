@@ -17,7 +17,7 @@
 
 import { PrismaClient, Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -124,9 +124,22 @@ async function main() {
         password: hashPassword('password123'),
       },
     }),
+
+    // E2E Test user (standard test credentials)
+    prisma.user.upsert({
+      where: { email: 'test@example.com' },
+      update: {},
+      create: {
+        email: 'test@example.com',
+        name: 'Test User',
+        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=test',
+        provider: 'EMAIL',
+        password: hashPassword('password123'),
+      },
+    }),
   ]);
 
-  const [adminUser, johnUser, janeUser, bobUser, aliceUser] = users;
+  const [adminUser, johnUser, janeUser, bobUser, aliceUser, testUser] = users;
   console.log(`  Created ${users.length} users\n`);
 
   // ---------------------------------------------------------------------------
@@ -254,6 +267,23 @@ async function main() {
         organizationId: acmeOrg.id,
         userId: aliceUser.id,
         role: 'VIEWER',
+        joinedAt: new Date(),
+      },
+    }),
+
+    // E2E Test user in Acme Corp
+    prisma.organizationMember.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: acmeOrg.id,
+          userId: testUser.id,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: acmeOrg.id,
+        userId: testUser.id,
+        role: 'EDITOR',
         joinedAt: new Date(),
       },
     }),
@@ -922,6 +952,7 @@ async function main() {
   console.log('  Email: admin@dms-test.com | Password: admin123!');
   console.log('  Email: bob.wilson@test.com | Password: password123');
   console.log('  Email: alice.johnson@test.com | Password: password123');
+  console.log('  Email: test@example.com | Password: password123 (E2E tests)');
 
   console.log('\nOrganizations:');
   console.log('  - Acme Corporation (Pro) - slug: acme-corp');
