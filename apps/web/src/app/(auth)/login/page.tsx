@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import {
   Button,
   Card,
@@ -12,31 +13,47 @@ import {
   CardTitle,
   Input,
 } from '@dms/ui';
-import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoggingIn, loginError } = useAuth();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/documents';
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     try {
-      await login({ email, password });
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Invalid email or password');
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirect to callback URL or documents page
+      router.push(callbackUrl);
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid credentials');
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
     }
   }
 
-  const handleOAuthLogin = (provider: 'google' | 'microsoft') => {
-    // Redirect to OAuth provider
-    window.location.href = `/api/v1/auth/${provider}`;
+  const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
+    await signIn(provider, { callbackUrl });
   };
 
   return (
@@ -55,6 +72,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               onClick={() => handleOAuthLogin('google')}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -81,6 +99,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               onClick={() => handleOAuthLogin('microsoft')}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path fill="#f25022" d="M1 1h10v10H1z" />
@@ -104,9 +123,9 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {(error || loginError) && (
+            {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error || (loginError as Error)?.message || 'An error occurred'}
+                {error}
               </div>
             )}
 
@@ -120,7 +139,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="name@company.com"
                 required
-                disabled={isLoggingIn}
+                disabled={isLoading}
                 autoComplete="email"
               />
             </div>
@@ -142,13 +161,13 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                disabled={isLoggingIn}
+                disabled={isLoading}
                 autoComplete="current-password"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoggingIn}>
-              {isLoggingIn ? (
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Signing in...

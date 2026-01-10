@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import {
   Button,
   Card,
@@ -12,17 +13,18 @@ import {
   CardTitle,
   Input,
 } from '@dms/ui';
-import { useAuth } from '@/hooks/useAuth';
+import { authApi } from '@/lib/api';
 import { isValidEmail } from '@/lib/utils';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, isRegistering, registerError } = useAuth();
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const name = formData.get('name') as string;
@@ -33,33 +35,62 @@ export default function RegisterPage() {
     // Validation
     if (!name.trim()) {
       setError('Name is required');
+      setIsLoading(false);
       return;
     }
 
     if (!isValidEmail(email)) {
       setError('Please enter a valid email address');
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
+      setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setIsLoading(false);
       return;
     }
 
     try {
-      await register({ name: name.trim(), email, password });
+      // First register the user via API
+      await authApi.register(name.trim(), email, password);
+
+      // Then sign in using NextAuth to create a session
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Account created but failed to sign in. Please try logging in.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirect to documents page
+      router.push('/documents');
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      // Check for common error messages
+      if (errorMessage.includes('already exists') || errorMessage.includes('already registered')) {
+        setError('An account with this email already exists');
+      } else {
+        setError(errorMessage);
+      }
+      setIsLoading(false);
     }
   }
 
-  const handleOAuthLogin = (provider: 'google' | 'microsoft') => {
-    window.location.href = `/api/v1/auth/${provider}`;
+  const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
+    await signIn(provider, { callbackUrl: '/documents' });
   };
 
   return (
@@ -78,6 +109,7 @@ export default function RegisterPage() {
               variant="outline"
               className="w-full"
               onClick={() => handleOAuthLogin('google')}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -104,6 +136,7 @@ export default function RegisterPage() {
               variant="outline"
               className="w-full"
               onClick={() => handleOAuthLogin('microsoft')}
+              disabled={isLoading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path fill="#f25022" d="M1 1h10v10H1z" />
@@ -127,9 +160,9 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {(error || registerError) && (
+            {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error || (registerError as Error)?.message || 'An error occurred'}
+                {error}
               </div>
             )}
 
@@ -143,7 +176,7 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="John Doe"
                 required
-                disabled={isRegistering}
+                disabled={isLoading}
                 autoComplete="name"
               />
             </div>
@@ -158,7 +191,7 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="name@company.com"
                 required
-                disabled={isRegistering}
+                disabled={isLoading}
                 autoComplete="email"
               />
             </div>
@@ -173,7 +206,7 @@ export default function RegisterPage() {
                 type="password"
                 minLength={8}
                 required
-                disabled={isRegistering}
+                disabled={isLoading}
                 autoComplete="new-password"
               />
               <p className="text-xs text-muted-foreground">
@@ -190,13 +223,13 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 type="password"
                 required
-                disabled={isRegistering}
+                disabled={isLoading}
                 autoComplete="new-password"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isRegistering}>
-              {isRegistering ? (
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Creating account...

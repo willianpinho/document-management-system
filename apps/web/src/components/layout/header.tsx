@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   Avatar,
   AvatarFallback,
@@ -59,8 +60,11 @@ export function Header() {
 
   const pageTitle = getPageTitle(pathname);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear local tokens first
     logout();
+    // Sign out from NextAuth session
+    await signOut({ callbackUrl: '/login' });
   };
 
   return (
@@ -105,7 +109,11 @@ export function Header() {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Button
+              variant="ghost"
+              className="relative h-10 w-10 rounded-full"
+              aria-label="User menu"
+            >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user?.avatarUrl || ''} alt={user?.name || 'User'} />
                 <AvatarFallback>

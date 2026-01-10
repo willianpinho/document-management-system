@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Palette, Sun, Moon, Monitor, Check } from 'lucide-react';
+import { ArrowLeft, Palette, Sun, Moon, Monitor, Check, Loader2, CheckCircle2 } from 'lucide-react';
 import {
   Button,
   Card,
@@ -11,8 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@dms/ui';
+import { useUserPreferences, useUpdatePreferences } from '@/hooks/usePreferences';
 
 type Theme = 'light' | 'dark' | 'system';
+type AccentColor = 'blue' | 'green' | 'purple' | 'orange' | 'red';
 
 const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
   { value: 'light', label: 'Light', icon: <Sun className="h-5 w-5" /> },
@@ -20,43 +22,43 @@ const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
   { value: 'system', label: 'System', icon: <Monitor className="h-5 w-5" /> },
 ];
 
-const accentColors = [
+const accentColors: { name: string; value: AccentColor; class: string }[] = [
   { name: 'Blue', value: 'blue', class: 'bg-blue-500' },
   { name: 'Purple', value: 'purple', class: 'bg-purple-500' },
   { name: 'Green', value: 'green', class: 'bg-green-500' },
   { name: 'Orange', value: 'orange', class: 'bg-orange-500' },
-  { name: 'Pink', value: 'pink', class: 'bg-pink-500' },
-  { name: 'Teal', value: 'teal', class: 'bg-teal-500' },
+  { name: 'Red', value: 'red', class: 'bg-red-500' },
 ];
 
 export default function AppearanceSettingsPage() {
+  const { data: preferences, isLoading: isLoadingPrefs } = useUserPreferences();
+  const updatePreferences = useUpdatePreferences();
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const [theme, setTheme] = useState<Theme>('system');
-  const [accentColor, setAccentColor] = useState('blue');
+  const [accentColor, setAccentColor] = useState<AccentColor>('blue');
   const [compactMode, setCompactMode] = useState(false);
 
+  // Sync with backend preferences
   useEffect(() => {
-    // Load saved theme preference
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
+    if (preferences?.appearance) {
+      const appearance = preferences.appearance;
+      if (appearance.theme) {
+        setTheme(appearance.theme);
+        applyTheme(appearance.theme);
+      }
+      if (appearance.accentColor) {
+        setAccentColor(appearance.accentColor);
+        applyAccentColor(appearance.accentColor);
+      }
+      if (appearance.compactMode !== undefined) {
+        setCompactMode(appearance.compactMode);
+        applyCompactMode(appearance.compactMode);
+      }
     }
+  }, [preferences]);
 
-    const savedAccent = localStorage.getItem('accentColor');
-    if (savedAccent) {
-      setAccentColor(savedAccent);
-    }
-
-    const savedCompact = localStorage.getItem('compactMode');
-    if (savedCompact) {
-      setCompactMode(savedCompact === 'true');
-    }
-  }, []);
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-
-    // Apply theme to document
+  const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
 
@@ -68,20 +70,60 @@ export default function AppearanceSettingsPage() {
     } else {
       root.classList.add(newTheme);
     }
+    localStorage.setItem('theme', newTheme);
   };
 
-  const handleAccentChange = (color: string) => {
-    setAccentColor(color);
+  const applyAccentColor = (color: AccentColor) => {
+    document.documentElement.setAttribute('data-accent', color);
     localStorage.setItem('accentColor', color);
-    // TODO: Apply accent color to CSS variables
   };
 
-  const handleCompactModeChange = () => {
+  const applyCompactMode = (compact: boolean) => {
+    if (compact) {
+      document.documentElement.classList.add('compact');
+    } else {
+      document.documentElement.classList.remove('compact');
+    }
+    localStorage.setItem('compactMode', String(compact));
+  };
+
+  const handleThemeChange = async (newTheme: Theme) => {
+    setTheme(newTheme);
+    applyTheme(newTheme);
+    await savePreferences({ theme: newTheme, accentColor, compactMode });
+  };
+
+  const handleAccentChange = async (color: AccentColor) => {
+    setAccentColor(color);
+    applyAccentColor(color);
+    await savePreferences({ theme, accentColor: color, compactMode });
+  };
+
+  const handleCompactModeChange = async () => {
     const newValue = !compactMode;
     setCompactMode(newValue);
-    localStorage.setItem('compactMode', String(newValue));
-    // TODO: Apply compact mode styles
+    applyCompactMode(newValue);
+    await savePreferences({ theme, accentColor, compactMode: newValue });
   };
+
+  const savePreferences = async (appearance: { theme: Theme; accentColor: AccentColor; compactMode: boolean }) => {
+    setSaveSuccess(false);
+    try {
+      await updatePreferences.mutateAsync({ appearance });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to save appearance preferences:', error);
+    }
+  };
+
+  if (isLoadingPrefs) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -100,6 +142,12 @@ export default function AppearanceSettingsPage() {
       </div>
 
       <div className="max-w-2xl space-y-6">
+        {saveSuccess && (
+          <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950/20 dark:text-green-400">
+            <CheckCircle2 className="h-4 w-4" />
+            Appearance preferences saved!
+          </div>
+        )}
         {/* Theme Selection */}
         <Card>
           <CardHeader>

@@ -18,6 +18,7 @@ import { Button, Progress } from '@dms/ui';
 import { FolderTree } from '@/components/folders/FolderTree';
 import { CreateFolderDialog } from '@/components/folders/CreateFolderDialog';
 import { useFolderTree, useCreateFolder } from '@/hooks/useFolders';
+import { useStorageStats } from '@/hooks/useStorage';
 import { cn, formatBytes, getStoragePercentage } from '@/lib/utils';
 
 const navigation = [
@@ -30,12 +31,6 @@ const bottomNavigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
-// Mock storage data - in real app, fetch from API
-const storageStats = {
-  usedBytes: 2.5 * 1024 * 1024 * 1024, // 2.5 GB
-  limitBytes: 10 * 1024 * 1024 * 1024, // 10 GB
-};
-
 export function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -43,12 +38,12 @@ export function Sidebar() {
   const [parentFolderId, setParentFolderId] = useState<string | undefined>();
 
   const { data: folderTree, isLoading: isLoadingFolders } = useFolderTree();
+  const { data: storageStats, isLoading: isLoadingStorage } = useStorageStats();
   const createFolder = useCreateFolder();
 
-  const storagePercentage = getStoragePercentage(
-    storageStats.usedBytes,
-    storageStats.limitBytes
-  );
+  const storagePercentage = storageStats
+    ? storageStats.usagePercent
+    : 0;
 
   const handleCreateFolder = (parentId?: string) => {
     setParentFolderId(parentId);
@@ -157,11 +152,17 @@ export function Sidebar() {
               <HardDrive className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Storage</span>
             </div>
-            <Progress value={storagePercentage} className="mt-2 h-1.5" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatBytes(storageStats.usedBytes)} of{' '}
-              {formatBytes(storageStats.limitBytes)} used
-            </p>
+            {isLoadingStorage ? (
+              <div className="mt-2 h-1.5 w-full animate-pulse rounded-full bg-muted" />
+            ) : (
+              <>
+                <Progress value={storagePercentage} className="mt-2 h-1.5" />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatBytes(storageStats?.usedBytes ?? 0)} of{' '}
+                  {formatBytes(storageStats?.quotaBytes ?? 0)} used
+                </p>
+              </>
+            )}
           </div>
         )}
 
