@@ -33,16 +33,16 @@ export const validationSchema = Joi.object({
   S3_ENDPOINT: Joi.string().optional().description('Custom S3 endpoint (for LocalStack)'),
 
   // OpenAI
-  OPENAI_API_KEY: Joi.string().optional().description('OpenAI API key for AI features'),
+  OPENAI_API_KEY: Joi.string().allow('').optional().description('OpenAI API key for AI features'),
   OPENAI_MODEL: Joi.string().default('gpt-4-turbo-preview'),
   OPENAI_EMBEDDING_MODEL: Joi.string().default('text-embedding-ada-002'),
 
   // OAuth (optional)
-  GOOGLE_CLIENT_ID: Joi.string().optional(),
-  GOOGLE_CLIENT_SECRET: Joi.string().optional(),
-  MICROSOFT_CLIENT_ID: Joi.string().optional(),
-  MICROSOFT_CLIENT_SECRET: Joi.string().optional(),
-  MICROSOFT_TENANT_ID: Joi.string().optional(),
+  GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
+  GOOGLE_CLIENT_SECRET: Joi.string().allow('').optional(),
+  MICROSOFT_CLIENT_ID: Joi.string().allow('').optional(),
+  MICROSOFT_CLIENT_SECRET: Joi.string().allow('').optional(),
+  MICROSOFT_TENANT_ID: Joi.string().allow('').optional(),
 
   // File upload
   MAX_FILE_SIZE_BYTES: Joi.number().default(104857600),
@@ -51,4 +51,13 @@ export const validationSchema = Joi.object({
   // Rate limiting
   RATE_LIMIT_TTL: Joi.number().default(60000),
   RATE_LIMIT_MAX: Joi.number().default(100),
+
+  // Email (SMTP)
+  SMTP_HOST: Joi.string().default('localhost'),
+  SMTP_PORT: Joi.number().default(1025),
+  SMTP_SECURE: Joi.string().valid('true', 'false').default('false'),
+  SMTP_USER: Joi.string().allow('').optional(),
+  SMTP_PASS: Joi.string().allow('').optional(),
+  EMAIL_FROM: Joi.string().default('noreply@dms.local'),
+  APP_URL: Joi.string().default('http://localhost:3000'),
 });

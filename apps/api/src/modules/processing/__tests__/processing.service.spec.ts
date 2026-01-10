@@ -11,6 +11,27 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Queue, Job } from 'bullmq';
 
+// Mock @prisma/client before importing services
+vi.mock('@prisma/client', () => ({
+  PrismaClient: vi.fn().mockImplementation(() => ({})),
+  DocumentStatus: {
+    UPLOADED: 'UPLOADED',
+    PROCESSING: 'PROCESSING',
+    READY: 'READY',
+    ERROR: 'ERROR',
+    DELETED: 'DELETED',
+  },
+  ProcessingStatus: {
+    PENDING: 'PENDING',
+    OCR_IN_PROGRESS: 'OCR_IN_PROGRESS',
+    AI_CLASSIFYING: 'AI_CLASSIFYING',
+    EMBEDDING: 'EMBEDDING',
+    COMPLETE: 'COMPLETE',
+    FAILED: 'FAILED',
+  },
+  Prisma: {},
+}));
+
 import { ProcessingService, ProcessingJobData } from '../processing.service';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import {

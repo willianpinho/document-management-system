@@ -27,7 +27,14 @@ const ACTION_TO_PRISMA: Record<AuditAction, string> = {
   [AuditAction.TOKEN_REFRESH]: 'USER_LOGIN', // Map to closest
   [AuditAction.PASSWORD_CHANGE]: 'SETTINGS_UPDATED',
   [AuditAction.PASSWORD_RESET]: 'SETTINGS_UPDATED',
+  [AuditAction.PASSWORD_RESET_REQUEST]: 'SETTINGS_UPDATED',
   [AuditAction.REGISTER]: 'USER_REGISTERED',
+  [AuditAction.SESSION_REVOKED]: 'USER_LOGOUT',
+  [AuditAction.SESSIONS_REVOKED_ALL]: 'USER_LOGOUT',
+
+  // User account actions
+  [AuditAction.DATA_EXPORT]: 'SETTINGS_UPDATED',
+  [AuditAction.ACCOUNT_DELETE]: 'SETTINGS_UPDATED',
 
   // Document actions
   [AuditAction.DOCUMENT_CREATE]: 'DOCUMENT_CREATED',
@@ -48,6 +55,7 @@ const ACTION_TO_PRISMA: Record<AuditAction, string> = {
   [AuditAction.FOLDER_UPDATE]: 'FOLDER_UPDATED',
   [AuditAction.FOLDER_DELETE]: 'FOLDER_DELETED',
   [AuditAction.FOLDER_SHARE]: 'FOLDER_UPDATED',
+  [AuditAction.FOLDER_UNSHARE]: 'FOLDER_UPDATED',
   [AuditAction.FOLDER_MOVE]: 'FOLDER_MOVED',
 
   // Organization actions

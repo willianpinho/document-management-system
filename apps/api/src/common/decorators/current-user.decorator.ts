@@ -4,6 +4,7 @@ import { Request } from 'express';
 export interface CurrentUserPayload {
   id: string;
   email: string;
+  name?: string;
   organizationId?: string;
   role?: string;
 }
