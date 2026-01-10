@@ -128,22 +128,25 @@ enum ResourceType {
 
 /// User accounts with OAuth support
 model User {
-  id         String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  email      String       @unique @db.VarChar(255)
-  name       String?      @db.VarChar(255)
-  avatarUrl  String?      @map("avatar_url") @db.VarChar(512)
-  provider   AuthProvider @default(EMAIL)
-  providerId String?      @map("provider_id") @db.VarChar(255)
-  password   String?      @db.VarChar(255) // Hashed, only for EMAIL provider
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
+  id          String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email       String       @unique @db.VarChar(255)
+  name        String?      @db.VarChar(255)
+  avatarUrl   String?      @map("avatar_url") @db.VarChar(512)
+  provider    AuthProvider @default(EMAIL)
+  providerId  String?      @map("provider_id") @db.VarChar(255)
+  password    String?      @db.VarChar(255) // Hashed, only for EMAIL provider
+  preferences Json         @default("{}") // User preferences (notifications, appearance, etc.)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
 
   // Relations
-  memberships      OrganizationMember[]
-  createdDocuments Document[]           @relation("CreatedDocuments")
-  createdFolders   Folder[]             @relation("CreatedFolders")
-  documentVersions DocumentVersion[]    @relation("CreatedVersions")
-  auditLogs        AuditLog[]           @relation("UserAuditLogs")
+  memberships        OrganizationMember[]
+  createdDocuments   Document[]           @relation("CreatedDocuments")
+  createdFolders     Folder[]             @relation("CreatedFolders")
+  documentVersions   DocumentVersion[]    @relation("CreatedVersions")
+  auditLogs          AuditLog[]           @relation("UserAuditLogs")
+  authoredComments   Comment[]            @relation("AuthoredComments")
+  resolvedComments   Comment[]            @relation("ResolvedComments")
 
   @@index([email])
   @@index([provider, providerId])
@@ -252,6 +255,7 @@ model Document {
   createdBy      User              @relation("CreatedDocuments", fields: [createdById], references: [id])
   versions       DocumentVersion[]
   processingJobs ProcessingJob[]
+  comments       Comment[]
 
   @@index([organizationId])
   @@index([folderId])
@@ -376,4 +380,195 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+/// Permission level for sharing
+enum SharePermission {
+  VIEW
+  COMMENT
+  EDIT
+}
+
+/// Upload status for resumable uploads
+enum UploadStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+/// Document/Folder sharing with users
+model DocumentShare {
+  id           String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String?         @map("document_id") @db.Uuid
+  folderId     String?         @map("folder_id") @db.Uuid
+  sharedWithId String          @map("shared_with_id") @db.Uuid // User ID
+  sharedById   String          @map("shared_by_id") @db.Uuid   // User who shared
+  permission   SharePermission @default(VIEW)
+  message      String?         @db.VarChar(500) // Optional message when sharing
+  expiresAt    DateTime?       @map("expires_at")
+  notified     Boolean         @default(false)
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  @@unique([documentId, sharedWithId])
+  @@unique([folderId, sharedWithId])
+  @@index([documentId])
+  @@index([folderId])
+  @@index([sharedWithId])
+  @@index([sharedById])
+  @@map("document_shares")
+}
+
+/// Share links for public/external access
+model ShareLink {
+  id           String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String?         @map("document_id") @db.Uuid
+  folderId     String?         @map("folder_id") @db.Uuid
+  token        String          @unique @db.VarChar(64) // Secure random token
+  permission   SharePermission @default(VIEW)
+  password     String?         @db.VarChar(255) // Optional password protection
+  maxDownloads Int?            @map("max_downloads")
+  downloadCount Int            @default(0) @map("download_count")
+  expiresAt    DateTime?       @map("expires_at")
+  createdById  String          @map("created_by_id") @db.Uuid
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  @@index([documentId])
+  @@index([folderId])
+  @@index([token])
+  @@map("share_links")
+}
+
+// =============================================================================
+// COLLABORATION MODELS
+// =============================================================================
+
+/// Comments on documents
+model Comment {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String    @map("document_id") @db.Uuid
+  authorId     String    @map("author_id") @db.Uuid
+  parentId     String?   @map("parent_id") @db.Uuid // For threaded comments
+  content      String    @db.Text
+  isResolved   Boolean   @default(false) @map("is_resolved")
+  resolvedById String?   @map("resolved_by_id") @db.Uuid
+  resolvedAt   DateTime? @map("resolved_at")
+  editedAt     DateTime? @map("edited_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Position in document (for annotations)
+  pageNumber   Int?    @map("page_number")
+  positionX    Float?  @map("position_x") // X coordinate (percentage)
+  positionY    Float?  @map("position_y") // Y coordinate (percentage)
+  selectionStart Int?  @map("selection_start") // Text selection start
+  selectionEnd   Int?  @map("selection_end")   // Text selection end
+
+  // Relations
+  document   Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author     User             @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+  resolvedBy User?            @relation("ResolvedComments", fields: [resolvedById], references: [id])
+  parent     Comment?         @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[]        @relation("CommentReplies")
+  mentions   CommentMention[]
+
+  @@index([documentId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+/// Mentions in comments (@user)
+model CommentMention {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  commentId    String   @map("comment_id") @db.Uuid
+  mentionedId  String   @map("mentioned_id") @db.Uuid
+  notified     Boolean  @default(false)
+  notifiedAt   DateTime? @map("notified_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, mentionedId])
+  @@index([commentId])
+  @@index([mentionedId])
+  @@map("comment_mentions")
+}
+
+// =============================================================================
+// RESUMABLE UPLOAD MODELS
+// =============================================================================
+
+/// Upload sessions for resumable uploads
+model UploadSession {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  fileName       String       @map("file_name") @db.VarChar(255)
+  mimeType       String       @map("mime_type") @db.VarChar(127)
+  totalBytes     BigInt       @map("total_bytes")
+  uploadedBytes  BigInt       @default(0) @map("uploaded_bytes")
+  chunkSize      Int          @default(5242880) @map("chunk_size") // 5MB default
+  totalChunks    Int          @map("total_chunks")
+  uploadedChunks Int          @default(0) @map("uploaded_chunks")
+  s3Key          String       @map("s3_key") @db.VarChar(1024)
+  s3UploadId     String?      @map("s3_upload_id") @db.VarChar(255) // Multipart upload ID
+  folderId       String?      @map("folder_id") @db.Uuid
+  status         UploadStatus @default(PENDING)
+  metadata       Json         @default("{}")
+  expiresAt      DateTime     @map("expires_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  chunks UploadChunk[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("upload_sessions")
+}
+
+/// Individual chunks for resumable uploads
+model UploadChunk {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  uploadSessionId String   @map("upload_session_id") @db.Uuid
+  chunkNumber     Int      @map("chunk_number")
+  sizeBytes       Int      @map("size_bytes")
+  checksum        String?  @db.VarChar(64) // MD5 or SHA-256 for verification
+  s3ETag          String?  @map("s3_etag") @db.VarChar(255)
+  uploadedAt      DateTime @default(now()) @map("uploaded_at")
+
+  // Relations
+  uploadSession UploadSession @relation(fields: [uploadSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([uploadSessionId, chunkNumber])
+  @@index([uploadSessionId])
+  @@map("upload_chunks")
+}
+
+// =============================================================================
+// REAL-TIME PRESENCE MODELS
+// =============================================================================
+
+/// User presence for real-time collaboration
+model UserPresence {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  documentId     String    @map("document_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  socketId       String?   @map("socket_id") @db.VarChar(255)
+  cursorPosition Json?     @map("cursor_position") // {page, x, y} for cursor position
+  lastActiveAt   DateTime  @default(now()) @map("last_active_at")
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+
+  @@unique([userId, documentId])
+  @@index([documentId])
+  @@index([organizationId])
+  @@index([lastActiveAt])
+  @@map("user_presence")
 }
