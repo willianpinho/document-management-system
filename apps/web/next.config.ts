@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker deployment
-  output: 'standalone',
+  // Enable standalone output for Docker deployment (disabled on Windows dev due to symlink issues)
+  output: process.env.CI || process.platform !== 'win32' ? 'standalone' : undefined,
 
   // Enable Turbopack for development
   experimental: {
