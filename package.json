@@ -5,10 +5,12 @@
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "turbo dev",
+    "dev:setup": "docker compose up -d && pnpm db:setup && pnpm dev",
+    "db:setup": "pnpm dotenv -e .env -- pnpm prisma db push && pnpm db:seed",
     "build": "turbo build",
     "test": "turbo test",
     "test:unit": "turbo test:unit",
@@ -34,10 +36,12 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.0",
     "bcryptjs": "^2.4.3",
+    "cross-env": "^10.1.0",
+    "dotenv-cli": "^11.0.0",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.4.0",
-    "prisma": "5.22.0",
+    "prisma": "6.19.1",
     "tsx": "^4.19.0",
     "turbo": "^2.3.0",
     "typescript": "^5.9.0-beta"
@@ -52,6 +56,6 @@
     ]
   },
   "dependencies": {
-    "@prisma/client": "5.22.0"
+    "@prisma/client": "6.19.1"
   }
 }
