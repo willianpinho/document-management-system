@@ -22,15 +22,15 @@ test.describe('Search', () => {
       await page.goto('/search');
 
       // Page has "Search" heading
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
       // Search input is visible
-      await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+      await expect(page.getByRole('main').getByPlaceholder(/search/i)).toBeVisible();
     });
 
     test('should have search mode toggle buttons', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Find toggle buttons
       const standardBtn = page.getByRole('button', { name: /standard/i });
@@ -44,7 +44,7 @@ test.describe('Search', () => {
     test('should toggle between standard and AI search', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Find toggle buttons
       const standardBtn = page.getByRole('button', { name: /standard/i });
@@ -60,7 +60,7 @@ test.describe('Search', () => {
       await standardBtn.click();
 
       // Placeholder should change back
-      await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+      await expect(page.getByRole('main').getByPlaceholder(/search/i)).toBeVisible();
     });
   });
 
@@ -68,7 +68,7 @@ test.describe('Search', () => {
     test('should have search button', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
       await expect(page.getByRole('button', { name: /^search$/i })).toBeVisible();
     });
 
@@ -76,7 +76,7 @@ test.describe('Search', () => {
       await page.goto('/search');
 
       // Enter search query
-      const searchInput = page.getByPlaceholder(/search/i);
+      const searchInput = page.getByRole('main').getByPlaceholder(/search/i);
       await searchInput.fill('test document');
 
       // Click search button
@@ -95,7 +95,7 @@ test.describe('Search', () => {
     test('should show file type filter', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Filter button should be visible
       const filterBtn = page.getByRole('button', { name: /file type/i });
@@ -111,7 +111,7 @@ test.describe('Search', () => {
     test('should show date filter', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Date button should be visible
       const dateBtn = page.getByRole('button', { name: /date/i });
@@ -144,7 +144,7 @@ test.describe('Search', () => {
       await page.goto('/search');
 
       // Enter search query and search
-      const searchInput = page.getByPlaceholder(/search/i);
+      const searchInput = page.getByRole('main').getByPlaceholder(/search/i);
       await searchInput.fill('test');
       await page.getByRole('button', { name: /^search$/i }).click();
 
@@ -168,7 +168,7 @@ test.describe('Search', () => {
     test('should switch to AI search mode', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Click AI search button
       await page.getByRole('button', { name: /ai search/i }).click();
@@ -201,7 +201,7 @@ test.describe('Search', () => {
     test('should show search suggestions in AI mode', async ({ page }) => {
       await page.goto('/search');
 
-      await expect(page.getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({ timeout: 10000 });
 
       // Switch to AI search
       await page.getByRole('button', { name: /ai search/i }).click();

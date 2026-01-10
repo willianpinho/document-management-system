@@ -198,12 +198,8 @@ test.describe('Authentication', () => {
       await page.goto('/documents');
       await expect(page).toHaveURL('/documents');
 
-      // Should see documents page content
-      await expect(page.getByRole('heading', { name: /documents/i }).or(
-        page.getByText(/my documents/i)
-      ).or(
-        page.getByRole('button', { name: /upload/i })
-      )).toBeVisible({ timeout: 10000 });
+      // Should see documents page content - use main content heading
+      await expect(page.getByRole('main').getByRole('heading', { name: /documents/i })).toBeVisible({ timeout: 10000 });
     });
   });
 });
