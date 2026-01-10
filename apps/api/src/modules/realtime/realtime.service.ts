@@ -32,6 +32,12 @@ import {
   DocumentEventData,
   FolderEventData,
   ProcessingJobEventData,
+  DocumentPresenceUser,
+  CursorPosition,
+  PresenceJoinPayload,
+  PresenceLeavePayload,
+  PresenceCursorPayload,
+  PresenceSyncPayload,
 } from './dto/realtime-events.dto';
 
 /**
@@ -42,11 +48,43 @@ interface UserConnection {
   userId: string;
   email: string;
   name: string | null;
+  avatarUrl?: string | null;
   socketId: string;
   organizationId: string;
   connectedAt: Date;
   currentLocation?: string;
 }
+
+/**
+ * Document presence tracking
+ */
+interface DocumentPresence {
+  documentId: string;
+  viewers: Map<string, {
+    userId: string;
+    email: string;
+    name: string | null;
+    avatarUrl?: string | null;
+    socketId: string;
+    cursorPosition: CursorPosition | null;
+    color: string;
+    lastActiveAt: Date;
+  }>;
+}
+
+/**
+ * Color palette for presence indicators
+ */
+const PRESENCE_COLORS = [
+  '#EF4444', // red
+  '#F59E0B', // amber
+  '#10B981', // emerald
+  '#3B82F6', // blue
+  '#8B5CF6', // violet
+  '#EC4899', // pink
+  '#06B6D4', // cyan
+  '#F97316', // orange
+];
 
 @Injectable()
 export class RealtimeService implements OnModuleInit {
@@ -71,6 +109,21 @@ export class RealtimeService implements OnModuleInit {
    * Map of organization ID to set of user IDs
    */
   private readonly organizationUsers = new Map<string, Set<string>>();
+
+  /**
+   * Map of document ID to presence data
+   */
+  private readonly documentPresence = new Map<string, DocumentPresence>();
+
+  /**
+   * Map of socket ID to subscribed document IDs
+   */
+  private readonly socketDocuments = new Map<string, Set<string>>();
+
+  /**
+   * Color assignment counter per document
+   */
+  private readonly colorCounters = new Map<string, number>();
 
   onModuleInit() {
     this.logger.log('RealtimeService initialized');
@@ -806,7 +859,200 @@ export class RealtimeService implements OnModuleInit {
       connection.currentLocation = undefined;
     }
 
+    // Remove from presence tracking
+    this.removeFromDocumentPresence(socket.id, documentId);
+
     this.logger.debug(`Socket ${socket.id} unsubscribed from doc:${documentId}`);
+  }
+
+  // ============================================
+  // Document Presence Management
+  // ============================================
+
+  /**
+   * Get a color for a new viewer
+   */
+  private getPresenceColor(documentId: string): string {
+    const counter = this.colorCounters.get(documentId) || 0;
+    const color = PRESENCE_COLORS[counter % PRESENCE_COLORS.length];
+    this.colorCounters.set(documentId, counter + 1);
+    return color;
+  }
+
+  /**
+   * Add user to document presence
+   */
+  joinDocumentPresence(
+    socket: Socket,
+    documentId: string,
+    organizationId: string,
+  ): DocumentPresenceUser[] {
+    const connection = this.connections.get(socket.id);
+    if (!connection) {
+      return [];
+    }
+
+    // Initialize document presence if needed
+    if (!this.documentPresence.has(documentId)) {
+      this.documentPresence.set(documentId, {
+        documentId,
+        viewers: new Map(),
+      });
+    }
+
+    const presence = this.documentPresence.get(documentId)!;
+
+    // Check if user already in presence (different socket)
+    const existingEntry = Array.from(presence.viewers.values())
+      .find(v => v.userId === connection.userId);
+
+    if (!existingEntry) {
+      // Add new viewer
+      const color = this.getPresenceColor(documentId);
+      presence.viewers.set(socket.id, {
+        userId: connection.userId,
+        email: connection.email,
+        name: connection.name,
+        avatarUrl: connection.avatarUrl,
+        socketId: socket.id,
+        cursorPosition: null,
+        color,
+        lastActiveAt: new Date(),
+      });
+    }
+
+    // Track which documents this socket is subscribed to
+    if (!this.socketDocuments.has(socket.id)) {
+      this.socketDocuments.set(socket.id, new Set());
+    }
+    this.socketDocuments.get(socket.id)!.add(documentId);
+
+    // Get current viewers
+    const viewers = this.getDocumentViewers(documentId);
+
+    // Emit join event to document room
+    const joinPayload: PresenceJoinPayload = {
+      documentId,
+      user: viewers.find(v => v.id === connection.userId)!,
+      viewers,
+    };
+    this.emitToDocument(documentId, RealtimeEventName.PRESENCE_JOIN, joinPayload);
+
+    return viewers;
+  }
+
+  /**
+   * Remove user from document presence
+   */
+  removeFromDocumentPresence(socketId: string, documentId: string): void {
+    const presence = this.documentPresence.get(documentId);
+    if (!presence) return;
+
+    const viewer = presence.viewers.get(socketId);
+    if (!viewer) return;
+
+    presence.viewers.delete(socketId);
+
+    // Clean up socket tracking
+    const socketDocs = this.socketDocuments.get(socketId);
+    if (socketDocs) {
+      socketDocs.delete(documentId);
+      if (socketDocs.size === 0) {
+        this.socketDocuments.delete(socketId);
+      }
+    }
+
+    // Clean up empty presence
+    if (presence.viewers.size === 0) {
+      this.documentPresence.delete(documentId);
+      this.colorCounters.delete(documentId);
+    }
+
+    // Emit leave event
+    const viewers = this.getDocumentViewers(documentId);
+    const leavePayload: PresenceLeavePayload = {
+      documentId,
+      userId: viewer.userId,
+      viewers,
+    };
+    this.emitToDocument(documentId, RealtimeEventName.PRESENCE_LEAVE, leavePayload);
+  }
+
+  /**
+   * Update cursor position for a user in a document
+   */
+  updateCursorPosition(
+    socketId: string,
+    documentId: string,
+    position: CursorPosition | null,
+  ): void {
+    const presence = this.documentPresence.get(documentId);
+    if (!presence) return;
+
+    const viewer = presence.viewers.get(socketId);
+    if (!viewer) return;
+
+    viewer.cursorPosition = position;
+    viewer.lastActiveAt = new Date();
+
+    // Emit cursor update
+    const cursorPayload: PresenceCursorPayload = {
+      documentId,
+      userId: viewer.userId,
+      cursorPosition: position,
+    };
+    this.emitToDocument(documentId, RealtimeEventName.PRESENCE_CURSOR, cursorPayload);
+  }
+
+  /**
+   * Get all viewers for a document
+   */
+  getDocumentViewers(documentId: string): DocumentPresenceUser[] {
+    const presence = this.documentPresence.get(documentId);
+    if (!presence) return [];
+
+    // Group by user ID (one user may have multiple sockets)
+    const userMap = new Map<string, DocumentPresenceUser>();
+
+    for (const viewer of presence.viewers.values()) {
+      if (!userMap.has(viewer.userId)) {
+        userMap.set(viewer.userId, {
+          id: viewer.userId,
+          email: viewer.email,
+          name: viewer.name,
+          avatarUrl: viewer.avatarUrl,
+          cursorPosition: viewer.cursorPosition,
+          color: viewer.color,
+          lastActiveAt: viewer.lastActiveAt.toISOString(),
+        });
+      }
+    }
+
+    return Array.from(userMap.values());
+  }
+
+  /**
+   * Handle socket disconnect for presence cleanup
+   */
+  cleanupSocketPresence(socketId: string): void {
+    const socketDocs = this.socketDocuments.get(socketId);
+    if (!socketDocs) return;
+
+    for (const documentId of socketDocs) {
+      this.removeFromDocumentPresence(socketId, documentId);
+    }
+  }
+
+  /**
+   * Sync full presence state to a socket
+   */
+  syncPresence(socket: Socket, documentId: string): void {
+    const viewers = this.getDocumentViewers(documentId);
+    const syncPayload: PresenceSyncPayload = {
+      documentId,
+      viewers,
+    };
+    socket.emit(RealtimeEventName.PRESENCE_SYNC, syncPayload);
   }
 
   // ============================================

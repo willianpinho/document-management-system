@@ -247,6 +247,67 @@ export interface UserActivityPayload extends BaseEventPayload {
 }
 
 // ============================================
+// Document Presence Events
+// ============================================
+
+/**
+ * Cursor position in a document
+ */
+export interface CursorPosition {
+  page: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * User presence in a document
+ */
+export interface DocumentPresenceUser {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl?: string | null;
+  cursorPosition?: CursorPosition | null;
+  color: string;
+  lastActiveAt: string;
+}
+
+/**
+ * Payload for presence:join event (when user starts viewing a document)
+ */
+export interface PresenceJoinPayload {
+  documentId: string;
+  user: DocumentPresenceUser;
+  viewers: DocumentPresenceUser[];
+}
+
+/**
+ * Payload for presence:leave event (when user stops viewing a document)
+ */
+export interface PresenceLeavePayload {
+  documentId: string;
+  userId: string;
+  viewers: DocumentPresenceUser[];
+}
+
+/**
+ * Payload for presence:cursor event (cursor position update)
+ */
+export interface PresenceCursorPayload {
+  documentId: string;
+  userId: string;
+  cursorPosition: CursorPosition | null;
+}
+
+/**
+ * Payload for presence:sync event (full state sync)
+ */
+export interface PresenceSyncPayload {
+  documentId: string;
+  viewers: DocumentPresenceUser[];
+}
+
+// ============================================
 // Event Names
 // ============================================
 
@@ -274,6 +335,12 @@ export enum RealtimeEventName {
   USER_JOINED = 'user:joined',
   USER_LEFT = 'user:left',
   USER_ACTIVITY = 'user:activity',
+
+  // Document presence events
+  PRESENCE_JOIN = 'presence:join',
+  PRESENCE_LEAVE = 'presence:leave',
+  PRESENCE_CURSOR = 'presence:cursor',
+  PRESENCE_SYNC = 'presence:sync',
 
   // System events
   ERROR = 'error',
@@ -312,6 +379,14 @@ export interface UpdateActivityDto {
   type: 'viewing' | 'editing' | 'idle';
   resourceType: 'document' | 'folder';
   resourceId: string;
+}
+
+/**
+ * Client request to update cursor position
+ */
+export interface UpdateCursorDto {
+  documentId: string;
+  position: CursorPosition | null;
 }
 
 // ============================================
@@ -375,4 +450,8 @@ export interface EventPayloadMap {
   [RealtimeEventName.USER_JOINED]: UserJoinedPayload;
   [RealtimeEventName.USER_LEFT]: UserLeftPayload;
   [RealtimeEventName.USER_ACTIVITY]: UserActivityPayload;
+  [RealtimeEventName.PRESENCE_JOIN]: PresenceJoinPayload;
+  [RealtimeEventName.PRESENCE_LEAVE]: PresenceLeavePayload;
+  [RealtimeEventName.PRESENCE_CURSOR]: PresenceCursorPayload;
+  [RealtimeEventName.PRESENCE_SYNC]: PresenceSyncPayload;
 }

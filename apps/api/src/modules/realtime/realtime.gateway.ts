@@ -33,10 +33,12 @@ import {
   LeaveOrganizationDto,
   SubscribeDocumentDto,
   UpdateActivityDto,
+  UpdateCursorDto,
   SuccessResponse,
   ErrorResponse,
   RealtimeEventName,
   UserActivityPayload,
+  DocumentPresenceUser,
 } from './dto/realtime-events.dto';
 
 /**
@@ -222,6 +224,9 @@ export class RealtimeGateway
    * Handle socket disconnection
    */
   handleDisconnect(socket: AuthenticatedSocket): void {
+    // Clean up document presence first
+    this.realtimeService.cleanupSocketPresence(socket.id);
+
     const connection = this.realtimeService.unregisterConnection(socket.id);
 
     if (connection) {
@@ -553,5 +558,165 @@ export class RealtimeGateway
       event: 'pong',
       data: Date.now(),
     };
+  }
+
+  // ============================================
+  // Document Presence Handlers
+  // ============================================
+
+  /**
+   * Handle request to join document presence (show as viewing)
+   */
+  @SubscribeMessage('presence:join')
+  async handlePresenceJoin(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: SubscribeDocumentDto,
+  ): Promise<SuccessResponse & { viewers?: DocumentPresenceUser[] } | ErrorResponse> {
+    try {
+      const { userId } = socket.data;
+      const organizationId = socket.data.organizationId;
+      const { documentId } = data;
+
+      if (!organizationId) {
+        return {
+          success: false,
+          error: {
+            code: 'NOT_IN_ORGANIZATION',
+            message: 'Must be in an organization to join presence',
+          },
+        };
+      }
+
+      // Verify user has access to this document
+      const document = await this.prismaService.document.findFirst({
+        where: {
+          id: documentId,
+          organization: {
+            members: {
+              some: { userId },
+            },
+          },
+        },
+      });
+
+      if (!document) {
+        return {
+          success: false,
+          error: {
+            code: 'ACCESS_DENIED',
+            message: 'Document not found or access denied',
+          },
+        };
+      }
+
+      // Subscribe to document room if not already
+      this.realtimeService.subscribeToDocument(socket, documentId);
+
+      // Join presence
+      const viewers = this.realtimeService.joinDocumentPresence(
+        socket,
+        documentId,
+        organizationId,
+      );
+
+      return {
+        success: true,
+        viewers,
+      };
+    } catch (error) {
+      this.logger.error(`Error joining presence: ${(error as Error).message}`);
+      return {
+        success: false,
+        error: {
+          code: 'PRESENCE_ERROR',
+          message: 'Failed to join document presence',
+        },
+      };
+    }
+  }
+
+  /**
+   * Handle request to leave document presence
+   */
+  @SubscribeMessage('presence:leave')
+  async handlePresenceLeave(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: SubscribeDocumentDto,
+  ): Promise<SuccessResponse | ErrorResponse> {
+    try {
+      const { documentId } = data;
+
+      // Unsubscribe from document (this also removes from presence)
+      this.realtimeService.unsubscribeFromDocument(socket, documentId);
+
+      return {
+        success: true,
+        message: `Left presence for document ${documentId}`,
+      };
+    } catch (error) {
+      this.logger.error(`Error leaving presence: ${(error as Error).message}`);
+      return {
+        success: false,
+        error: {
+          code: 'PRESENCE_ERROR',
+          message: 'Failed to leave document presence',
+        },
+      };
+    }
+  }
+
+  /**
+   * Handle cursor position updates
+   */
+  @SubscribeMessage('presence:cursor')
+  async handleCursorUpdate(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: UpdateCursorDto,
+  ): Promise<SuccessResponse | ErrorResponse> {
+    try {
+      const { documentId, position } = data;
+
+      this.realtimeService.updateCursorPosition(socket.id, documentId, position);
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error(`Error updating cursor: ${(error as Error).message}`);
+      return {
+        success: false,
+        error: {
+          code: 'CURSOR_ERROR',
+          message: 'Failed to update cursor position',
+        },
+      };
+    }
+  }
+
+  /**
+   * Handle request to get current document viewers
+   */
+  @SubscribeMessage('presence:sync')
+  async handlePresenceSync(
+    @ConnectedSocket() socket: AuthenticatedSocket,
+    @MessageBody() data: SubscribeDocumentDto,
+  ): Promise<SuccessResponse & { viewers?: DocumentPresenceUser[] } | ErrorResponse> {
+    try {
+      const { documentId } = data;
+
+      const viewers = this.realtimeService.getDocumentViewers(documentId);
+
+      return {
+        success: true,
+        viewers,
+      };
+    } catch (error) {
+      this.logger.error(`Error syncing presence: ${(error as Error).message}`);
+      return {
+        success: false,
+        error: {
+          code: 'SYNC_ERROR',
+          message: 'Failed to sync presence',
+        },
+      };
+    }
   }
 }
