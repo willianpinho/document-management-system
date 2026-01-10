@@ -16,6 +16,8 @@ import { SearchModule } from './modules/search/search.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -56,6 +58,12 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 
     // WebSocket real-time communication (global module)
     RealtimeModule,
+
+    // Collaboration
+    CommentsModule,
+
+    // Resumable uploads
+    UploadsModule,
   ],
   providers: [
     // Global throttler guard

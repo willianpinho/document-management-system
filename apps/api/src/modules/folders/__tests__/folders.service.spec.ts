@@ -9,8 +9,43 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
+// Mock @prisma/client before importing services
+vi.mock('@prisma/client', () => ({
+  PrismaClient: vi.fn().mockImplementation(() => ({})),
+  DocumentStatus: {
+    UPLOADED: 'UPLOADED',
+    PROCESSING: 'PROCESSING',
+    READY: 'READY',
+    ERROR: 'ERROR',
+    DELETED: 'DELETED',
+  },
+  ProcessingStatus: {
+    PENDING: 'PENDING',
+    OCR_IN_PROGRESS: 'OCR_IN_PROGRESS',
+    AI_CLASSIFYING: 'AI_CLASSIFYING',
+    EMBEDDING: 'EMBEDDING',
+    COMPLETE: 'COMPLETE',
+    FAILED: 'FAILED',
+  },
+  SharePermission: {
+    VIEW: 'VIEW',
+    EDIT: 'EDIT',
+  },
+  Prisma: {},
+}));
+
 import { FoldersService } from '../folders.service';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { RealtimeService } from '../../realtime/realtime.service';
+
+// Use the actual enum values for test assertions
+const DocumentStatus = {
+  UPLOADED: 'UPLOADED',
+  PROCESSING: 'PROCESSING',
+  READY: 'READY',
+  ERROR: 'ERROR',
+  DELETED: 'DELETED',
+};
 
 // Mock factory for PrismaService
 const createMockPrismaService = () => ({
@@ -26,6 +61,13 @@ const createMockPrismaService = () => ({
   document: {
     count: vi.fn(),
   },
+});
+
+// Mock factory for RealtimeService
+const createMockRealtimeService = () => ({
+  emitFolderCreated: vi.fn(),
+  emitFolderUpdated: vi.fn(),
+  emitFolderDeleted: vi.fn(),
 });
 
 // Test fixtures
@@ -67,14 +109,17 @@ const mockParentFolder = {
 describe('FoldersService', () => {
   let service: FoldersService;
   let prismaService: ReturnType<typeof createMockPrismaService>;
+  let realtimeService: ReturnType<typeof createMockRealtimeService>;
 
   beforeEach(async () => {
     prismaService = createMockPrismaService();
+    realtimeService = createMockRealtimeService();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FoldersService,
         { provide: PrismaService, useValue: prismaService },
+        { provide: RealtimeService, useValue: realtimeService },
       ],
     }).compile();
 
@@ -93,6 +138,7 @@ describe('FoldersService', () => {
         ...mockFolder,
         name: createInput.name,
         path: `/${createInput.name}`,
+        createdBy: mockUser,
       };
 
       prismaService.folder.create.mockResolvedValue(expectedFolder);
@@ -109,6 +155,11 @@ describe('FoldersService', () => {
           parentId: undefined,
           createdById: createInput.createdById,
         },
+        include: {
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
+        },
       });
     });
 
@@ -123,6 +174,7 @@ describe('FoldersService', () => {
         ...mockFolder,
         parentId: mockParentFolderId,
         path: '/Parent Folder/New Folder',
+        createdBy: mockUser,
       });
 
       const result = await service.create(inputWithParent);
@@ -133,6 +185,7 @@ describe('FoldersService', () => {
           path: '/Parent Folder/New Folder',
           parentId: mockParentFolderId,
         }),
+        include: expect.any(Object),
       });
     });
 
@@ -266,7 +319,7 @@ describe('FoldersService', () => {
           parent: true,
           children: { orderBy: { name: 'asc' } },
           documents: {
-            where: { status: { not: 'deleted' } },
+            where: { status: { not: DocumentStatus.DELETED } },
             orderBy: { createdAt: 'desc' },
           },
           createdBy: {
@@ -302,7 +355,7 @@ describe('FoldersService', () => {
         expect.objectContaining({
           include: expect.objectContaining({
             documents: {
-              where: { status: { not: 'deleted' } },
+              where: { status: { not: DocumentStatus.DELETED } },
               orderBy: { createdAt: 'desc' },
             },
           }),

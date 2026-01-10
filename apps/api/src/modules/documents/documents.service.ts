@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentStatus, ProcessingStatus } from '@prisma/client';
+import archiver from 'archiver';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -431,5 +432,583 @@ export class DocumentsService {
     }
 
     return buffers;
+  }
+
+  /**
+   * Move a document to a different folder
+   * @param id - Document ID
+   * @param organizationId - Organization ID for access control
+   * @param targetFolderId - Target folder ID (null for root)
+   * @param triggeredBy - User who triggered the action
+   */
+  async move(
+    id: string,
+    organizationId: string,
+    targetFolderId: string | null,
+    triggeredBy?: EventUser,
+  ) {
+    const document = await this.findOne(id, organizationId);
+
+    // Verify target folder exists and belongs to organization
+    if (targetFolderId) {
+      const folder = await this.prisma.folder.findFirst({
+        where: { id: targetFolderId, organizationId },
+      });
+      if (!folder) {
+        throw new NotFoundException('Target folder not found');
+      }
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { id },
+      data: { folderId: targetFolderId },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    // Emit real-time event
+    if (triggeredBy) {
+      this.realtimeService.emitDocumentUpdated(
+        this.toEventData(updatedDocument),
+        organizationId,
+        triggeredBy,
+        [{ field: 'folderId', oldValue: document.folderId, newValue: targetFolderId }],
+      );
+    }
+
+    return this.toApiResponse(updatedDocument);
+  }
+
+  /**
+   * Copy a document to a different folder
+   * @param id - Document ID
+   * @param organizationId - Organization ID for access control
+   * @param targetFolderId - Target folder ID (null for root)
+   * @param newName - Optional new name for the copy
+   * @param triggeredBy - User who triggered the action
+   */
+  async copy(
+    id: string,
+    organizationId: string,
+    targetFolderId: string | null,
+    newName?: string,
+    triggeredBy?: EventUser,
+  ) {
+    const document = await this.findOne(id, organizationId);
+
+    // Verify target folder exists and belongs to organization
+    if (targetFolderId) {
+      const folder = await this.prisma.folder.findFirst({
+        where: { id: targetFolderId, organizationId },
+      });
+      if (!folder) {
+        throw new NotFoundException('Target folder not found');
+      }
+    }
+
+    // Copy the file in S3
+    const newS3Key = `organizations/${organizationId}/documents/${Date.now()}-${document.name}`;
+    await this.storageService.copyObject(document.s3Key, newS3Key);
+
+    // Create new document record
+    const copiedDocument = await this.prisma.document.create({
+      data: {
+        name: newName || `Copy of ${document.name}`,
+        mimeType: document.mimeType,
+        sizeBytes: document.sizeBytes,
+        s3Key: newS3Key,
+        status: document.status,
+        processingStatus: document.processingStatus,
+        folderId: targetFolderId,
+        organizationId,
+        createdById: triggeredBy?.id || document.createdBy?.id,
+        metadata: document.metadata as any,
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    // Emit real-time event for the new document
+    if (triggeredBy) {
+      this.realtimeService.emitDocumentCreated(
+        this.toEventData(copiedDocument),
+        organizationId,
+        triggeredBy,
+      );
+    }
+
+    return this.toApiResponse(copiedDocument);
+  }
+
+  // ============================================
+  // Bulk Operations
+  // ============================================
+
+  /**
+   * Bulk delete documents and folders
+   */
+  async bulkDelete(
+    organizationId: string,
+    documentIds: string[],
+    folderIds: string[] = [],
+    permanent = false,
+    triggeredBy?: EventUser,
+  ) {
+    const results: { id: string; success: boolean; error?: string }[] = [];
+
+    // Delete documents
+    for (const id of documentIds) {
+      try {
+        const document = await this.prisma.document.findFirst({
+          where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+        });
+
+        if (!document) {
+          results.push({ id, success: false, error: 'Document not found' });
+          continue;
+        }
+
+        if (permanent) {
+          // Permanently delete from S3 and database
+          await this.storageService.deleteObject(document.s3Key);
+          await this.prisma.document.delete({ where: { id } });
+        } else {
+          // Soft delete
+          await this.prisma.document.update({
+            where: { id },
+            data: { status: DocumentStatus.DELETED, deletedAt: new Date() },
+          });
+        }
+
+        // Emit real-time event
+        if (triggeredBy) {
+          this.realtimeService.emitDocumentDeleted(
+            document.id,
+            document.name,
+            organizationId,
+            triggeredBy,
+          );
+        }
+
+        results.push({ id, success: true });
+      } catch (error) {
+        results.push({
+          id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    // Delete folders
+    for (const id of folderIds) {
+      try {
+        const folder = await this.prisma.folder.findFirst({
+          where: { id, organizationId },
+        });
+
+        if (!folder) {
+          results.push({ id, success: false, error: 'Folder not found' });
+          continue;
+        }
+
+        // Get all documents in folder and subfolders
+        const documentsInFolder = await this.prisma.document.findMany({
+          where: {
+            organizationId,
+            folder: {
+              OR: [
+                { id },
+                { path: { startsWith: folder.path + '/' } },
+              ],
+            },
+            status: { not: DocumentStatus.DELETED },
+          },
+        });
+
+        // Delete documents in folder
+        for (const doc of documentsInFolder) {
+          if (permanent) {
+            await this.storageService.deleteObject(doc.s3Key);
+            await this.prisma.document.delete({ where: { id: doc.id } });
+          } else {
+            await this.prisma.document.update({
+              where: { id: doc.id },
+              data: { status: DocumentStatus.DELETED, deletedAt: new Date() },
+            });
+          }
+
+          if (triggeredBy) {
+            this.realtimeService.emitDocumentDeleted(
+              doc.id,
+              doc.name,
+              organizationId,
+              triggeredBy,
+            );
+          }
+        }
+
+        // Delete folder and subfolders
+        await this.prisma.folder.deleteMany({
+          where: {
+            organizationId,
+            OR: [
+              { id },
+              { path: { startsWith: folder.path + '/' } },
+            ],
+          },
+        });
+
+        results.push({ id, success: true });
+      } catch (error) {
+        results.push({
+          id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    return {
+      total: results.length,
+      successful,
+      failed,
+      results,
+    };
+  }
+
+  /**
+   * Bulk move documents and folders
+   */
+  async bulkMove(
+    organizationId: string,
+    documentIds: string[],
+    folderIds: string[] = [],
+    targetFolderId: string | null,
+    triggeredBy?: EventUser,
+  ) {
+    const results: { id: string; success: boolean; error?: string }[] = [];
+
+    // Verify target folder exists
+    if (targetFolderId) {
+      const targetFolder = await this.prisma.folder.findFirst({
+        where: { id: targetFolderId, organizationId },
+      });
+      if (!targetFolder) {
+        throw new BadRequestException('Target folder not found');
+      }
+    }
+
+    // Move documents
+    for (const id of documentIds) {
+      try {
+        const document = await this.prisma.document.findFirst({
+          where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+          include: { createdBy: { select: { id: true, name: true, email: true } } },
+        });
+
+        if (!document) {
+          results.push({ id, success: false, error: 'Document not found' });
+          continue;
+        }
+
+        const oldFolderId = document.folderId;
+
+        await this.prisma.document.update({
+          where: { id },
+          data: { folderId: targetFolderId },
+        });
+
+        // Emit real-time event
+        if (triggeredBy) {
+          this.realtimeService.emitDocumentUpdated(
+            this.toEventData(document),
+            organizationId,
+            triggeredBy,
+            [{ field: 'folderId', oldValue: oldFolderId, newValue: targetFolderId }],
+          );
+        }
+
+        results.push({ id, success: true });
+      } catch (error) {
+        results.push({
+          id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    // Move folders
+    for (const id of folderIds) {
+      try {
+        const folder = await this.prisma.folder.findFirst({
+          where: { id, organizationId },
+        });
+
+        if (!folder) {
+          results.push({ id, success: false, error: 'Folder not found' });
+          continue;
+        }
+
+        // Prevent moving folder into itself or its descendants
+        if (targetFolderId) {
+          const targetPath = (await this.prisma.folder.findUnique({
+            where: { id: targetFolderId },
+          }))?.path || '';
+
+          if (targetPath.startsWith(folder.path)) {
+            results.push({ id, success: false, error: 'Cannot move folder into itself or its descendants' });
+            continue;
+          }
+        }
+
+        // Get new path
+        let newPath = folder.name;
+        if (targetFolderId) {
+          const parent = await this.prisma.folder.findUnique({
+            where: { id: targetFolderId },
+          });
+          newPath = `${parent?.path}/${folder.name}`;
+        }
+
+        // Update folder and its descendants
+        const oldPath = folder.path;
+        await this.prisma.folder.update({
+          where: { id },
+          data: { parentId: targetFolderId, path: newPath },
+        });
+
+        // Update descendants paths
+        await this.prisma.$executeRaw`
+          UPDATE folders
+          SET path = REPLACE(path, ${oldPath}, ${newPath})
+          WHERE organization_id = ${organizationId}::uuid
+          AND path LIKE ${oldPath + '/%'}
+        `;
+
+        results.push({ id, success: true });
+      } catch (error) {
+        results.push({
+          id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    return {
+      total: results.length,
+      successful,
+      failed,
+      results,
+    };
+  }
+
+  /**
+   * Bulk copy documents
+   */
+  async bulkCopy(
+    organizationId: string,
+    documentIds: string[],
+    targetFolderId: string | null,
+    triggeredBy?: EventUser,
+  ) {
+    const results: { id: string; success: boolean; error?: string; newId?: string }[] = [];
+
+    // Verify target folder exists
+    if (targetFolderId) {
+      const targetFolder = await this.prisma.folder.findFirst({
+        where: { id: targetFolderId, organizationId },
+      });
+      if (!targetFolder) {
+        throw new BadRequestException('Target folder not found');
+      }
+    }
+
+    for (const id of documentIds) {
+      try {
+        const document = await this.prisma.document.findFirst({
+          where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+          include: { createdBy: { select: { id: true, name: true, email: true } } },
+        });
+
+        if (!document) {
+          results.push({ id, success: false, error: 'Document not found' });
+          continue;
+        }
+
+        // Copy file in S3
+        const newS3Key = `organizations/${organizationId}/documents/${uuidv4()}-${document.name}`;
+        await this.storageService.copyObject(document.s3Key, newS3Key);
+
+        // Create copy in database
+        const copy = await this.prisma.document.create({
+          data: {
+            name: `Copy of ${document.name}`,
+            mimeType: document.mimeType,
+            sizeBytes: document.sizeBytes,
+            s3Key: newS3Key,
+            status: document.status,
+            processingStatus: document.processingStatus,
+            folderId: targetFolderId,
+            organizationId,
+            createdById: triggeredBy?.id || document.createdById,
+            metadata: document.metadata as any,
+          },
+          include: {
+            createdBy: { select: { id: true, name: true, email: true } },
+          },
+        });
+
+        // Emit real-time event
+        if (triggeredBy) {
+          this.realtimeService.emitDocumentCreated(
+            this.toEventData(copy),
+            organizationId,
+            triggeredBy,
+          );
+        }
+
+        results.push({ id, success: true, newId: copy.id });
+      } catch (error) {
+        results.push({
+          id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    return {
+      total: results.length,
+      successful,
+      failed,
+      results,
+    };
+  }
+
+  /**
+   * Create a zip file for bulk download
+   */
+  async createBulkDownload(
+    organizationId: string,
+    documentIds: string[],
+    folderIds: string[] = [],
+  ): Promise<{ downloadUrl: string; expiresIn: number; fileCount: number; totalSizeBytes: number }> {
+    const documents: { id: string; name: string; s3Key: string; sizeBytes: bigint; folderPath?: string }[] = [];
+
+    // Get documents by ID
+    for (const id of documentIds) {
+      const doc = await this.prisma.document.findFirst({
+        where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+        include: { folder: true },
+      });
+      if (doc) {
+        documents.push({
+          id: doc.id,
+          name: doc.name,
+          s3Key: doc.s3Key,
+          sizeBytes: doc.sizeBytes,
+          folderPath: doc.folder?.path,
+        });
+      }
+    }
+
+    // Get documents from folders
+    for (const folderId of folderIds) {
+      const folder = await this.prisma.folder.findFirst({
+        where: { id: folderId, organizationId },
+      });
+      if (folder) {
+        const folderDocs = await this.prisma.document.findMany({
+          where: {
+            organizationId,
+            status: { not: DocumentStatus.DELETED },
+            OR: [
+              { folderId },
+              { folder: { path: { startsWith: folder.path + '/' } } },
+            ],
+          },
+          include: { folder: true },
+        });
+        for (const doc of folderDocs) {
+          documents.push({
+            id: doc.id,
+            name: doc.name,
+            s3Key: doc.s3Key,
+            sizeBytes: doc.sizeBytes,
+            folderPath: doc.folder?.path,
+          });
+        }
+      }
+    }
+
+    if (documents.length === 0) {
+      throw new BadRequestException('No documents to download');
+    }
+
+    // Create zip archive
+    const archive = archiver('zip', { zlib: { level: 5 } });
+    const chunks: Buffer[] = [];
+
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    // Add documents to archive
+    for (const doc of documents) {
+      try {
+        const fileStream = await this.storageService.getObject(doc.s3Key);
+        const fileChunks: Buffer[] = [];
+        for await (const chunk of fileStream as AsyncIterable<Buffer>) {
+          fileChunks.push(chunk);
+        }
+        const fileBuffer = Buffer.concat(fileChunks);
+
+        const filePath = doc.folderPath ? `${doc.folderPath}/${doc.name}` : doc.name;
+        archive.append(fileBuffer, { name: filePath });
+      } catch {
+        // Skip files that can't be read
+      }
+    }
+
+    await archive.finalize();
+
+    // Wait for archive to finish
+    await new Promise<void>((resolve) => {
+      archive.on('end', resolve);
+    });
+
+    const zipBuffer = Buffer.concat(chunks);
+    const zipKey = `temp/bulk-downloads/${organizationId}/${uuidv4()}.zip`;
+
+    // Upload zip to S3
+    await this.storageService.uploadBuffer(zipKey, zipBuffer, 'application/zip');
+
+    // Get download URL
+    const downloadUrl = await this.storageService.getPresignedDownloadUrl(zipKey, 3600);
+
+    const totalSizeBytes = documents.reduce((sum, doc) => sum + Number(doc.sizeBytes), 0);
+
+    return {
+      downloadUrl,
+      expiresIn: 3600,
+      fileCount: documents.length,
+      totalSizeBytes,
+    };
   }
 }

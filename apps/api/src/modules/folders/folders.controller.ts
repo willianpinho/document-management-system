@@ -27,6 +27,15 @@ import { CurrentUser, CurrentUserPayload } from '@/common/decorators/current-use
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { UpdateFolderDto } from './dto/update-folder.dto';
 import { AuditFolder, AuditAction } from '../audit';
+import {
+  ShareFolderDto,
+  UpdateFolderShareDto,
+  CreateFolderShareLinkDto,
+  FolderSharesResponseDto,
+  FolderShareUserDto,
+  FolderShareLinkDto,
+} from './dto/folder-share.dto';
+import { SharePermission } from '@prisma/client';
 
 @ApiTags('folders')
 @Controller('folders')
@@ -68,6 +77,16 @@ export class FoldersController {
       organizationId: user.organizationId!,
       createdById: user.id,
     });
+  }
+
+  @Get('tree')
+  @ApiOperation({
+    summary: 'Get full folder tree',
+    description: 'Get complete hierarchical tree structure of all folders in the organization',
+  })
+  @ApiResponse({ status: 200, description: 'Complete folder tree structure' })
+  async getFullTree(@CurrentUser() user: CurrentUserPayload) {
+    return this.foldersService.getFullTree(user.organizationId!);
   }
 
   @Get(':id')
@@ -136,5 +155,149 @@ export class FoldersController {
   @ApiResponse({ status: 200, description: 'Breadcrumb path' })
   async getBreadcrumbs(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.foldersService.getBreadcrumbs(id, user.organizationId!);
+  }
+
+  // ==================== Folder Sharing Endpoints ====================
+
+  @Get(':id/shares')
+  @ApiOperation({
+    summary: 'Get folder shares',
+    description: 'Get all users and links with access to this folder',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiResponse({ status: 200, description: 'Folder shares', type: FolderSharesResponseDto })
+  @ApiResponse({ status: 404, description: 'Folder not found' })
+  async getShares(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ): Promise<FolderSharesResponseDto> {
+    return this.foldersService.getShares(id, user.organizationId!);
+  }
+
+  @Post(':id/shares')
+  @AuditFolder(AuditAction.FOLDER_SHARE, { includeBody: true })
+  @ApiOperation({
+    summary: 'Share folder with user',
+    description: 'Share folder with a user by email',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiResponse({ status: 201, description: 'Folder shared', type: FolderShareUserDto })
+  @ApiResponse({ status: 400, description: 'Invalid input or user already has access' })
+  @ApiResponse({ status: 404, description: 'Folder or user not found' })
+  async shareWithUser(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() shareDto: ShareFolderDto,
+  ): Promise<FolderShareUserDto> {
+    return this.foldersService.shareWithUser(
+      id,
+      user.organizationId!,
+      shareDto.email,
+      shareDto.permission,
+      user.id,
+      shareDto.canShare,
+    );
+  }
+
+  @Patch(':id/shares/:userId')
+  @AuditFolder(AuditAction.FOLDER_UPDATE, { includeBody: true })
+  @ApiOperation({
+    summary: 'Update share permission',
+    description: 'Update permission level for a shared user',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiParam({ name: 'userId', description: 'User ID to update' })
+  @ApiResponse({ status: 200, description: 'Share updated', type: FolderShareUserDto })
+  @ApiResponse({ status: 404, description: 'Share not found' })
+  async updateShare(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() updateDto: UpdateFolderShareDto,
+  ): Promise<FolderShareUserDto> {
+    return this.foldersService.updateShare(
+      id,
+      user.organizationId!,
+      userId,
+      updateDto.permission,
+      updateDto.canShare,
+    );
+  }
+
+  @Delete(':id/shares/:userId')
+  @AuditFolder(AuditAction.FOLDER_UNSHARE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remove share',
+    description: 'Remove user access from folder',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiParam({ name: 'userId', description: 'User ID to remove' })
+  @ApiResponse({ status: 204, description: 'Share removed' })
+  @ApiResponse({ status: 404, description: 'Share not found' })
+  async removeShare(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    await this.foldersService.removeShare(id, user.organizationId!, userId);
+  }
+
+  @Post(':id/share-link')
+  @AuditFolder(AuditAction.FOLDER_SHARE, { includeBody: true })
+  @ApiOperation({
+    summary: 'Create share link',
+    description: 'Create a shareable link for the folder',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiResponse({ status: 201, description: 'Share link created', type: FolderShareLinkDto })
+  @ApiResponse({ status: 400, description: 'Share link already exists' })
+  @ApiResponse({ status: 404, description: 'Folder not found' })
+  async createShareLink(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() createLinkDto: CreateFolderShareLinkDto,
+  ): Promise<FolderShareLinkDto> {
+    return this.foldersService.createShareLink(
+      id,
+      user.organizationId!,
+      createLinkDto.permission,
+      user.id,
+      createLinkDto.expiresAt ? new Date(createLinkDto.expiresAt) : undefined,
+      createLinkDto.password,
+      createLinkDto.maxUses,
+    );
+  }
+
+  @Delete(':id/share-link')
+  @AuditFolder(AuditAction.FOLDER_UNSHARE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete share link',
+    description: 'Delete the shareable link for the folder',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiResponse({ status: 204, description: 'Share link deleted' })
+  @ApiResponse({ status: 404, description: 'Share link not found' })
+  async deleteShareLink(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.foldersService.deleteShareLink(id, user.organizationId!);
+  }
+
+  @Get(':id/inherited-shares')
+  @ApiOperation({
+    summary: 'Get inherited shares',
+    description: 'Get shares inherited from parent folders',
+  })
+  @ApiParam({ name: 'id', description: 'Folder ID' })
+  @ApiResponse({ status: 200, description: 'Inherited shares' })
+  @ApiResponse({ status: 404, description: 'Folder not found' })
+  async getInheritedShares(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.foldersService.getInheritedShares(id, user.organizationId!);
   }
 }

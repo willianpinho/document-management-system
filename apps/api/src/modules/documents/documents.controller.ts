@@ -47,6 +47,14 @@ import {
   SplitResultDto,
   MergeResultDto,
 } from '../processing/dto/pdf-result.dto';
+import {
+  BulkDeleteDto,
+  BulkMoveDto,
+  BulkCopyDto,
+  BulkDownloadDto,
+  BulkOperationResult,
+  BulkDownloadResult,
+} from './dto/bulk-operations.dto';
 
 @ApiTags('documents')
 @Controller('documents')
@@ -168,6 +176,62 @@ export class DocumentsController {
     @Body() processDto: { type: string; options?: Record<string, unknown> },
   ) {
     return this.documentsService.triggerProcessing(id, user.organizationId!, processDto);
+  }
+
+  @Post(':id/move')
+  @AuditDocument(AuditAction.DOCUMENT_MOVE, { includeBody: true })
+  @ApiOperation({ summary: 'Move document to a different folder' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        folderId: { type: 'string', nullable: true, description: 'Target folder ID or null for root' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Document moved successfully' })
+  @ApiResponse({ status: 404, description: 'Document or folder not found' })
+  async moveDocument(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() moveDto: { folderId: string | null },
+  ) {
+    return this.documentsService.move(
+      id,
+      user.organizationId!,
+      moveDto.folderId,
+      { id: user.id, name: user.name || null, email: user.email },
+    );
+  }
+
+  @Post(':id/copy')
+  @AuditDocument(AuditAction.DOCUMENT_COPY, { includeBody: true })
+  @ApiOperation({ summary: 'Copy document to a folder' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        folderId: { type: 'string', nullable: true, description: 'Target folder ID or null for root' },
+        name: { type: 'string', description: 'Optional new name for the copy' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Document copied successfully' })
+  @ApiResponse({ status: 404, description: 'Document or folder not found' })
+  async copyDocument(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() copyDto: { folderId: string | null; name?: string },
+  ) {
+    return this.documentsService.copy(
+      id,
+      user.organizationId!,
+      copyDto.folderId,
+      copyDto.name,
+      { id: user.id, name: user.name || null, email: user.email },
+    );
   }
 
   // ==========================================
@@ -503,5 +567,122 @@ export class DocumentsController {
       message: 'Thumbnail generation queued',
       cached: false,
     };
+  }
+
+  // ==========================================
+  // Bulk Operations Endpoints
+  // ==========================================
+
+  @Post('bulk/delete')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_DELETE,
+    resourceType: AuditResourceType.DOCUMENT,
+    includeBody: true,
+  })
+  @ApiOperation({
+    summary: 'Bulk delete documents and folders',
+    description: 'Delete multiple documents and folders at once. Supports soft delete (default) or permanent deletion.',
+  })
+  @ApiBody({ type: BulkDeleteDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk delete completed',
+    type: BulkOperationResult,
+  })
+  async bulkDelete(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() bulkDeleteDto: BulkDeleteDto,
+  ): Promise<BulkOperationResult> {
+    return this.documentsService.bulkDelete(
+      user.organizationId!,
+      bulkDeleteDto.documentIds,
+      bulkDeleteDto.folderIds || [],
+      bulkDeleteDto.permanent || false,
+      { id: user.id, name: user.name || null, email: user.email },
+    );
+  }
+
+  @Post('bulk/move')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_MOVE,
+    resourceType: AuditResourceType.DOCUMENT,
+    includeBody: true,
+  })
+  @ApiOperation({
+    summary: 'Bulk move documents and folders',
+    description: 'Move multiple documents and folders to a target folder at once.',
+  })
+  @ApiBody({ type: BulkMoveDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk move completed',
+    type: BulkOperationResult,
+  })
+  async bulkMove(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() bulkMoveDto: BulkMoveDto,
+  ): Promise<BulkOperationResult> {
+    return this.documentsService.bulkMove(
+      user.organizationId!,
+      bulkMoveDto.documentIds,
+      bulkMoveDto.folderIds || [],
+      bulkMoveDto.targetFolderId,
+      { id: user.id, name: user.name || null, email: user.email },
+    );
+  }
+
+  @Post('bulk/copy')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_COPY,
+    resourceType: AuditResourceType.DOCUMENT,
+    includeBody: true,
+  })
+  @ApiOperation({
+    summary: 'Bulk copy documents',
+    description: 'Copy multiple documents to a target folder at once.',
+  })
+  @ApiBody({ type: BulkCopyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk copy completed',
+    type: BulkOperationResult,
+  })
+  async bulkCopy(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() bulkCopyDto: BulkCopyDto,
+  ): Promise<BulkOperationResult> {
+    return this.documentsService.bulkCopy(
+      user.organizationId!,
+      bulkCopyDto.documentIds,
+      bulkCopyDto.targetFolderId,
+      { id: user.id, name: user.name || null, email: user.email },
+    );
+  }
+
+  @Post('bulk/download')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_DOWNLOAD,
+    resourceType: AuditResourceType.DOCUMENT,
+    includeBody: true,
+  })
+  @ApiOperation({
+    summary: 'Bulk download documents as ZIP',
+    description: 'Download multiple documents and folders as a single ZIP file.',
+  })
+  @ApiBody({ type: BulkDownloadDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk download ZIP created',
+    type: BulkDownloadResult,
+  })
+  async bulkDownload(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() bulkDownloadDto: BulkDownloadDto,
+  ): Promise<BulkDownloadResult> {
+    return this.documentsService.createBulkDownload(
+      user.organizationId!,
+      bulkDownloadDto.documentIds,
+      bulkDownloadDto.folderIds || [],
+    );
   }
 }

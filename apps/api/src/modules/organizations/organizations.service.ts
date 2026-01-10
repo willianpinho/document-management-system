@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -421,5 +422,148 @@ export class OrganizationsService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
       .substring(0, 100);
+  }
+
+  // =============================================================================
+  // API KEYS MANAGEMENT
+  // =============================================================================
+
+  /**
+   * Get all API keys for an organization
+   */
+  async getApiKeys(organizationId: string) {
+    await this.findById(organizationId);
+
+    const apiKeys = await this.prisma.apiKey.findMany({
+      where: {
+        organizationId,
+        revokedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        keyPrefix: true,
+        scopes: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return apiKeys;
+  }
+
+  /**
+   * Create a new API key
+   */
+  async createApiKey(
+    organizationId: string,
+    name: string,
+    scopes: string[] = [],
+    expiresAt?: Date,
+  ) {
+    await this.findById(organizationId);
+
+    // Generate a secure API key
+    const keyPrefix = `dms_${crypto.randomBytes(4).toString('hex')}`;
+    const keySuffix = crypto.randomBytes(24).toString('hex');
+    const fullKey = `${keyPrefix}_${keySuffix}`;
+    const keyHash = crypto.createHash('sha256').update(fullKey).digest('hex');
+
+    const apiKey = await this.prisma.apiKey.create({
+      data: {
+        organizationId,
+        name,
+        keyPrefix,
+        keyHash,
+        scopes,
+        expiresAt,
+      },
+      select: {
+        id: true,
+        name: true,
+        keyPrefix: true,
+        scopes: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+    });
+
+    this.logger.log(`API key created: ${apiKey.id} for organization ${organizationId}`);
+
+    // Return the full key only on creation (it cannot be retrieved later)
+    return {
+      ...apiKey,
+      key: fullKey,
+      message: 'Save this key securely. It cannot be retrieved again.',
+    };
+  }
+
+  /**
+   * Revoke an API key
+   */
+  async revokeApiKey(organizationId: string, keyId: string) {
+    const apiKey = await this.prisma.apiKey.findFirst({
+      where: {
+        id: keyId,
+        organizationId,
+        revokedAt: null,
+      },
+    });
+
+    if (!apiKey) {
+      throw new NotFoundException('API key not found');
+    }
+
+    await this.prisma.apiKey.update({
+      where: { id: keyId },
+      data: { revokedAt: new Date() },
+    });
+
+    this.logger.log(`API key revoked: ${keyId} for organization ${organizationId}`);
+    return { success: true, message: 'API key revoked successfully' };
+  }
+
+  /**
+   * Validate an API key and return organization info
+   */
+  async validateApiKey(key: string) {
+    const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+
+    const apiKey = await this.prisma.apiKey.findFirst({
+      where: {
+        keyHash,
+        revokedAt: null,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            plan: true,
+          },
+        },
+      },
+    });
+
+    if (!apiKey) {
+      return null;
+    }
+
+    // Update last used timestamp
+    await this.prisma.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    });
+
+    return {
+      keyId: apiKey.id,
+      organizationId: apiKey.organizationId,
+      organization: apiKey.organization,
+      scopes: apiKey.scopes,
+    };
   }
 }

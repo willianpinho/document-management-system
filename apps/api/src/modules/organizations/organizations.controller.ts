@@ -28,6 +28,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
+import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import {
   AuditOrganization,
   AuditLog,
@@ -191,5 +192,68 @@ export class OrganizationsController {
   @ApiResponse({ status: 403, description: 'Owner cannot leave' })
   async leave(@Param('id') id: string, @CurrentUser() user: CurrentUserPayload) {
     return this.organizationsService.leaveOrganization(id, user.id);
+  }
+
+  // =============================================================================
+  // API KEYS ENDPOINTS
+  // =============================================================================
+
+  @Get(':id/api-keys')
+  @UseGuards(OrganizationGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get all API keys for organization' })
+  @ApiParam({ name: 'id', description: 'Organization ID' })
+  @ApiResponse({ status: 200, description: 'List of API keys' })
+  async getApiKeys(@Param('id') id: string) {
+    return this.organizationsService.getApiKeys(id);
+  }
+
+  @Post(':id/api-keys')
+  @UseGuards(OrganizationGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @AuditLog({
+    action: AuditAction.API_KEY_CREATE,
+    resourceType: AuditResourceType.API_KEY,
+    resourceIdParam: 'id',
+    includeBody: true,
+    redactFields: ['key'],
+  })
+  @ApiOperation({ summary: 'Create a new API key' })
+  @ApiParam({ name: 'id', description: 'Organization ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'API key created. The full key is only returned once.',
+  })
+  async createApiKey(
+    @Param('id') id: string,
+    @Body() createDto: CreateApiKeyDto,
+  ) {
+    return this.organizationsService.createApiKey(
+      id,
+      createDto.name,
+      createDto.scopes || [],
+      createDto.expiresAt ? new Date(createDto.expiresAt) : undefined,
+    );
+  }
+
+  @Delete(':id/api-keys/:keyId')
+  @UseGuards(OrganizationGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @AuditLog({
+    action: AuditAction.API_KEY_REVOKE,
+    resourceType: AuditResourceType.API_KEY,
+    resourceIdParam: 'keyId',
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Revoke an API key' })
+  @ApiParam({ name: 'id', description: 'Organization ID' })
+  @ApiParam({ name: 'keyId', description: 'API Key ID' })
+  @ApiResponse({ status: 200, description: 'API key revoked' })
+  @ApiResponse({ status: 404, description: 'API key not found' })
+  async revokeApiKey(
+    @Param('id') id: string,
+    @Param('keyId') keyId: string,
+  ) {
+    return this.organizationsService.revokeApiKey(id, keyId);
   }
 }
