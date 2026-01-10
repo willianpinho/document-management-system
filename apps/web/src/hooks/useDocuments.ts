@@ -152,5 +152,215 @@ export function useCopyDocument() {
   });
 }
 
+// ============================================================================
+// SHARING HOOKS
+// ============================================================================
+
+export interface SharedUser {
+  id: string;
+  email: string;
+  name?: string;
+  avatarUrl?: string;
+  permission: 'VIEW' | 'COMMENT' | 'EDIT';
+}
+
+export interface ShareLink {
+  id: string;
+  token: string;
+  permission: 'VIEW' | 'COMMENT' | 'EDIT';
+  expiresAt?: string;
+  downloadCount: number;
+  maxDownloads?: number;
+}
+
+export function useDocumentShares(documentId: string) {
+  return useQuery({
+    queryKey: ['documents', documentId, 'shares'],
+    queryFn: async () => {
+      const response = await documentsApi.getShares(documentId);
+      return response.data as { users: SharedUser[]; link: ShareLink | null };
+    },
+    enabled: !!documentId,
+  });
+}
+
+export function useShareDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      email,
+      permission,
+    }: {
+      documentId: string;
+      email: string;
+      permission: 'VIEW' | 'COMMENT' | 'EDIT';
+    }) => {
+      const response = await documentsApi.share(documentId, { email, permission });
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.documentId, 'shares'],
+      });
+    },
+  });
+}
+
+export function useRemoveShare() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      userId,
+    }: {
+      documentId: string;
+      userId: string;
+    }) => {
+      await documentsApi.removeShare(documentId, userId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.documentId, 'shares'],
+      });
+    },
+  });
+}
+
+export function useUpdateSharePermission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      userId,
+      permission,
+    }: {
+      documentId: string;
+      userId: string;
+      permission: 'VIEW' | 'COMMENT' | 'EDIT';
+    }) => {
+      const response = await documentsApi.updateSharePermission(
+        documentId,
+        userId,
+        permission
+      );
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.documentId, 'shares'],
+      });
+    },
+  });
+}
+
+export function useCreateShareLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      permission,
+    }: {
+      documentId: string;
+      permission: 'VIEW' | 'COMMENT' | 'EDIT';
+    }) => {
+      const response = await documentsApi.createShareLink(documentId, permission);
+      return response.data as ShareLink;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.documentId, 'shares'],
+      });
+    },
+  });
+}
+
+export function useDeleteShareLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documentId: string) => {
+      await documentsApi.deleteShareLink(documentId);
+    },
+    onSuccess: (_, documentId) => {
+      queryClient.invalidateQueries({
+        queryKey: ['documents', documentId, 'shares'],
+      });
+    },
+  });
+}
+
+// ============================================================================
+// VERSION HISTORY HOOKS
+// ============================================================================
+
+export interface DocumentVersion {
+  id: string;
+  versionNumber: number;
+  sizeBytes: number;
+  checksum?: string;
+  changeNote?: string;
+  createdAt: string;
+  createdBy?: {
+    id: string;
+    name?: string;
+    email: string;
+    avatarUrl?: string;
+  };
+}
+
+export function useDocumentVersions(documentId: string) {
+  return useQuery({
+    queryKey: ['documents', documentId, 'versions'],
+    queryFn: async () => {
+      const response = await documentsApi.getVersions(documentId);
+      return response.data as DocumentVersion[];
+    },
+    enabled: !!documentId,
+  });
+}
+
+export function useDownloadVersion() {
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      versionId,
+    }: {
+      documentId: string;
+      versionId: string;
+    }) => {
+      const response = await documentsApi.getVersionDownloadUrl(documentId, versionId);
+      return response.data as { url: string };
+    },
+  });
+}
+
+export function useRestoreVersion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      documentId,
+      versionId,
+    }: {
+      documentId: string;
+      versionId: string;
+    }) => {
+      const response = await documentsApi.restoreVersion(documentId, versionId);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['documents', variables.documentId] });
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.documentId, 'versions'],
+      });
+    },
+  });
+}
+
 // Type exports for consumers
 export type { DocumentListItem, DocumentDetail };

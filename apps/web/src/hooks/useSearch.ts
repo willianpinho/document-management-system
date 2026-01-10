@@ -50,14 +50,14 @@ export function useSearch(initialFilters?: SearchFilters) {
     queryKey: ['search', { ...filters, q: debouncedQuery }],
     queryFn: async () => {
       if (!debouncedQuery && !filters.mimeType && !filters.folderId) {
-        return { data: [], meta: undefined };
+        return { results: [], total: 0, page: 1, limit: 20, hasMore: false, searchType: 'text' as const };
       }
 
       const response = await searchApi.search({
         ...filters,
         q: debouncedQuery,
       });
-      return response;
+      return response.data;
     },
     enabled: !!(debouncedQuery || filters.mimeType || filters.folderId),
     staleTime: 1000 * 30, // 30 seconds
@@ -66,8 +66,8 @@ export function useSearch(initialFilters?: SearchFilters) {
   return {
     query: filters.q || '',
     filters,
-    results: searchQuery.data?.data || [],
-    meta: searchQuery.data?.meta,
+    results: searchQuery.data?.results || [],
+    meta: searchQuery.data,
     isLoading: searchQuery.isLoading,
     isError: searchQuery.isError,
     error: searchQuery.error,
@@ -98,7 +98,7 @@ export function useSemanticSearch() {
         query: searchQuery,
         limit,
       });
-      setResults(response.data);
+      setResults(response.data?.results || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Search failed'));
       setResults([]);
@@ -151,7 +151,7 @@ export function useSearchSuggestions() {
         return [];
       }
       const response = await searchApi.suggest(debouncedQuery);
-      return response.data;
+      return response.data?.suggestions || [];
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 1000 * 60, // 1 minute
