@@ -13,11 +13,30 @@ This is a cloud-based Document Management System similar to OneDrive/Google Driv
 
 ### Key Features
 
-- **Document Storage**: Secure cloud storage with versioning on S3
+#### Core Features
+- **Document Storage**: Secure cloud storage with versioning on AWS S3
 - **Document Processing**: PDF split/merge, OCR (AWS Textract), AI classification
-- **Web UI**: Modern React-based interface with drag-and-drop uploads
-- **Multi-tenancy**: Organization-based data isolation with RBAC
-- **Semantic Search**: AI-powered document search using pgvector
+- **Semantic Search**: AI-powered document search using pgvector embeddings
+- **Multi-tenancy**: Organization-based data isolation with Row-Level Security
+
+#### Collaboration
+- **Real-time Presence**: See who's viewing documents in real-time via WebSocket
+- **Comments & Discussions**: Threaded comments with @mentions
+- **Document Sharing**: Share documents with granular permissions
+- **Version History**: Track all document changes with version control
+
+#### User Experience
+- **Modern Web UI**: Next.js 15 with App Router and React 19
+- **Drag-and-Drop Uploads**: Intuitive file upload with progress tracking
+- **Resumable Uploads**: Large file uploads with automatic resume
+- **Bulk Operations**: Select and manage multiple documents at once
+- **Desktop Upload Agent**: Electron app for automated folder syncing
+
+#### Security & Auth
+- **OAuth Integration**: Google and Microsoft SSO support
+- **Email/Password Auth**: Traditional authentication with password reset flow
+- **RBAC**: Role-based access control (Viewer, Editor, Admin, Owner)
+- **API Keys**: Machine-to-machine authentication for integrations
 
 ---
 
@@ -25,18 +44,20 @@ This is a cloud-based Document Management System similar to OneDrive/Google Driv
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **Frontend** | Next.js (App Router) | 16.1 |
+| **Frontend** | Next.js (App Router) | 15.5 |
+| **UI Components** | shadcn/ui + Radix | Latest |
 | **Backend** | NestJS | 11+ |
-| **Database** | PostgreSQL + pgvector | 18 |
-| **ORM** | Prisma | 7.x |
-| **Cache** | Redis (ElastiCache) | 7.x |
+| **Database** | PostgreSQL + pgvector | 16+ |
+| **ORM** | Prisma | 5.22 |
+| **Cache** | Redis | 7+ |
+| **Queue** | BullMQ | 5+ |
 | **Storage** | AWS S3 + CloudFront | - |
-| **Queue** | BullMQ + SQS | - |
+| **Real-time** | Socket.IO | 4.8 |
 | **AI/ML** | AWS Textract, OpenAI GPT-4 | - |
-| **IaC** | AWS CDK v2 | - |
+| **IaC** | AWS CDK v2 | 2.175 |
 | **Language** | TypeScript | 5.9 |
-| **Styling** | Tailwind CSS + shadcn/ui | 4.1 |
-| **Package Manager** | pnpm | 9.x |
+| **Styling** | Tailwind CSS | 3.4 |
+| **Package Manager** | pnpm | 9+ |
 
 ---
 
@@ -45,7 +66,7 @@ This is a cloud-based Document Management System similar to OneDrive/Google Driv
 ```
 document-management-system/
 ├── apps/
-│   ├── web/                    # Next.js 16.1 Frontend
+│   ├── web/                    # Next.js 15 Frontend
 │   ├── api/                    # NestJS 11+ Backend
 │   └── upload-agent/           # Desktop Upload Agent (Electron)
 ├── packages/
@@ -108,15 +129,22 @@ pnpm infra:deploy:prod       # Deploy to production
 apps/api/src/
 ├── modules/           # Feature modules
 │   ├── auth/          # Authentication (JWT, OAuth, API Keys)
-│   ├── documents/     # Document CRUD
-│   ├── folders/       # Folder management
-│   ├── storage/       # S3 operations
-│   ├── processing/    # File processing pipeline
-│   └── search/        # Full-text & semantic search
+│   ├── users/         # User management and profiles
+│   ├── organizations/ # Multi-tenant organization management
+│   ├── documents/     # Document CRUD and metadata
+│   ├── folders/       # Hierarchical folder structure
+│   ├── storage/       # S3 file operations and presigned URLs
+│   ├── uploads/       # Chunked upload handling
+│   ├── processing/    # Background job processing (OCR, thumbnails)
+│   ├── search/        # Full-text and semantic search
+│   ├── comments/      # Document comments and threads
+│   ├── realtime/      # WebSocket events and presence
+│   ├── audit/         # Activity logging and audit trail
+│   └── email/         # Transactional email service
 ├── common/            # Shared utilities
-│   ├── decorators/    # Custom decorators
+│   ├── decorators/    # Custom decorators (@CurrentUser, etc.)
 │   ├── filters/       # Exception filters
-│   ├── guards/        # Auth guards
+│   ├── guards/        # Auth guards (JWT, API Key, Roles)
 │   └── interceptors/  # Request/response interceptors
 └── config/            # Configuration modules
 ```
@@ -126,17 +154,23 @@ apps/api/src/
 ```
 apps/web/src/
 ├── app/               # App Router pages
-│   ├── (auth)/        # Auth routes (login, register)
+│   ├── (auth)/        # Auth routes (login, register, reset-password)
 │   ├── (dashboard)/   # Protected routes
 │   │   ├── documents/ # Document management
 │   │   ├── folders/   # Folder management
-│   │   └── settings/  # User settings
-│   └── api/           # API routes (BFF)
+│   │   └── settings/  # User settings (appearance, security, org)
+│   └── auth/          # OAuth callback handlers
 ├── components/        # React components
-│   ├── ui/            # shadcn/ui components
-│   ├── documents/     # Document-specific components
-│   └── layout/        # Layout components
+│   ├── documents/     # Document components (detail, upload, share)
+│   ├── comments/      # Comments and threads
+│   ├── folders/       # Folder components
+│   ├── search/        # Search components
+│   └── layout/        # Layout components (header, sidebar)
 ├── hooks/             # Custom React hooks
+│   ├── useDocuments   # Document operations
+│   ├── usePresence    # Real-time presence
+│   ├── useBulkSelection # Multi-select operations
+│   └── useResumableUpload # Chunked uploads
 └── lib/               # Utilities and helpers
 ```
 
