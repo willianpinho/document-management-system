@@ -16,6 +16,23 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 
+// Mock @prisma/client before importing services
+vi.mock('@prisma/client', () => ({
+  PrismaClient: vi.fn().mockImplementation(() => ({})),
+  AuthProvider: {
+    EMAIL: 'EMAIL',
+    GOOGLE: 'GOOGLE',
+    MICROSOFT: 'MICROSOFT',
+  },
+  MemberRole: {
+    OWNER: 'OWNER',
+    ADMIN: 'ADMIN',
+    EDITOR: 'EDITOR',
+    VIEWER: 'VIEWER',
+  },
+  Prisma: {},
+}));
+
 import { AuthService } from '../auth.service';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { UsersService } from '../../users/users.service';
@@ -33,6 +50,13 @@ const createMockPrismaService = () => ({
     findFirst: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
+  },
+  organization: {
+    create: vi.fn(),
+  },
+  user: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
   },
 });
 
@@ -128,6 +152,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue(hashedPassword);
       usersService.create.mockResolvedValue(newUser);
+      prismaService.organization.create.mockResolvedValue({});
       jwtService.sign
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token');
@@ -146,6 +171,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
+      prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
@@ -173,6 +199,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
+      prismaService.organization.create.mockResolvedValue({});
       jwtService.sign
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token');
@@ -193,6 +220,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
+      prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
@@ -516,6 +544,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
+      prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
