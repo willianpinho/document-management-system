@@ -5,7 +5,7 @@
  * handling system tray integration, and coordinating IPC communication.
  */
 
-import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, shell, dialog } from 'electron';
 import * as path from 'path';
 
 let mainWindow: BrowserWindow | null = null;
@@ -64,9 +64,35 @@ export function createWindow(): BrowserWindow {
  * Create system tray with context menu
  */
 export function createTray(): Tray {
-  const icon = nativeImage.createFromPath(
-    path.join(__dirname, '../../assets/tray-icon.png')
-  );
+  // Try to load custom icon, fallback to generated icon
+  let icon: Electron.NativeImage;
+  const iconPath = path.join(__dirname, '../../assets/tray-icon.png');
+
+  try {
+    const fs = require('fs');
+    if (fs.existsSync(iconPath)) {
+      icon = nativeImage.createFromPath(iconPath);
+    } else {
+      // Create a simple 16x16 icon programmatically
+      icon = nativeImage.createEmpty();
+    }
+  } catch {
+    icon = nativeImage.createEmpty();
+  }
+
+  // Ensure icon is at least minimally sized
+  if (icon.isEmpty()) {
+    // Create a simple colored square as fallback
+    const size = 16;
+    const buffer = Buffer.alloc(size * size * 4);
+    for (let i = 0; i < size * size; i++) {
+      buffer[i * 4 + 0] = 79;   // R
+      buffer[i * 4 + 1] = 156;  // G
+      buffer[i * 4 + 2] = 249;  // B
+      buffer[i * 4 + 3] = 255;  // A
+    }
+    icon = nativeImage.createFromBuffer(buffer, { width: size, height: size });
+  }
 
   tray = new Tray(icon.resize({ width: 16, height: 16 }));
 
@@ -142,6 +168,20 @@ export function setupIPC(): void {
     if (process.platform === 'darwin') {
       app.dock.setBadge(count > 0 ? count.toString() : '');
     }
+  });
+
+  // Open external URL
+  ipcMain.handle('app:open-external', async (_, url: string) => {
+    await shell.openExternal(url);
+    return true;
+  });
+
+  // Show open dialog for file/folder selection
+  ipcMain.handle('app:show-open-dialog', async (_, options: Electron.OpenDialogOptions) => {
+    if (!mainWindow) {
+      return { canceled: true, filePaths: [] };
+    }
+    return dialog.showOpenDialog(mainWindow, options);
   });
 }
 

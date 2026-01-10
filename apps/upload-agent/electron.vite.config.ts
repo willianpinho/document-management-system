@@ -13,7 +13,7 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/main.ts'),
+          index: resolve(__dirname, 'src/index.ts'),
         },
       },
     },

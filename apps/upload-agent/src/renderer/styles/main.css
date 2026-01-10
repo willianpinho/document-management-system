@@ -414,6 +414,47 @@ body {
 
 .watch-list {
   list-style: none;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.watch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.watch-item:last-child {
+  border-bottom: none;
+}
+
+.watch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.watch-path {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-options {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.watch-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .empty-state {

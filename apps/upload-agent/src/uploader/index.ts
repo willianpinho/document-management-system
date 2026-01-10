@@ -135,7 +135,7 @@ export function removeFromQueue(jobId: string): boolean {
   if (index === -1) return false;
 
   const job = uploadQueue[index];
-  if (job.status === 'uploading') {
+  if (job && job.status === 'uploading') {
     job.status = 'cancelled';
   }
 
@@ -182,6 +182,82 @@ function updateJobProgress(job: UploadJob, progress: number, uploadedBytes: numb
 }
 
 /**
+ * Upload file with progress tracking
+ */
+async function uploadWithProgress(
+  job: UploadJob,
+  uploadUrl: string,
+  uploadFields: Record<string, string>
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const fileStream = fs.createReadStream(job.filePath);
+    let uploadedBytes = 0;
+
+    // Build multipart form data manually for streaming
+    const boundary = `----FormBoundary${Date.now().toString(16)}`;
+    const chunks: Buffer[] = [];
+
+    // Add form fields
+    for (const [key, value] of Object.entries(uploadFields)) {
+      chunks.push(Buffer.from(`--${boundary}\r\n`));
+      chunks.push(Buffer.from(`Content-Disposition: form-data; name="${key}"\r\n\r\n`));
+      chunks.push(Buffer.from(`${value}\r\n`));
+    }
+
+    // Add file header
+    chunks.push(Buffer.from(`--${boundary}\r\n`));
+    chunks.push(
+      Buffer.from(
+        `Content-Disposition: form-data; name="file"; filename="${job.fileName}"\r\n`
+      )
+    );
+    chunks.push(Buffer.from(`Content-Type: ${job.mimeType}\r\n\r\n`));
+
+    const header = Buffer.concat(chunks);
+    const footer = Buffer.from(`\r\n--${boundary}--\r\n`);
+
+    // Read file and upload with progress tracking
+    const fileChunks: Buffer[] = [header];
+
+    fileStream.on('data', (chunk: Buffer) => {
+      fileChunks.push(chunk);
+      uploadedBytes += chunk.length;
+      const progress = Math.round((uploadedBytes / job.fileSize) * 90); // Reserve 10% for upload
+      updateJobProgress(job, progress, uploadedBytes);
+    });
+
+    fileStream.on('end', async () => {
+      fileChunks.push(footer);
+      const body = Buffer.concat(fileChunks);
+
+      try {
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': body.length.toString(),
+          },
+          body: body,
+        });
+
+        if (!response.ok) {
+          reject(new Error(`S3 upload failed: ${response.statusText}`));
+        } else {
+          updateJobProgress(job, 100, job.fileSize);
+          resolve();
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    fileStream.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
+/**
  * Upload a single file
  */
 async function uploadFile(job: UploadJob): Promise<void> {
@@ -224,30 +300,8 @@ async function uploadFile(job: UploadJob): Promise<void> {
     const { document, uploadUrl, uploadFields } = await createResponse.json();
     job.documentId = document.id;
 
-    // Step 3: Upload file to S3 using presigned URL
-    const fileStream = fs.createReadStream(job.filePath);
-    const formData = new FormData();
-
-    // Add presigned form fields
-    for (const [key, value] of Object.entries(uploadFields || {})) {
-      formData.append(key, value as string);
-    }
-
-    // Read file into buffer for upload
-    const fileBuffer = fs.readFileSync(job.filePath);
-    const blob = new Blob([fileBuffer], { type: job.mimeType });
-    formData.append('file', blob, job.fileName);
-
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
-    }
-
-    updateJobProgress(job, 100, job.fileSize);
+    // Step 3: Upload file to S3 using presigned URL with progress tracking
+    await uploadWithProgress(job, uploadUrl, uploadFields || {});
 
     // Step 4: Confirm upload
     const confirmHeaders = createAuthHeaders('POST', `/api/documents/${document.id}/confirm`);
@@ -285,7 +339,7 @@ async function uploadFile(job: UploadJob): Promise<void> {
 /**
  * Process upload queue
  */
-async function processQueue(): Promise<void> {
+export async function processQueue(): Promise<void> {
   if (isProcessing || isPaused) return;
   isProcessing = true;
 
@@ -369,3 +423,8 @@ export function setupUploaderIPC(): void {
     togglePause(paused);
   });
 }
+
+/**
+ * Alias for addToQueue - used by watcher integration
+ */
+export const addUploadJob = addToQueue;

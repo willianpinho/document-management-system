@@ -20,6 +20,9 @@ const disconnectBtn = document.getElementById('disconnect-btn') as HTMLButtonEle
 const minimizeBtn = document.getElementById('minimize-btn') as HTMLButtonElement;
 const closeBtn = document.getElementById('close-btn') as HTMLButtonElement;
 const versionSpan = document.getElementById('version') as HTMLSpanElement;
+const addWatchBtn = document.getElementById('add-watch-btn') as HTMLButtonElement;
+const watchList = document.getElementById('watch-list') as HTMLUListElement;
+const emptyWatch = document.getElementById('empty-watch') as HTMLElement;
 
 // State
 let isPaused = false;
@@ -53,6 +56,10 @@ async function init() {
   // Load initial queue
   const queue = await window.dms.upload.getQueue();
   updateQueueDisplay(queue);
+
+  // Load watch folders
+  const watchConfigs = await window.dms.watcher.getConfigs();
+  updateWatchDisplay(watchConfigs);
 }
 
 function setupEventListeners() {
@@ -76,6 +83,9 @@ function setupEventListeners() {
   // Queue controls
   pauseBtn.addEventListener('click', handlePauseToggle);
   clearBtn.addEventListener('click', () => window.dms.upload.clearCompleted());
+
+  // Watch folder controls
+  addWatchBtn.addEventListener('click', handleAddWatchFolder);
 }
 
 function showAuthSection() {
@@ -236,6 +246,114 @@ function formatBytes(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+// Watch folder functions
+async function handleAddWatchFolder() {
+  const result = await window.dms.app.showOpenDialog({
+    properties: ['openDirectory'],
+    title: 'Select folder to watch',
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return;
+
+  const folderPath = result.filePaths[0];
+
+  try {
+    const config = await window.dms.watcher.addConfig({
+      path: folderPath,
+      recursive: true,
+      patterns: ['*'],
+      enabled: true,
+    });
+
+    const configs = await window.dms.watcher.getConfigs();
+    updateWatchDisplay(configs);
+  } catch (error) {
+    console.error('Failed to add watch folder:', error);
+    alert('Failed to add watch folder. Please try again.');
+  }
+}
+
+interface WatchConfig {
+  id: string;
+  path: string;
+  folderId?: string;
+  recursive: boolean;
+  patterns: string[];
+  enabled: boolean;
+}
+
+function updateWatchDisplay(configs: WatchConfig[]) {
+  if (configs.length === 0) {
+    watchList.innerHTML = '';
+    emptyWatch.classList.remove('hidden');
+    return;
+  }
+
+  emptyWatch.classList.add('hidden');
+  watchList.innerHTML = configs
+    .map(
+      (config) => `
+    <li class="watch-item" data-id="${config.id}">
+      <div class="watch-info">
+        <span class="watch-path" title="${config.path}">${truncatePath(config.path)}</span>
+        <span class="watch-options">
+          ${config.recursive ? 'Recursive' : 'Top-level only'}
+        </span>
+      </div>
+      <div class="watch-actions">
+        <button class="btn btn-small ${config.enabled ? 'btn-warning' : 'btn-primary'} toggle-watch-btn">
+          ${config.enabled ? 'Disable' : 'Enable'}
+        </button>
+        <button class="btn btn-small btn-danger remove-watch-btn">Remove</button>
+      </div>
+    </li>
+  `
+    )
+    .join('');
+
+  // Add event listeners to buttons
+  watchList.querySelectorAll('.toggle-watch-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = (e.target as HTMLElement).closest('.watch-item')?.getAttribute('data-id');
+      if (!id) return;
+
+      const config = configs.find((c) => c.id === id);
+      if (!config) return;
+
+      await window.dms.watcher.updateConfig(id, { enabled: !config.enabled });
+      const updatedConfigs = await window.dms.watcher.getConfigs();
+      updateWatchDisplay(updatedConfigs);
+    });
+  });
+
+  watchList.querySelectorAll('.remove-watch-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = (e.target as HTMLElement).closest('.watch-item')?.getAttribute('data-id');
+      if (!id) return;
+
+      await window.dms.watcher.removeConfig(id);
+      const updatedConfigs = await window.dms.watcher.getConfigs();
+      updateWatchDisplay(updatedConfigs);
+    });
+  });
+}
+
+function truncatePath(fullPath: string, maxLength: number = 35): string {
+  if (fullPath.length <= maxLength) return fullPath;
+
+  const separator = fullPath.includes('\\') ? '\\' : '/';
+  const parts = fullPath.split(separator);
+
+  if (parts.length <= 2) {
+    return '...' + fullPath.slice(-maxLength + 3);
+  }
+
+  // Keep first and last parts
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  return `${first}${separator}...${separator}${last}`;
 }
 
 // Initialize when DOM is ready
