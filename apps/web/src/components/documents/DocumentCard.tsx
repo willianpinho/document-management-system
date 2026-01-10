@@ -80,7 +80,7 @@ export function DocumentCard({
   const iconColor = getMimeTypeColor(document.mimeType);
 
   return (
-    <Card className="group relative transition-all hover:shadow-md">
+    <Card className="group relative transition-all hover:shadow-md" data-testid="document-card">
       <Link href={`/documents/${document.id}`}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
