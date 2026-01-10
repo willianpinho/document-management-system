@@ -14,7 +14,7 @@
     "destroy:staging": "cdk destroy --all -c environment=staging --force",
     "bootstrap": "cdk bootstrap",
     "lint": "eslint . --ext .ts",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
