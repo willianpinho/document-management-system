@@ -377,72 +377,102 @@ async function main() {
   }
 
   // Nested folders under Documents
-  const contractsFolder = await prisma.folder.create({
-    data: {
-      organizationId: acmeOrg.id,
-      parentId: documentsFolder.id,
-      name: 'Contracts',
-      path: '/Documents/Contracts',
-      depth: 1,
-      createdById: johnUser.id,
-    },
+  let contractsFolder = await prisma.folder.findFirst({
+    where: { organizationId: acmeOrg.id, parentId: documentsFolder.id, name: 'Contracts' },
   });
+  if (!contractsFolder) {
+    contractsFolder = await prisma.folder.create({
+      data: {
+        organizationId: acmeOrg.id,
+        parentId: documentsFolder.id,
+        name: 'Contracts',
+        path: '/Documents/Contracts',
+        depth: 1,
+        createdById: johnUser.id,
+      },
+    });
+  }
 
-  const invoicesFolder = await prisma.folder.create({
-    data: {
-      organizationId: acmeOrg.id,
-      parentId: documentsFolder.id,
-      name: 'Invoices',
-      path: '/Documents/Invoices',
-      depth: 1,
-      createdById: johnUser.id,
-    },
+  let invoicesFolder = await prisma.folder.findFirst({
+    where: { organizationId: acmeOrg.id, parentId: documentsFolder.id, name: 'Invoices' },
   });
+  if (!invoicesFolder) {
+    invoicesFolder = await prisma.folder.create({
+      data: {
+        organizationId: acmeOrg.id,
+        parentId: documentsFolder.id,
+        name: 'Invoices',
+        path: '/Documents/Invoices',
+        depth: 1,
+        createdById: johnUser.id,
+      },
+    });
+  }
 
-  const reportsFolder = await prisma.folder.create({
-    data: {
-      organizationId: acmeOrg.id,
-      parentId: documentsFolder.id,
-      name: 'Reports',
-      path: '/Documents/Reports',
-      depth: 1,
-      createdById: janeUser.id,
-    },
+  let reportsFolder = await prisma.folder.findFirst({
+    where: { organizationId: acmeOrg.id, parentId: documentsFolder.id, name: 'Reports' },
   });
+  if (!reportsFolder) {
+    reportsFolder = await prisma.folder.create({
+      data: {
+        organizationId: acmeOrg.id,
+        parentId: documentsFolder.id,
+        name: 'Reports',
+        path: '/Documents/Reports',
+        depth: 1,
+        createdById: janeUser.id,
+      },
+    });
+  }
 
   // Nested folders under Projects
-  const project2024Folder = await prisma.folder.create({
-    data: {
-      organizationId: acmeOrg.id,
-      parentId: projectsFolder.id,
-      name: '2024',
-      path: '/Projects/2024',
-      depth: 1,
-      createdById: adminUser.id,
-    },
+  let project2024Folder = await prisma.folder.findFirst({
+    where: { organizationId: acmeOrg.id, parentId: projectsFolder.id, name: '2024' },
   });
+  if (!project2024Folder) {
+    project2024Folder = await prisma.folder.create({
+      data: {
+        organizationId: acmeOrg.id,
+        parentId: projectsFolder.id,
+        name: '2024',
+        path: '/Projects/2024',
+        depth: 1,
+        createdById: adminUser.id,
+      },
+    });
+  }
 
-  const websiteRedesignFolder = await prisma.folder.create({
-    data: {
-      organizationId: acmeOrg.id,
-      parentId: project2024Folder.id,
-      name: 'Website Redesign',
-      path: '/Projects/2024/Website Redesign',
-      depth: 2,
-      createdById: janeUser.id,
-    },
+  let websiteRedesignFolder = await prisma.folder.findFirst({
+    where: { organizationId: acmeOrg.id, parentId: project2024Folder.id, name: 'Website Redesign' },
   });
+  if (!websiteRedesignFolder) {
+    websiteRedesignFolder = await prisma.folder.create({
+      data: {
+        organizationId: acmeOrg.id,
+        parentId: project2024Folder.id,
+        name: 'Website Redesign',
+        path: '/Projects/2024/Website Redesign',
+        depth: 2,
+        createdById: janeUser.id,
+      },
+    });
+  }
 
   // Folders for Startup Inc
-  const startupDocsFolder = await prisma.folder.create({
-    data: {
-      organizationId: startupOrg.id,
-      name: 'Company Documents',
-      path: '/Company Documents',
-      depth: 0,
-      createdById: bobUser.id,
-    },
+  let startupDocsFolder = await prisma.folder.findFirst({
+    where: { organizationId: startupOrg.id, parentId: null, name: 'Company Documents' },
   });
+  if (!startupDocsFolder) {
+    startupDocsFolder = await prisma.folder.create({
+      data: {
+        organizationId: startupOrg.id,
+        name: 'Company Documents',
+        path: '/Company Documents',
+        depth: 0,
+        createdById: bobUser.id,
+      },
+    });
+  }
 
   console.log('  Created folder hierarchy\n');
 
@@ -808,6 +838,7 @@ async function main() {
           createdById: johnUser.id,
         },
       ],
+      skipDuplicates: true,
     });
   }
 
@@ -833,6 +864,7 @@ async function main() {
           createdById: janeUser.id,
         },
       ],
+      skipDuplicates: true,
     });
   }
 
