@@ -25,6 +25,8 @@ export class StorageService {
     this.bucket = this.configService.get<string>('S3_BUCKET', 'dms-documents-dev');
 
     const endpoint = this.configService.get<string>('S3_ENDPOINT');
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
 
     this.s3Client = new S3Client({
       region: this.configService.get<string>('S3_REGION', 'us-east-1'),
@@ -32,7 +34,15 @@ export class StorageService {
         endpoint,
         forcePathStyle: true,
       }),
+      ...(accessKeyId && secretAccessKey && {
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      }),
     });
+
+    this.logger.log(`Storage configured with endpoint: ${endpoint || 'AWS S3'}, bucket: ${this.bucket}`);
   }
 
   async getPresignedUploadUrl(key: string, contentType: string, expiresIn = 3600) {
