@@ -14,48 +14,38 @@ import {
   Input,
 } from '@dms/ui';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/documents';
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoggingIn } = useAuth();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Invalid email or password');
-        setIsLoading(false);
-        return;
-      }
-
-      // Redirect to callback URL or documents page
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      setIsLoading(false);
+      // Use custom auth API which fetches organizations and sets the current one
+      await login({ email, password });
+      // The login mutation already handles navigation to /documents
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      setError(message);
     }
   }
 
   const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
     await signIn(provider, { callbackUrl });
   };
+
+  const isLoading = isLoggingIn;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
