@@ -178,6 +178,7 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
                 autoComplete="name"
+                data-testid="name-input"
               />
             </div>
 
@@ -193,6 +194,7 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                data-testid="email-input"
               />
             </div>
 
@@ -208,6 +210,7 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
                 autoComplete="new-password"
+                data-testid="password-input"
               />
               <p className="text-xs text-muted-foreground">
                 Must be at least 8 characters
@@ -225,10 +228,11 @@ export default function RegisterPage() {
                 required
                 disabled={isLoading}
                 autoComplete="new-password"
+                data-testid="confirm-password-input"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="register-button">
               {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

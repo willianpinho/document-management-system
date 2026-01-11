@@ -27,10 +27,9 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Redirect authenticated users away from auth pages to dashboard
-  if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
-  }
+  // Don't redirect authenticated users away from auth pages
+  // This allows the signOut flow to complete properly
+  // The login/register pages will handle their own redirects if user is authenticated
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && !isPublicRoute) {

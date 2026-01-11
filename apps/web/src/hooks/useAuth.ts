@@ -137,7 +137,7 @@ export function useAuth() {
       setAuthTokens(data.accessToken, data.refreshToken);
       await refetchUser();
       await refetchOrgs();
-      router.push('/documents');
+      // Navigation is handled by the login page after NextAuth signIn
     },
   });
 
@@ -173,7 +173,7 @@ export function useAuth() {
     onSettled: () => {
       storeLogout();
       queryClient.clear();
-      router.push('/login');
+      // Navigation is handled by NextAuth signOut in header.tsx
     },
   });
 

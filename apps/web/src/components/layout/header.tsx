@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import { useCallback } from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -60,12 +61,30 @@ export function Header() {
 
   const pageTitle = getPageTitle(pathname);
 
-  const handleLogout = async () => {
-    // Clear local tokens first
-    logout();
-    // Sign out from NextAuth session
-    await signOut({ callbackUrl: '/login' });
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      // Clear local tokens and Zustand state first
+      logout();
+
+      // Clear all localStorage auth data to prevent stale state
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('currentOrganizationId');
+      }
+
+      // Sign out from NextAuth without redirect (we'll handle it ourselves)
+      await signOut({ redirect: false });
+
+      // Force hard navigation to login page to clear all React state
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Force navigation even on error
+      window.location.href = '/login';
+    }
+  }, [logout]);
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6">
@@ -113,6 +132,7 @@ export function Header() {
               variant="ghost"
               className="relative h-10 w-10 rounded-full"
               aria-label="User menu"
+              data-testid="user-menu"
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user?.avatarUrl || ''} alt={user?.name || 'User'} />
@@ -147,7 +167,11 @@ export function Header() {
               Organization
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+            <DropdownMenuItem
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              data-testid="logout-button"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               {isLoggingOut ? 'Logging out...' : 'Log out'}
             </DropdownMenuItem>

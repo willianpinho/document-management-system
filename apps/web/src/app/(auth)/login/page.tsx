@@ -21,31 +21,48 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/documents';
   const [error, setError] = useState('');
-  const { login, isLoggingIn } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     try {
-      // Use custom auth API which fetches organizations and sets the current one
+      // First, call the custom auth API to get tokens and set up organization context
       await login({ email, password });
-      // The login mutation already handles navigation to /documents
+
+      // Then, sign in with NextAuth to establish the session
+      // This is needed because the dashboard uses useSession() to check auth
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Invalid email or password');
+        setIsLoading(false);
+        return;
+      }
+
+      // Navigate to the callback URL or documents page
+      router.push(callbackUrl);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid email or password';
       setError(message);
+      setIsLoading(false);
     }
   }
 
   const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
     await signIn(provider, { callbackUrl });
   };
-
-  const isLoading = isLoggingIn;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -132,6 +149,7 @@ function LoginContent() {
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                data-testid="email-input"
               />
             </div>
 
@@ -154,10 +172,11 @@ function LoginContent() {
                 required
                 disabled={isLoading}
                 autoComplete="current-password"
+                data-testid="password-input"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="login-button">
               {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
