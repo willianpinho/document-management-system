@@ -625,6 +625,9 @@ export const searchApi = {
     limit?: number;
     sortBy?: SortField;
     sortOrder?: SortOrder;
+    mimeType?: string;
+    dateFrom?: string;
+    folderId?: string;
   }) =>
     request<SearchResponse>('/search', {
       params: params as Record<string, string | number | boolean | undefined>,
@@ -903,9 +906,17 @@ export interface UpdateCommentInput {
   mentions?: string[];
 }
 
+export interface CommentListResponse {
+  data: Comment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const commentsApi = {
   list: (documentId: string, params?: { page?: number; limit?: number; includeReplies?: boolean }) =>
-    request<Comment[]>(`/documents/${documentId}/comments`, {
+    request<CommentListResponse>(`/documents/${documentId}/comments`, {
       params: params as Record<string, string | number | boolean | undefined>,
     }),
 

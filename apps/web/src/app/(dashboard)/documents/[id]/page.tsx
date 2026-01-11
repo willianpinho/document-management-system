@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -18,6 +18,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Code2,
 } from 'lucide-react';
 import {
   Button,
@@ -83,6 +84,11 @@ export default function DocumentDetailPage() {
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
 
+  // Text file preview state
+  const [textContent, setTextContent] = useState<string | null>(null);
+  const [textLoadError, setTextLoadError] = useState<string | null>(null);
+  const [isLoadingText, setIsLoadingText] = useState(false);
+
   // Document data hooks
   const { data: document, isLoading, error } = useDocument(documentId);
   const { data: downloadUrlData } = useDocumentDownloadUrl(documentId);
@@ -120,6 +126,60 @@ export default function DocumentDetailPage() {
     documentId,
     enabled: document?.processingStatus === 'processing',
   });
+
+  // Helper to check if file is a text-based file that can be previewed
+  const isTextFile = (mimeType: string | undefined): boolean => {
+    if (!mimeType) return false;
+    const textTypes = [
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'text/xml',
+      'text/html',
+      'text/css',
+      'text/javascript',
+      'application/json',
+      'application/xml',
+      'application/javascript',
+      'application/x-yaml',
+      'application/yaml',
+    ];
+    return textTypes.includes(mimeType) || mimeType.startsWith('text/');
+  };
+
+  // Fetch text content for text-based files
+  useEffect(() => {
+    const loadTextContent = async () => {
+      if (!document || !downloadUrlData?.url || !isTextFile(document.mimeType)) {
+        setTextContent(null);
+        return;
+      }
+
+      setIsLoadingText(true);
+      setTextLoadError(null);
+
+      try {
+        const response = await fetch(downloadUrlData.url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch file content');
+        }
+        const text = await response.text();
+        // Limit preview to first 100KB for performance
+        const maxLength = 100 * 1024;
+        if (text.length > maxLength) {
+          setTextContent(text.substring(0, maxLength) + '\n\n... (truncated, download to view full file)');
+        } else {
+          setTextContent(text);
+        }
+      } catch (err) {
+        setTextLoadError(err instanceof Error ? err.message : 'Failed to load file content');
+      } finally {
+        setIsLoadingText(false);
+      }
+    };
+
+    loadTextContent();
+  }, [document, downloadUrlData?.url]);
 
   const handleDownload = async () => {
     if (downloadUrlData?.url && document) {
@@ -372,6 +432,55 @@ export default function DocumentDetailPage() {
                     className="h-[600px] w-full rounded-lg border"
                     title={document.name}
                   />
+                ) : document.mimeType.startsWith('video/') && downloadUrlData?.url ? (
+                  <video
+                    src={downloadUrlData.url}
+                    controls
+                    className="max-h-[600px] w-full rounded-lg"
+                    title={document.name}
+                  />
+                ) : document.mimeType.startsWith('audio/') && downloadUrlData?.url ? (
+                  <div className="flex flex-col items-center justify-center rounded-lg bg-muted p-8">
+                    <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                    <audio
+                      src={downloadUrlData.url}
+                      controls
+                      className="w-full max-w-md"
+                      title={document.name}
+                    />
+                  </div>
+                ) : isTextFile(document.mimeType) ? (
+                  <div className="rounded-lg border bg-muted/30">
+                    <div className="flex items-center justify-between border-b px-4 py-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Code2 className="h-4 w-4" />
+                        <span>{document.mimeType}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={handleDownload}>
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                    <div className="max-h-[500px] overflow-auto p-4">
+                      {isLoadingText ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : textLoadError ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-destructive">
+                          <AlertCircle className="h-8 w-8 mb-2" />
+                          <p>{textLoadError}</p>
+                          <Button variant="outline" size="sm" className="mt-2" onClick={handleDownload}>
+                            Download instead
+                          </Button>
+                        </div>
+                      ) : textContent ? (
+                        <pre className="whitespace-pre-wrap text-sm font-mono">{textContent}</pre>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">No content to display</p>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-lg bg-muted py-16">
                     <FileText className="h-16 w-16 text-muted-foreground" />

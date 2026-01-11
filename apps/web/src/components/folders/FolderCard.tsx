@@ -35,7 +35,7 @@ export function FolderCard({
   onMove,
 }: FolderCardProps) {
   return (
-    <Card className="group relative transition-all hover:shadow-md">
+    <Card className="group relative transition-all hover:shadow-md" data-testid="folder-card">
       <Link href={`/folders/${folder.id}`}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between">

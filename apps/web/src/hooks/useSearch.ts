@@ -54,8 +54,10 @@ export function useSearch(initialFilters?: SearchFilters) {
       }
 
       const response = await searchApi.search({
-        ...filters,
-        q: debouncedQuery,
+        q: debouncedQuery || '',
+        mimeType: filters.mimeType,
+        dateFrom: filters.dateFrom,
+        folderId: filters.folderId,
       });
       return response.data;
     },

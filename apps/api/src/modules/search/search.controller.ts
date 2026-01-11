@@ -97,6 +97,13 @@ Supports pagination, filtering, and sorting.
     @CurrentUser() user: CurrentUserPayload,
     @Query() query: SearchQueryDto,
   ) {
+    // Build filters from query params
+    const filters = {
+      ...(query.mimeType && { mimeTypes: [query.mimeType] }),
+      ...(query.dateFrom && { createdAt: { from: query.dateFrom } }),
+      ...(query.folderId && { folderId: query.folderId }),
+    };
+
     return this.searchService.search({
       organizationId: user.organizationId!,
       query: query.q,
@@ -105,6 +112,7 @@ Supports pagination, filtering, and sorting.
       limit: query.limit || 20,
       sortBy: query.sortBy,
       sortOrder: query.sortOrder,
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
     });
   }
 

@@ -5,6 +5,13 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+
+// Add BigInt JSON serialization support
+// This is needed because Prisma returns BigInt for large number fields (e.g., sizeBytes)
+// and JSON.stringify() doesn't natively support BigInt
+(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function () {
+  return this.toString();
+};
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';

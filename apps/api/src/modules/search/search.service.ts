@@ -111,11 +111,7 @@ export class SearchService {
     const skip = (page - 1) * limit;
     const startTime = Date.now();
 
-    const results: {
-      documents?: TextSearchResult[];
-      folders?: unknown[];
-    } = {};
-
+    const searchResults: SearchResultItemDto[] = [];
     let totalDocuments = 0;
     let totalFolders = 0;
 
@@ -137,10 +133,21 @@ export class SearchService {
         },
       });
 
-      results.documents = documents.map((doc) => ({
-        ...doc,
-        rank: 1, // Basic text search doesn't have ranking
-      }));
+      // Map documents to unified result format
+      documents.forEach((doc) => {
+        searchResults.push({
+          id: doc.id,
+          type: 'document',
+          name: doc.name,
+          path: doc.folder?.path || '/',
+          mimeType: doc.mimeType,
+          sizeBytes: doc.sizeBytes,
+          snippet: this.generateSnippet(doc.extractedText, 200),
+          score: 1,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        });
+      });
     }
 
     if (type === 'all' || type === 'folders') {
@@ -162,21 +169,31 @@ export class SearchService {
         orderBy: { name: 'asc' },
       });
 
-      results.folders = folders;
+      // Map folders to unified result format
+      folders.forEach((folder) => {
+        searchResults.push({
+          id: folder.id,
+          type: 'folder',
+          name: folder.name,
+          path: folder.path,
+          score: 1,
+          createdAt: folder.createdAt,
+          updatedAt: folder.updatedAt,
+        });
+      });
     }
 
     const total = type === 'documents' ? totalDocuments : type === 'folders' ? totalFolders : totalDocuments + totalFolders;
 
     return {
-      data: results,
-      meta: {
-        query,
-        algorithm: 'text' as const,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        took: Date.now() - startTime,
+      results: searchResults,
+      total,
+      page,
+      limit,
+      hasMore: page * limit < total,
+      searchType: 'text' as const,
+      timing: {
+        totalMs: Date.now() - startTime,
       },
     };
   }
@@ -224,18 +241,22 @@ export class SearchService {
       // Limit to requested number
       processedResults = processedResults.slice(0, limit);
 
+      // Map to unified format with type field
+      const mappedResults = processedResults.map((r) => ({
+        ...r,
+        type: 'document' as const,
+        path: r.folder?.path || '/',
+      }));
+
       return {
-        data: processedResults,
-        meta: {
-          query,
-          algorithm: 'semantic' as const,
-          total: processedResults.length,
-          page: 1,
-          limit,
-          totalPages: 1,
-          took: Date.now() - startTime,
-          threshold,
-          reranked: enableReranking,
+        results: mappedResults,
+        total: mappedResults.length,
+        page: 1,
+        limit,
+        hasMore: false,
+        searchType: 'semantic' as const,
+        timing: {
+          totalMs: Date.now() - startTime,
         },
       };
     } catch (error) {
@@ -295,20 +316,22 @@ export class SearchService {
     // Limit to requested number
     finalResults = finalResults.slice(0, limit);
 
+    // Map to unified format with type field
+    const mappedResults = finalResults.map((r) => ({
+      ...r,
+      type: 'document' as const,
+      path: r.folder?.path || '/',
+    }));
+
     return {
-      data: finalResults,
-      meta: {
-        query,
-        algorithm: 'hybrid' as const,
-        total: finalResults.length,
-        page: 1,
-        limit,
-        totalPages: 1,
-        took: Date.now() - startTime,
-        threshold,
-        reranked: enableReranking,
-        textWeight,
-        semanticWeight,
+      results: mappedResults,
+      total: mappedResults.length,
+      page: 1,
+      limit,
+      hasMore: false,
+      searchType: 'hybrid' as const,
+      timing: {
+        totalMs: Date.now() - startTime,
       },
     };
   }
@@ -797,6 +820,7 @@ Response format: comma-separated indices (e.g., "3,1,0,2,4")`;
    * Fallback to text search when semantic search is unavailable
    */
   private async fallbackToTextSearch(organizationId: string, query: string, limit: number) {
+    const startTime = Date.now();
     const documents = await this.prisma.document.findMany({
       where: {
         organizationId,
@@ -814,34 +838,25 @@ Response format: comma-separated indices (e.g., "3,1,0,2,4")`;
     });
 
     return {
-      data: documents.map((doc) => ({
+      results: documents.map((doc) => ({
         id: doc.id,
+        type: 'document' as const,
         name: doc.name,
-        originalName: doc.originalName,
+        path: doc.folder?.path || '/',
         mimeType: doc.mimeType,
         sizeBytes: doc.sizeBytes,
-        status: doc.status,
-        processingStatus: doc.processingStatus,
-        score: 0.5,
         snippet: this.generateSnippet(doc.extractedText, 200),
-        folder: doc.folder
-          ? {
-              id: doc.folder.id,
-              name: doc.folder.name,
-              path: doc.folder.path,
-            }
-          : undefined,
+        score: 0.5,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       })),
-      meta: {
-        query,
-        algorithm: 'text-fallback' as const,
-        total: documents.length,
-        page: 1,
-        limit,
-        totalPages: 1,
-        took: 0,
+      total: documents.length,
+      page: 1,
+      limit,
+      hasMore: false,
+      searchType: 'text' as const,
+      timing: {
+        totalMs: Date.now() - startTime,
       },
     };
   }

@@ -50,7 +50,9 @@ export function CommentsPanel({
       setLoading(true);
       setError(null);
       const response = await commentsApi.list(documentId, { includeReplies: true });
-      setComments(response.data || []);
+      // API response.data is CommentListResponse { data: Comment[], ... }
+      // So we need response.data.data to get the actual comments array
+      setComments(response.data?.data || []);
     } catch (err) {
       setError('Failed to load comments');
       console.error('Error fetching comments:', err);

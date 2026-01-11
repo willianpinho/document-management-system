@@ -211,6 +211,30 @@ export class SearchQueryDto {
   @IsEnum(SortOrder)
   @IsOptional()
   sortOrder?: SortOrder = SortOrder.DESC;
+
+  @ApiPropertyOptional({
+    description: 'Filter by MIME type (supports partial match like "image/" or "application/pdf")',
+    example: 'application/pdf',
+  })
+  @IsString()
+  @IsOptional()
+  mimeType?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by creation date (ISO 8601 date, returns documents created on or after this date)',
+    example: '2025-01-01',
+  })
+  @IsString()
+  @IsOptional()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by folder ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID()
+  @IsOptional()
+  folderId?: string;
 }
 
 export class SemanticSearchDto {
@@ -362,26 +386,32 @@ export class SuggestQueryDto {
 // =============================================================================
 
 export class SearchResultItemDto {
-  @ApiProperty({ description: 'Document ID' })
+  @ApiProperty({ description: 'Resource ID' })
   id: string;
 
-  @ApiProperty({ description: 'Document name' })
+  @ApiProperty({ description: 'Resource type', enum: ['document', 'folder'] })
+  type?: 'document' | 'folder';
+
+  @ApiProperty({ description: 'Resource name' })
   name: string;
 
-  @ApiProperty({ description: 'Original file name' })
-  originalName: string | null;
+  @ApiPropertyOptional({ description: 'Path in folder hierarchy' })
+  path?: string;
 
-  @ApiProperty({ description: 'MIME type' })
-  mimeType: string;
+  @ApiPropertyOptional({ description: 'Original file name' })
+  originalName?: string | null;
 
-  @ApiProperty({ description: 'File size in bytes' })
-  sizeBytes: bigint;
+  @ApiPropertyOptional({ description: 'MIME type' })
+  mimeType?: string;
 
-  @ApiProperty({ description: 'Document status' })
-  status: string;
+  @ApiPropertyOptional({ description: 'File size in bytes' })
+  sizeBytes?: bigint;
 
-  @ApiProperty({ description: 'Processing status' })
-  processingStatus: string;
+  @ApiPropertyOptional({ description: 'Document status' })
+  status?: string;
+
+  @ApiPropertyOptional({ description: 'Processing status' })
+  processingStatus?: string;
 
   @ApiPropertyOptional({ description: 'Relevance score (0-1)' })
   score?: number;

@@ -170,12 +170,26 @@ export class DocumentsController {
   @AuditDocument(AuditAction.DOCUMENT_PROCESS, { includeBody: true })
   @ApiOperation({ summary: 'Trigger document processing' })
   @ApiParam({ name: 'id', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        operations: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of processing operations (e.g., OCR, THUMBNAIL, AI_CLASSIFICATION)',
+        },
+      },
+      required: ['operations'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Processing jobs created', schema: { properties: { jobIds: { type: 'array', items: { type: 'string' } } } } })
   async triggerProcessing(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
-    @Body() processDto: { type: string; options?: Record<string, unknown> },
+    @Body() processDto: { operations: string[] },
   ) {
-    return this.documentsService.triggerProcessing(id, user.organizationId!, processDto);
+    return this.documentsService.triggerProcessing(id, user.organizationId!, processDto.operations);
   }
 
   @Post(':id/move')
@@ -684,5 +698,35 @@ export class DocumentsController {
       bulkDownloadDto.documentIds,
       bulkDownloadDto.folderIds || [],
     );
+  }
+
+  @Get(':id/versions')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_READ,
+    resourceType: AuditResourceType.DOCUMENT,
+    resourceIdParam: 'id',
+  })
+  @ApiOperation({ summary: 'Get document version history' })
+  @ApiParam({ name: 'id', description: 'Document ID' })
+  async getVersions(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.documentsService.getVersions(id, user.organizationId!);
+  }
+
+  @Get(':id/shares')
+  @AuditLog({
+    action: AuditAction.DOCUMENT_READ,
+    resourceType: AuditResourceType.DOCUMENT,
+    resourceIdParam: 'id',
+  })
+  @ApiOperation({ summary: 'Get document shares' })
+  @ApiParam({ name: 'id', description: 'Document ID' })
+  async getShares(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.documentsService.getShares(id, user.organizationId!);
   }
 }

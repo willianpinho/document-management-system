@@ -13,6 +13,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   ParseBoolPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,8 @@ import {
 } from '@nestjs/swagger';
 
 import { CurrentUser, CurrentUserPayload } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OrganizationGuard } from '@/common/guards/organization.guard';
 import { CommentsService } from './comments.service';
 import {
   CreateCommentDto,
@@ -36,6 +39,7 @@ import { AuditLog, AuditAction, AuditResourceType } from '../audit';
 
 @ApiTags('comments')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(JwtAuthGuard, OrganizationGuard)
 @Controller('documents/:documentId/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}

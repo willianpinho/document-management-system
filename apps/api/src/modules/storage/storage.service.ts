@@ -88,6 +88,27 @@ export class StorageService {
     return getSignedUrl(this.s3Client, command, { expiresIn });
   }
 
+  /**
+   * Check if an object exists in S3 and return presigned download URL if it does
+   * Returns null if the object doesn't exist
+   */
+  async getPresignedDownloadUrlIfExists(key: string, expiresIn = 3600): Promise<string | null> {
+    const exists = await this.headObject(key);
+    if (!exists) {
+      this.logger.warn(`Object does not exist: ${key}`);
+      return null;
+    }
+    return this.getPresignedDownloadUrl(key, expiresIn);
+  }
+
+  /**
+   * Check if an object exists in S3
+   */
+  async objectExists(key: string): Promise<boolean> {
+    const result = await this.headObject(key);
+    return result !== null;
+  }
+
   async uploadBuffer(key: string, buffer: Buffer, contentType: string) {
     const command = new PutObjectCommand({
       Bucket: this.bucket,

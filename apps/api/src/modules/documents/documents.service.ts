@@ -40,6 +40,17 @@ export class DocumentsService {
   ) {}
 
   /**
+   * Generate a consistent S3 key for storing documents
+   * Format: organizations/{organizationId}/documents/{uuid}/{filename}
+   */
+  private generateS3Key(organizationId: string, filename: string): string {
+    const documentId = uuidv4();
+    // Sanitize filename to remove special characters that might cause issues
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    return `organizations/${organizationId}/documents/${documentId}/${sanitizedFilename}`;
+  }
+
+  /**
    * Convert a Prisma document to API-safe format (handles BigInt serialization)
    */
   private toApiResponse(document: any) {
@@ -106,7 +117,7 @@ export class DocumentsService {
   }
 
   async create(input: CreateDocumentInput, triggeredBy?: EventUser) {
-    const s3Key = `${input.organizationId}/${uuidv4()}/${input.name}`;
+    const s3Key = this.generateS3Key(input.organizationId, input.name);
 
     const document = await this.prisma.document.create({
       data: {
@@ -317,7 +328,14 @@ export class DocumentsService {
   async getDownloadUrl(id: string, organizationId: string) {
     const document = await this.findOne(id, organizationId);
 
-    const url = await this.storageService.getPresignedDownloadUrl(document.s3Key);
+    // Verify the file exists in S3 before generating download URL
+    const url = await this.storageService.getPresignedDownloadUrlIfExists(document.s3Key);
+
+    if (!url) {
+      throw new NotFoundException(
+        `File not found in storage. The document "${document.name}" may have been deleted from storage.`,
+      );
+    }
 
     return {
       url,
@@ -328,29 +346,38 @@ export class DocumentsService {
   async triggerProcessing(
     id: string,
     organizationId: string,
-    processDto: { type: string; options?: Record<string, unknown> },
+    operations: string[],
   ) {
     const document = await this.findOne(id, organizationId);
 
-    // Create processing job
-    const job = await this.prisma.processingJob.create({
-      data: {
-        documentId: document.id,
-        jobType: processDto.type as any,
-        status: 'PENDING',
-        inputParams: (processDto.options || {}) as any,
-      },
-    });
+    if (!operations || operations.length === 0) {
+      throw new BadRequestException('At least one operation is required');
+    }
 
-    // Update document status
+    const jobIds: string[] = [];
+
+    // Create a processing job for each operation
+    for (const operation of operations) {
+      const job = await this.prisma.processingJob.create({
+        data: {
+          documentId: document.id,
+          jobType: operation as any,
+          status: 'PENDING',
+          inputParams: {} as any,
+        },
+      });
+      jobIds.push(job.id);
+    }
+
+    // Update document status to indicate processing is in progress
     await this.prisma.document.update({
       where: { id },
       data: { processingStatus: ProcessingStatus.OCR_IN_PROGRESS },
     });
 
-    // TODO: Add job to queue (BullMQ)
+    // TODO: Add jobs to queue (BullMQ)
 
-    return { job, message: 'Processing job created' };
+    return { jobIds, message: `${jobIds.length} processing job(s) created` };
   }
 
   async confirmUpload(id: string, organizationId: string) {
@@ -475,8 +502,8 @@ export class DocumentsService {
       }
     }
 
-    // Copy the file in S3
-    const newS3Key = `organizations/${organizationId}/documents/${Date.now()}-${document.name}`;
+    // Copy the file in S3 using consistent key format
+    const newS3Key = this.generateS3Key(organizationId, newName || document.name);
     await this.storageService.copyObject(document.s3Key, newS3Key);
 
     // Create new document record
@@ -816,8 +843,8 @@ export class DocumentsService {
           continue;
         }
 
-        // Copy file in S3
-        const newS3Key = `organizations/${organizationId}/documents/${uuidv4()}-${document.name}`;
+        // Copy file in S3 using consistent key format
+        const newS3Key = this.generateS3Key(organizationId, document.name);
         await this.storageService.copyObject(document.s3Key, newS3Key);
 
         // Create copy in database
@@ -975,6 +1002,103 @@ export class DocumentsService {
       expiresIn: 3600,
       fileCount: documents.length,
       totalSizeBytes,
+    };
+  }
+
+  /**
+   * Get document versions
+   */
+  async getVersions(id: string, organizationId: string) {
+    const document = await this.prisma.document.findFirst({
+      where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    const versions = await this.prisma.documentVersion.findMany({
+      where: { documentId: id },
+      orderBy: { versionNumber: 'desc' },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+    });
+
+    return versions.map((v) => ({
+      id: v.id,
+      versionNumber: v.versionNumber,
+      sizeBytes: Number(v.sizeBytes),
+      checksum: v.checksum,
+      changeNote: v.changeNote,
+      createdAt: v.createdAt,
+      createdBy: v.createdBy,
+    }));
+  }
+
+  /**
+   * Get document shares
+   */
+  async getShares(id: string, organizationId: string) {
+    const document = await this.prisma.document.findFirst({
+      where: { id, organizationId, status: { not: DocumentStatus.DELETED } },
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    const shares = await this.prisma.documentShare.findMany({
+      where: { documentId: id },
+    });
+
+    // Fetch user data for each share
+    const usersData = await Promise.all(
+      shares.map(async (share) => {
+        const [sharedWith, sharedBy] = await Promise.all([
+          this.prisma.user.findUnique({
+            where: { id: share.sharedWithId },
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          }),
+          this.prisma.user.findUnique({
+            where: { id: share.sharedById },
+            select: { id: true, name: true, email: true },
+          }),
+        ]);
+
+        return {
+          id: share.sharedWithId,
+          email: sharedWith?.email || '',
+          name: sharedWith?.name,
+          avatarUrl: sharedWith?.avatarUrl,
+          permission: share.permission,
+          sharedAt: share.createdAt,
+          sharedBy: sharedBy,
+        };
+      }),
+    );
+
+    // Get share link if exists
+    const shareLink = await this.prisma.shareLink.findFirst({
+      where: { documentId: id },
+    });
+
+    return {
+      users: usersData,
+      link: shareLink
+        ? {
+            id: shareLink.id,
+            token: shareLink.token,
+            permission: shareLink.permission,
+            expiresAt: shareLink.expiresAt,
+            hasPassword: !!shareLink.password,
+            maxUses: shareLink.maxDownloads,
+            useCount: shareLink.downloadCount,
+            createdAt: shareLink.createdAt,
+          }
+        : null,
     };
   }
 }
