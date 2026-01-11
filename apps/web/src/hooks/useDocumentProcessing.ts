@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { processingApi, type ProcessingJob, type QueueStats, type QueueInfo } from '@/lib/api';
 
@@ -22,9 +22,18 @@ export function useDocumentProcessing({
   const queryClient = useQueryClient();
   const [activeJobIds, setActiveJobIds] = useState<string[]>(jobIds);
 
-  // Track active jobs
+  // Store previous jobIds to compare by value
+  const prevJobIdsRef = useRef<string[]>(jobIds);
+
+  // Track active jobs - only update when jobIds actually change (by value)
   useEffect(() => {
-    setActiveJobIds(jobIds);
+    const jobIdsStr = JSON.stringify(jobIds);
+    const prevJobIdsStr = JSON.stringify(prevJobIdsRef.current);
+
+    if (jobIdsStr !== prevJobIdsStr) {
+      setActiveJobIds(jobIds);
+      prevJobIdsRef.current = jobIds;
+    }
   }, [jobIds]);
 
   // Poll job statuses
