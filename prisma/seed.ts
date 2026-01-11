@@ -5,7 +5,7 @@
  * - Test users with different auth providers
  * - Sample organizations with various plans
  * - Folder hierarchies
- * - Sample documents
+ * - Sample documents with REAL files uploaded to MinIO/S3
  * - Processing jobs
  * - Audit logs
  *
@@ -15,11 +15,169 @@
  *   pnpm prisma db seed
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables from apps/api/.env
+config({ path: resolve(process.cwd(), 'apps/api/.env') });
+
+import { PrismaClient, Prisma, DocumentStatus, ProcessingStatus } from '@prisma/client';
 import * as crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { S3Client, PutObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const prisma = new PrismaClient();
+
+// =============================================================================
+// S3/MINIO CONFIGURATION
+// =============================================================================
+
+const S3_ENDPOINT = process.env.S3_ENDPOINT || 'http://localhost:9000';
+const S3_BUCKET = process.env.S3_BUCKET || 'dms-documents-dev';
+const S3_REGION = process.env.S3_REGION || 'us-east-1';
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || 'minioadmin';
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || 'minioadmin';
+
+const s3Client = new S3Client({
+  region: S3_REGION,
+  endpoint: S3_ENDPOINT,
+  forcePathStyle: true,
+  credentials: {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+async function checkS3Connection(): Promise<boolean> {
+  console.log(`  S3 Config: endpoint=${S3_ENDPOINT}, bucket=${S3_BUCKET}`);
+  try {
+    await s3Client.send(new HeadBucketCommand({ Bucket: S3_BUCKET }));
+    console.log(`  Connected to S3/MinIO bucket: ${S3_BUCKET}`);
+    return true;
+  } catch (error) {
+    console.warn(`  Warning: Could not connect to S3/MinIO bucket ${S3_BUCKET}`);
+    console.warn(`  Error: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(`  Files will NOT be uploaded. Only database records will be created.`);
+    return false;
+  }
+}
+
+async function uploadToS3(key: string, buffer: Buffer, contentType: string): Promise<void> {
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    })
+  );
+}
+
+// =============================================================================
+// FILE GENERATORS
+// =============================================================================
+
+async function generatePDF(title: string, content: string, pages = 1): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  for (let i = 0; i < pages; i++) {
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
+    const { width, height } = page.getSize();
+
+    // Header
+    page.drawText(title, {
+      x: 50,
+      y: height - 50,
+      size: 24,
+      font: boldFont,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+
+    // Page number
+    page.drawText(`Page ${i + 1} of ${pages}`, {
+      x: width - 100,
+      y: 30,
+      size: 10,
+      font,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+
+    // Content
+    const lines = content.split('\n');
+    let yPosition = height - 100;
+    for (const line of lines) {
+      if (yPosition < 50) break;
+      page.drawText(line.substring(0, 80), {
+        x: 50,
+        y: yPosition,
+        size: 12,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= 20;
+    }
+
+    // Sample content for remaining space
+    if (pages > 1 && i < pages - 1) {
+      page.drawText(`[Content continues on page ${i + 2}...]`, {
+        x: 50,
+        y: 100,
+        size: 10,
+        font,
+        color: rgb(0.5, 0.5, 0.5),
+      });
+    }
+  }
+
+  const pdfBytes = await pdfDoc.save();
+  return Buffer.from(pdfBytes);
+}
+
+function generateTextFile(content: string): Buffer {
+  return Buffer.from(content, 'utf-8');
+}
+
+function generateCSV(headers: string[], rows: string[][]): Buffer {
+  const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+  return Buffer.from(csvContent, 'utf-8');
+}
+
+// Generate a simple PNG placeholder (1x1 pixel)
+function generatePlaceholderImage(width: number, height: number, color: string): Buffer {
+  // Create a simple BMP file as placeholder (simpler than PNG)
+  // This creates a minimal valid image that browsers can display
+  const size = width * height * 3 + 54; // 24-bit BMP
+  const buffer = Buffer.alloc(size);
+
+  // BMP Header
+  buffer.write('BM', 0);
+  buffer.writeUInt32LE(size, 2);
+  buffer.writeUInt32LE(54, 10); // Data offset
+  buffer.writeUInt32LE(40, 14); // DIB header size
+  buffer.writeInt32LE(width, 18);
+  buffer.writeInt32LE(-height, 22); // Negative for top-down
+  buffer.writeUInt16LE(1, 26); // Planes
+  buffer.writeUInt16LE(24, 28); // Bits per pixel
+  buffer.writeUInt32LE(0, 30); // No compression
+  buffer.writeUInt32LE(width * height * 3, 34); // Image size
+
+  // Parse color (hex to RGB)
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+
+  // Fill with color (BGR format for BMP)
+  for (let i = 54; i < size; i += 3) {
+    buffer[i] = b;
+    buffer[i + 1] = g;
+    buffer[i + 2] = r;
+  }
+
+  return buffer;
+}
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -63,7 +221,9 @@ async function main() {
     // Admin user (email auth)
     prisma.user.upsert({
       where: { email: 'admin@dms-test.com' },
-      update: {},
+      update: {
+        password: hashPassword('admin123!'),
+      },
       create: {
         email: 'admin@dms-test.com',
         name: 'Admin User',
@@ -102,7 +262,9 @@ async function main() {
     // Regular email user
     prisma.user.upsert({
       where: { email: 'bob.wilson@test.com' },
-      update: {},
+      update: {
+        password: hashPassword('password123'),
+      },
       create: {
         email: 'bob.wilson@test.com',
         name: 'Bob Wilson',
@@ -115,7 +277,9 @@ async function main() {
     // Another user for viewer role
     prisma.user.upsert({
       where: { email: 'alice.johnson@test.com' },
-      update: {},
+      update: {
+        password: hashPassword('password123'),
+      },
       create: {
         email: 'alice.johnson@test.com',
         name: 'Alice Johnson',
@@ -128,7 +292,9 @@ async function main() {
     // E2E Test user (standard test credentials)
     prisma.user.upsert({
       where: { email: 'test@example.com' },
-      update: {},
+      update: {
+        password: hashPassword('password123'),
+      },
       create: {
         email: 'test@example.com',
         name: 'Test User',
@@ -477,255 +643,457 @@ async function main() {
   console.log('  Created folder hierarchy\n');
 
   // ---------------------------------------------------------------------------
-  // 5. CREATE DOCUMENTS
+  // 5. CREATE DOCUMENTS WITH REAL FILE UPLOADS
   // ---------------------------------------------------------------------------
-  console.log('Creating documents...');
+  console.log('Creating documents with real files...');
 
-  const documentData: Prisma.DocumentCreateManyInput[] = [
-    // Root level documents
-    {
-      organizationId: acmeOrg.id,
-      folderId: null,
-      name: 'Company Handbook.pdf',
-      originalName: 'Company_Handbook_2024.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(2457600),
-      s3Key: generateS3Key(acmeOrg.id, null, 'Company Handbook.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 45, author: 'HR Department' },
-      createdById: adminUser.id,
-    },
+  // Check S3/MinIO connection
+  const s3Connected = await checkS3Connection();
 
-    // Documents in Contracts folder
-    {
-      organizationId: acmeOrg.id,
-      folderId: contractsFolder.id,
-      name: 'Service Agreement - Client A.pdf',
-      originalName: 'ServiceAgreement_ClientA_2024.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(1048576),
-      s3Key: generateS3Key(acmeOrg.id, contractsFolder.id, 'Service Agreement.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 12, contractType: 'service', client: 'Client A' },
-      extractedText: 'This Service Agreement is entered into between...',
-      createdById: johnUser.id,
+  // Helper to create document with file upload
+  async function createDocumentWithFile(
+    data: {
+      organizationId: string;
+      folderId: string | null;
+      name: string;
+      originalName: string;
+      mimeType: string;
+      status?: DocumentStatus;
+      processingStatus?: ProcessingStatus;
+      metadata?: Prisma.InputJsonValue;
+      extractedText?: string;
+      createdById: string;
     },
-    {
-      organizationId: acmeOrg.id,
-      folderId: contractsFolder.id,
-      name: 'NDA - Partner Corp.pdf',
-      originalName: 'NDA_PartnerCorp.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(524288),
-      s3Key: generateS3Key(acmeOrg.id, contractsFolder.id, 'NDA Partner.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 5, contractType: 'nda', partner: 'Partner Corp' },
-      createdById: johnUser.id,
-    },
+    fileGenerator: () => Promise<Buffer> | Buffer
+  ) {
+    const s3Key = generateS3Key(data.organizationId, data.folderId, data.name);
+    const buffer = await fileGenerator();
+    const checksum = crypto.createHash('sha256').update(buffer).digest('hex');
 
-    // Documents in Invoices folder
-    {
-      organizationId: acmeOrg.id,
-      folderId: invoicesFolder.id,
-      name: 'Invoice-2024-001.pdf',
-      originalName: 'Invoice-2024-001.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(204800),
-      s3Key: generateS3Key(acmeOrg.id, invoicesFolder.id, 'Invoice-2024-001.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { invoiceNumber: 'INV-2024-001', amount: 5000, currency: 'USD' },
-      createdById: janeUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: invoicesFolder.id,
-      name: 'Invoice-2024-002.pdf',
-      originalName: 'Invoice-2024-002.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(215040),
-      s3Key: generateS3Key(acmeOrg.id, invoicesFolder.id, 'Invoice-2024-002.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { invoiceNumber: 'INV-2024-002', amount: 7500, currency: 'USD' },
-      createdById: janeUser.id,
-    },
+    // Upload to S3/MinIO if connected
+    if (s3Connected) {
+      await uploadToS3(s3Key, buffer, data.mimeType);
+    }
 
-    // Documents in Reports folder
-    {
-      organizationId: acmeOrg.id,
-      folderId: reportsFolder.id,
-      name: 'Q1 2024 Financial Report.xlsx',
-      originalName: 'Q1_2024_Financial_Report.xlsx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      sizeBytes: BigInt(1572864),
-      s3Key: generateS3Key(acmeOrg.id, reportsFolder.id, 'Q1 Report.xlsx'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { sheets: 5, quarter: 'Q1', year: 2024 },
-      createdById: janeUser.id,
-    },
+    // Check if document already exists
+    const existing = await prisma.document.findFirst({
+      where: {
+        organizationId: data.organizationId,
+        name: data.name,
+        folderId: data.folderId,
+      },
+    });
 
-    // Documents in Website Redesign project
-    {
-      organizationId: acmeOrg.id,
-      folderId: websiteRedesignFolder.id,
-      name: 'Wireframes.fig',
-      originalName: 'Website_Wireframes_v2.fig',
-      mimeType: 'application/octet-stream',
-      sizeBytes: BigInt(8388608),
-      s3Key: generateS3Key(acmeOrg.id, websiteRedesignFolder.id, 'Wireframes.fig'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'PENDING',
-      metadata: { version: 2, tool: 'Figma' },
-      createdById: janeUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: websiteRedesignFolder.id,
-      name: 'Brand Guidelines.pdf',
-      originalName: 'Brand_Guidelines_2024.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(15728640),
-      s3Key: generateS3Key(acmeOrg.id, websiteRedesignFolder.id, 'Brand Guidelines.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 32, version: '2024.1' },
-      createdById: janeUser.id,
-    },
+    if (existing) {
+      return existing;
+    }
 
-    // Word Documents (DOCX)
-    {
-      organizationId: acmeOrg.id,
-      folderId: documentsFolder.id,
-      name: 'Meeting Notes.docx',
-      originalName: 'Meeting_Notes_2024_01.docx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      sizeBytes: BigInt(524288),
-      s3Key: generateS3Key(acmeOrg.id, documentsFolder.id, 'Meeting Notes.docx'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 8, author: 'John Doe' },
-      createdById: johnUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: contractsFolder.id,
-      name: 'Employment Contract Template.docx',
-      originalName: 'Employment_Contract_Template.docx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      sizeBytes: BigInt(786432),
-      s3Key: generateS3Key(acmeOrg.id, contractsFolder.id, 'Employment Contract.docx'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 15, version: '3.0' },
-      createdById: adminUser.id,
-    },
+    return prisma.document.create({
+      data: {
+        organizationId: data.organizationId,
+        folderId: data.folderId,
+        name: data.name,
+        originalName: data.originalName,
+        mimeType: data.mimeType,
+        sizeBytes: BigInt(buffer.length),
+        s3Key,
+        checksum,
+        status: data.status ?? DocumentStatus.READY,
+        processingStatus: data.processingStatus ?? ProcessingStatus.COMPLETE,
+        metadata: data.metadata ?? {},
+        extractedText: data.extractedText,
+        createdById: data.createdById,
+      },
+    });
+  }
 
-    // Images (PNG, JPG)
-    {
-      organizationId: acmeOrg.id,
-      folderId: websiteRedesignFolder.id,
-      name: 'Company Logo.png',
-      originalName: 'acme_logo_2024.png',
-      mimeType: 'image/png',
-      sizeBytes: BigInt(256000),
-      s3Key: generateS3Key(acmeOrg.id, websiteRedesignFolder.id, 'Company Logo.png'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { width: 1200, height: 600, format: 'PNG' },
-      createdById: janeUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: websiteRedesignFolder.id,
-      name: 'Hero Banner.jpg',
-      originalName: 'website_hero_banner.jpg',
-      mimeType: 'image/jpeg',
-      sizeBytes: BigInt(1048576),
-      s3Key: generateS3Key(acmeOrg.id, websiteRedesignFolder.id, 'Hero Banner.jpg'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { width: 1920, height: 1080, format: 'JPEG' },
-      createdById: janeUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: documentsFolder.id,
-      name: 'Team Photo.jpg',
-      originalName: 'team_photo_2024.jpg',
-      mimeType: 'image/jpeg',
-      sizeBytes: BigInt(2097152),
-      s3Key: generateS3Key(acmeOrg.id, documentsFolder.id, 'Team Photo.jpg'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { width: 4000, height: 3000, format: 'JPEG' },
-      createdById: adminUser.id,
-    },
+  const createdDocuments = [];
 
-    // Text Files (TXT)
-    {
-      organizationId: acmeOrg.id,
-      folderId: documentsFolder.id,
-      name: 'README.txt',
-      originalName: 'README.txt',
-      mimeType: 'text/plain',
-      sizeBytes: BigInt(4096),
-      s3Key: generateS3Key(acmeOrg.id, documentsFolder.id, 'README.txt'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { encoding: 'UTF-8', lines: 50 },
-      extractedText: 'This is the README file for the project...',
-      createdById: adminUser.id,
-    },
+  // PDF Documents
+  console.log('    Creating PDF documents...');
 
-    // CSV Files
-    {
-      organizationId: acmeOrg.id,
-      folderId: reportsFolder.id,
-      name: 'Sales Data 2024.csv',
-      originalName: 'sales_data_q1_2024.csv',
-      mimeType: 'text/csv',
-      sizeBytes: BigInt(102400),
-      s3Key: generateS3Key(acmeOrg.id, reportsFolder.id, 'Sales Data 2024.csv'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { rows: 1500, columns: 12, delimiter: ',' },
-      createdById: janeUser.id,
-    },
-    {
-      organizationId: acmeOrg.id,
-      folderId: reportsFolder.id,
-      name: 'Customer List.csv',
-      originalName: 'customer_list_export.csv',
-      mimeType: 'text/csv',
-      sizeBytes: BigInt(51200),
-      s3Key: generateS3Key(acmeOrg.id, reportsFolder.id, 'Customer List.csv'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { rows: 500, columns: 8, delimiter: ',' },
-      createdById: johnUser.id,
-    },
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: null,
+        name: 'Company Handbook.pdf',
+        originalName: 'Company_Handbook_2024.pdf',
+        mimeType: 'application/pdf',
+        metadata: { pages: 5, author: 'HR Department' },
+        createdById: adminUser.id,
+      },
+      () =>
+        generatePDF(
+          'Company Handbook',
+          `Welcome to Acme Corporation!
 
+This handbook outlines our company policies and procedures.
+
+Chapter 1: Introduction
+Acme Corporation was founded in 2020 with a mission to provide
+innovative solutions for document management.
+
+Chapter 2: Company Values
+- Innovation: We constantly seek new ways to improve.
+- Integrity: We act with honesty and transparency.
+- Collaboration: We work together to achieve goals.
+
+Chapter 3: Policies
+Please refer to your department head for specific policies.`,
+          5
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: contractsFolder.id,
+        name: 'Service Agreement - Client A.pdf',
+        originalName: 'ServiceAgreement_ClientA_2024.pdf',
+        mimeType: 'application/pdf',
+        metadata: { pages: 3, contractType: 'service', client: 'Client A' },
+        extractedText: 'This Service Agreement is entered into between...',
+        createdById: johnUser.id,
+      },
+      () =>
+        generatePDF(
+          'Service Agreement',
+          `SERVICE AGREEMENT
+
+This Service Agreement ("Agreement") is entered into between
+Acme Corporation ("Provider") and Client A ("Client").
+
+1. SERVICES
+Provider agrees to provide document management services.
+
+2. TERM
+This agreement is effective for 12 months.
+
+3. PAYMENT
+Client agrees to pay monthly service fees.`,
+          3
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: contractsFolder.id,
+        name: 'NDA - Partner Corp.pdf',
+        originalName: 'NDA_PartnerCorp.pdf',
+        mimeType: 'application/pdf',
+        metadata: { pages: 2, contractType: 'nda', partner: 'Partner Corp' },
+        createdById: johnUser.id,
+      },
+      () =>
+        generatePDF(
+          'Non-Disclosure Agreement',
+          `NON-DISCLOSURE AGREEMENT
+
+This NDA is entered into between Acme Corporation and Partner Corp.
+
+1. CONFIDENTIAL INFORMATION
+Both parties agree to protect confidential information.
+
+2. TERM
+This agreement remains in effect for 5 years.`,
+          2
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: invoicesFolder.id,
+        name: 'Invoice-2024-001.pdf',
+        originalName: 'Invoice-2024-001.pdf',
+        mimeType: 'application/pdf',
+        metadata: { invoiceNumber: 'INV-2024-001', amount: 5000, currency: 'USD' },
+        createdById: janeUser.id,
+      },
+      () =>
+        generatePDF(
+          'Invoice INV-2024-001',
+          `INVOICE
+
+Invoice Number: INV-2024-001
+Date: January 15, 2024
+
+Bill To:
+Client A
+123 Business Street
+
+Services Rendered:
+Document Management Services - January 2024
+
+Amount Due: $5,000.00
+
+Payment Terms: Net 30`,
+          1
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: invoicesFolder.id,
+        name: 'Invoice-2024-002.pdf',
+        originalName: 'Invoice-2024-002.pdf',
+        mimeType: 'application/pdf',
+        metadata: { invoiceNumber: 'INV-2024-002', amount: 7500, currency: 'USD' },
+        createdById: janeUser.id,
+      },
+      () =>
+        generatePDF(
+          'Invoice INV-2024-002',
+          `INVOICE
+
+Invoice Number: INV-2024-002
+Date: February 15, 2024
+
+Bill To:
+Client B
+456 Corporate Ave
+
+Services Rendered:
+Premium Document Management Services - February 2024
+
+Amount Due: $7,500.00
+
+Payment Terms: Net 30`,
+          1
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: websiteRedesignFolder.id,
+        name: 'Brand Guidelines.pdf',
+        originalName: 'Brand_Guidelines_2024.pdf',
+        mimeType: 'application/pdf',
+        metadata: { pages: 4, version: '2024.1' },
+        createdById: janeUser.id,
+      },
+      () =>
+        generatePDF(
+          'Brand Guidelines 2024',
+          `ACME CORPORATION BRAND GUIDELINES
+
+Version 2024.1
+
+1. LOGO USAGE
+- Always maintain clear space around the logo
+- Minimum size: 100px width
+
+2. COLOR PALETTE
+Primary: #2563EB (Blue)
+Secondary: #10B981 (Green)
+Accent: #F59E0B (Orange)
+
+3. TYPOGRAPHY
+Headings: Inter Bold
+Body: Inter Regular
+
+4. VOICE AND TONE
+Professional yet approachable`,
+          4
+        )
+    )
+  );
+
+  // Text Files
+  console.log('    Creating text documents...');
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: documentsFolder.id,
+        name: 'README.txt',
+        originalName: 'README.txt',
+        mimeType: 'text/plain',
+        metadata: { encoding: 'UTF-8', lines: 20 },
+        extractedText: 'Document Management System Project',
+        createdById: adminUser.id,
+      },
+      () =>
+        generateTextFile(`Document Management System - README
+=====================================
+
+Welcome to the Acme Corporation Document Management System.
+
+Getting Started:
+1. Upload your documents via the web interface
+2. Organize documents into folders
+3. Use AI-powered search to find documents
+
+Features:
+- Cloud storage with versioning
+- AI-powered OCR and classification
+- Real-time collaboration
+- Secure sharing with permissions
+
+For support, contact: support@acme-corp.com`)
+    )
+  );
+
+  // CSV Files
+  console.log('    Creating CSV documents...');
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: reportsFolder.id,
+        name: 'Sales Data 2024.csv',
+        originalName: 'sales_data_q1_2024.csv',
+        mimeType: 'text/csv',
+        metadata: { rows: 10, columns: 4, delimiter: ',' },
+        createdById: janeUser.id,
+      },
+      () =>
+        generateCSV(
+          ['Date', 'Product', 'Quantity', 'Revenue'],
+          [
+            ['2024-01-05', 'Basic Plan', '15', '7500'],
+            ['2024-01-12', 'Pro Plan', '8', '12000'],
+            ['2024-01-19', 'Enterprise', '2', '10000'],
+            ['2024-02-02', 'Basic Plan', '20', '10000'],
+            ['2024-02-09', 'Pro Plan', '12', '18000'],
+            ['2024-02-16', 'Enterprise', '3', '15000'],
+            ['2024-03-01', 'Basic Plan', '18', '9000'],
+            ['2024-03-08', 'Pro Plan', '10', '15000'],
+            ['2024-03-15', 'Enterprise', '4', '20000'],
+          ]
+        )
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: reportsFolder.id,
+        name: 'Customer List.csv',
+        originalName: 'customer_list_export.csv',
+        mimeType: 'text/csv',
+        metadata: { rows: 6, columns: 4, delimiter: ',' },
+        createdById: johnUser.id,
+      },
+      () =>
+        generateCSV(
+          ['CustomerID', 'Name', 'Email', 'Plan'],
+          [
+            ['C001', 'Acme Industries', 'contact@acme-ind.com', 'Enterprise'],
+            ['C002', 'TechStart Inc', 'hello@techstart.io', 'Pro'],
+            ['C003', 'Global Corp', 'info@globalcorp.com', 'Enterprise'],
+            ['C004', 'Local Business', 'owner@localbiz.com', 'Basic'],
+            ['C005', 'StartupXYZ', 'team@startupxyz.co', 'Pro'],
+          ]
+        )
+    )
+  );
+
+  // Image Files (BMP for simplicity - browsers can display these)
+  console.log('    Creating image documents...');
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: websiteRedesignFolder.id,
+        name: 'Company Logo.bmp',
+        originalName: 'acme_logo_2024.bmp',
+        mimeType: 'image/bmp',
+        metadata: { width: 100, height: 50, format: 'BMP' },
+        createdById: janeUser.id,
+      },
+      () => generatePlaceholderImage(100, 50, '#2563EB')
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: websiteRedesignFolder.id,
+        name: 'Hero Banner.bmp',
+        originalName: 'website_hero_banner.bmp',
+        mimeType: 'image/bmp',
+        metadata: { width: 200, height: 100, format: 'BMP' },
+        createdById: janeUser.id,
+      },
+      () => generatePlaceholderImage(200, 100, '#10B981')
+    )
+  );
+
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: acmeOrg.id,
+        folderId: documentsFolder.id,
+        name: 'Team Photo.bmp',
+        originalName: 'team_photo_2024.bmp',
+        mimeType: 'image/bmp',
+        metadata: { width: 150, height: 100, format: 'BMP' },
+        createdById: adminUser.id,
+      },
+      () => generatePlaceholderImage(150, 100, '#F59E0B')
+    )
+  );
+
+  // Startup Inc documents
+  createdDocuments.push(
+    await createDocumentWithFile(
+      {
+        organizationId: startupOrg.id,
+        folderId: startupDocsFolder.id,
+        name: 'Business Plan 2024.pdf',
+        originalName: 'Business_Plan_2024_Final.pdf',
+        mimeType: 'application/pdf',
+        metadata: { pages: 3, confidential: true },
+        createdById: bobUser.id,
+      },
+      () =>
+        generatePDF(
+          'Startup Inc Business Plan 2024',
+          `BUSINESS PLAN 2024
+
+Executive Summary:
+Startup Inc aims to disrupt the market with innovative solutions.
+
+Market Analysis:
+- Target market size: $50B
+- Growth rate: 15% YoY
+
+Financial Projections:
+- Year 1: $500K revenue
+- Year 2: $2M revenue
+- Year 3: $5M revenue`,
+          3
+        )
+    )
+  );
+
+  console.log(`  Created ${createdDocuments.length} documents${s3Connected ? ' with files uploaded to MinIO' : ''}\n`);
+
+  // For compatibility with rest of seed, create documents array
+  const documents = createdDocuments.filter(Boolean);
+
+  // Additional documents without file upload (processing/error states - for testing)
+  const additionalDocumentData: Prisma.DocumentCreateManyInput[] = [
     // Document currently being processed
     {
       organizationId: acmeOrg.id,
@@ -741,7 +1109,6 @@ async function main() {
       metadata: { source: 'scanner', dpi: 300 },
       createdById: johnUser.id,
     },
-
     // Document with error
     {
       organizationId: acmeOrg.id,
@@ -756,56 +1123,27 @@ async function main() {
       metadata: { errorReason: 'Invalid PDF structure' },
       createdById: adminUser.id,
     },
-
-    // Startup Inc documents
-    {
-      organizationId: startupOrg.id,
-      folderId: startupDocsFolder.id,
-      name: 'Business Plan 2024.pdf',
-      originalName: 'Business_Plan_2024_Final.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: BigInt(3145728),
-      s3Key: generateS3Key(startupOrg.id, startupDocsFolder.id, 'Business Plan.pdf'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { pages: 28, confidential: true },
-      createdById: bobUser.id,
-    },
-    {
-      organizationId: startupOrg.id,
-      folderId: null,
-      name: 'Pitch Deck.pptx',
-      originalName: 'Startup_Pitch_v3.pptx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      sizeBytes: BigInt(10485760),
-      s3Key: generateS3Key(startupOrg.id, null, 'Pitch Deck.pptx'),
-      checksum: crypto.randomBytes(32).toString('hex'),
-      status: 'READY',
-      processingStatus: 'COMPLETE',
-      metadata: { slides: 15, version: 3 },
-      createdById: bobUser.id,
-    },
   ];
 
   await prisma.document.createMany({
-    data: documentData,
+    data: additionalDocumentData,
     skipDuplicates: true,
   });
 
-  const documents = await prisma.document.findMany({
+  // Reload all documents for reference in later sections
+  const allDocuments = await prisma.document.findMany({
     where: { organizationId: { in: [acmeOrg.id, startupOrg.id] } },
   });
 
-  console.log(`  Created ${documents.length} documents\n`);
+  console.log(`  Total documents in database: ${allDocuments.length}\n`);
 
   // ---------------------------------------------------------------------------
   // 6. CREATE DOCUMENT VERSIONS
   // ---------------------------------------------------------------------------
   console.log('Creating document versions...');
 
-  const companyHandbook = documents.find((d) => d.name === 'Company Handbook.pdf');
-  const brandGuidelines = documents.find((d) => d.name === 'Brand Guidelines.pdf');
+  const companyHandbook = allDocuments.find((d) => d.name === 'Company Handbook.pdf');
+  const brandGuidelines = allDocuments.find((d) => d.name === 'Brand Guidelines.pdf');
 
   if (companyHandbook) {
     await prisma.documentVersion.createMany({
@@ -875,13 +1213,13 @@ async function main() {
   // ---------------------------------------------------------------------------
   console.log('Creating processing jobs...');
 
-  const scannedContract = documents.find((d) => d.name === 'Scanned Contract.pdf');
-  const corruptedFile = documents.find((d) => d.name === 'Corrupted File.pdf');
+  const scannedContract = allDocuments.find((d) => d.name === 'Scanned Contract.pdf');
+  const corruptedFile = allDocuments.find((d) => d.name === 'Corrupted File.pdf');
 
   const processingJobs: Prisma.ProcessingJobCreateManyInput[] = [];
 
   // Add OCR jobs for documents
-  for (const doc of documents.filter((d) => d.mimeType === 'application/pdf' && d.status === 'READY')) {
+  for (const doc of allDocuments.filter((d) => d.mimeType === 'application/pdf' && d.status === 'READY')) {
     processingJobs.push({
       documentId: doc.id,
       jobType: 'OCR',
@@ -1095,7 +1433,7 @@ async function main() {
   console.log(`  - ${organizations.length} organizations`);
   console.log(`  - ${memberships.length} organization memberships`);
   console.log('  - 10 folders (nested hierarchy)');
-  console.log(`  - ${documents.length} documents`);
+  console.log(`  - ${allDocuments.length} documents (with files in MinIO)`);
   console.log('  - 5 document versions');
   console.log(`  - ${processingJobs.length} processing jobs`);
   console.log('  - 3 API keys');

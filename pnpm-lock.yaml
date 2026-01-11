@@ -12,6 +12,9 @@ importers:
         specifier: 5.20.0
         version: 5.20.0(prisma@5.20.0)
     devDependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.700.0
+        version: 3.965.0
       '@changesets/cli':
         specifier: ^2.27.0
         version: 2.29.8(@types/node@22.19.3)
@@ -27,6 +30,9 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
@@ -36,6 +42,9 @@ importers:
       lint-staged:
         specifier: ^15.2.0
         version: 15.5.2
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
       prettier:
         specifier: ^3.4.0
         version: 3.7.4
