@@ -51,6 +51,19 @@ export function usePresence({
   const socketRef = useRef<Socket | null>(null);
   const hasJoinedRef = useRef(false);
 
+  // Store callbacks in refs to avoid useEffect re-runs
+  const onViewersChangeRef = useRef(onViewersChange);
+  const onCursorChangeRef = useRef(onCursorChange);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onViewersChangeRef.current = onViewersChange;
+  }, [onViewersChange]);
+
+  useEffect(() => {
+    onCursorChangeRef.current = onCursorChange;
+  }, [onCursorChange]);
+
   // Connect to WebSocket
   useEffect(() => {
     if (!enabled || !documentId) {
@@ -102,7 +115,7 @@ export function usePresence({
           if (response.success) {
             setViewers(response.viewers || []);
             hasJoinedRef.current = true;
-            onViewersChange?.(response.viewers || []);
+            onViewersChangeRef.current?.(response.viewers || []);
           } else {
             setError(response.error?.message || 'Failed to join presence');
           }
@@ -114,14 +127,14 @@ export function usePresence({
     socket.on('presence:join', (data) => {
       if (data.documentId === documentId) {
         setViewers(data.viewers);
-        onViewersChange?.(data.viewers);
+        onViewersChangeRef.current?.(data.viewers);
       }
     });
 
     socket.on('presence:leave', (data) => {
       if (data.documentId === documentId) {
         setViewers(data.viewers);
-        onViewersChange?.(data.viewers);
+        onViewersChangeRef.current?.(data.viewers);
       }
     });
 
@@ -134,14 +147,14 @@ export function usePresence({
               : v
           )
         );
-        onCursorChange?.(data.userId, data.cursorPosition);
+        onCursorChangeRef.current?.(data.userId, data.cursorPosition);
       }
     });
 
     socket.on('presence:sync', (data) => {
       if (data.documentId === documentId) {
         setViewers(data.viewers);
-        onViewersChange?.(data.viewers);
+        onViewersChangeRef.current?.(data.viewers);
       }
     });
 
@@ -154,7 +167,7 @@ export function usePresence({
       socketRef.current = null;
       hasJoinedRef.current = false;
     };
-  }, [documentId, enabled, onViewersChange, onCursorChange]);
+  }, [documentId, enabled]);
 
   // Update cursor position
   const updateCursor = useCallback(
