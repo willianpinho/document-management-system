@@ -25,6 +25,14 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report' }],
     ['list'],
   ],
+  /* Global timeout for each test */
+  timeout: 60 * 1000,
+
+  /* Expect timeout */
+  expect: {
+    timeout: 10 * 1000,
+  },
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -35,6 +43,15 @@ export default defineConfig({
 
     /* Capture screenshot on failure */
     screenshot: 'only-on-failure',
+
+    /* Video on failure for debugging */
+    video: 'on-first-retry',
+
+    /* Default action timeout */
+    actionTimeout: 15 * 1000,
+
+    /* Navigation timeout */
+    navigationTimeout: 30 * 1000,
   },
 
   /* Configure projects for major browsers */
