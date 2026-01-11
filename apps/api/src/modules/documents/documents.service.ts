@@ -149,72 +149,38 @@ export class DocumentsService {
     const { organizationId, page, limit, folderId, search } = params;
     const skip = (page - 1) * limit;
 
-    // Use Prisma's typed template for safe query building
-    const { Prisma } = require('@prisma/client');
-
-    // Build WHERE conditions
-    const conditions = [
-      Prisma.sql`d.organization_id = ${organizationId}::uuid`,
-      Prisma.sql`d.status != 'DELETED'`,
-    ];
+    // Build where clause using Prisma's query builder
+    const where: any = {
+      organizationId,
+      status: { not: 'DELETED' as const },
+    };
 
     if (folderId) {
-      conditions.push(Prisma.sql`d.folder_id = ${folderId}::uuid`);
+      where.folderId = folderId;
     }
 
     if (search) {
-      conditions.push(Prisma.sql`d.name ILIKE ${`%${search}%`}`);
+      where.name = { contains: search, mode: 'insensitive' };
     }
 
-    const whereClause = Prisma.join(conditions, ' AND ');
+    // Execute queries in parallel for better performance
+    const [rawDocuments, total] = await Promise.all([
+      this.prisma.document.findMany({
+        where,
+        include: {
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.document.count({ where }),
+    ]);
 
-    const rawDocuments = await this.prisma.$queryRaw<any[]>`
-      SELECT
-        d.id, d.name, d.mime_type as "mimeType", d.size_bytes as "sizeBytes",
-        d.s3_key as "s3Key", d.status, d.processing_status as "processingStatus",
-        d.folder_id as "folderId", d.thumbnail_key as "thumbnailKey",
-        d.checksum, d.metadata, d.extracted_text as "extractedText",
-        d.created_at as "createdAt", d.updated_at as "updatedAt", d.deleted_at as "deletedAt",
-        u.id as "createdById", u.name as "createdByName", u.email as "createdByEmail"
-      FROM documents d
-      LEFT JOIN users u ON d.created_by_id = u.id
-      WHERE ${whereClause}
-      ORDER BY d.created_at DESC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
-
-    const countResult = await this.prisma.$queryRaw<{ total: bigint }[]>`
-      SELECT COUNT(*) as total
-      FROM documents d
-      WHERE ${whereClause}
-    `;
-
-    const documents = rawDocuments.map((doc) => ({
-      id: doc.id,
-      name: doc.name,
-      mimeType: doc.mimeType,
-      sizeBytes: Number(doc.sizeBytes),
-      s3Key: doc.s3Key,
-      status: doc.status,
-      processingStatus: doc.processingStatus,
-      folderId: doc.folderId,
-      thumbnailKey: doc.thumbnailKey,
-      checksum: doc.checksum,
-      metadata: doc.metadata,
-      extractedText: doc.extractedText,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      deletedAt: doc.deletedAt,
-      createdBy: doc.createdById
-        ? {
-            id: doc.createdById,
-            name: doc.createdByName,
-            email: doc.createdByEmail,
-          }
-        : null,
-    }));
-
-    const total = Number(countResult[0]?.total || 0);
+    // Map documents to API response format (handles BigInt)
+    const documents = rawDocuments.map((doc) => this.toApiResponse(doc));
 
     return {
       data: documents,

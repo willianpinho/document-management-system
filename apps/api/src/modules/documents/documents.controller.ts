@@ -80,15 +80,15 @@ export class DocumentsController {
   @ApiQuery({ name: 'q', required: false, type: String })
   async findAll(
     @CurrentUser() user: CurrentUserPayload,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
     @Query('folderId') folderId?: string,
     @Query('q') search?: string,
   ) {
     return this.documentsService.findAll({
       organizationId: user.organizationId!,
-      page,
-      limit,
+      page: parseInt(page, 10) || 1,
+      limit: Math.min(parseInt(limit, 10) || 20, 100), // Max 100 items per page
       folderId,
       search,
     });
