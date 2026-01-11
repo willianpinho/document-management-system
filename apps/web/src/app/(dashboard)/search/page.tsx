@@ -334,6 +334,7 @@ function SearchPageContent() {
                 key={`${result.type}-${result.id}`}
                 className="cursor-pointer transition-all hover:shadow-md"
                 onClick={() => handleResultClick(result)}
+                data-testid="search-result"
               >
                 <CardContent className="flex items-start gap-4 py-4">
                   <div
