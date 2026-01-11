@@ -83,7 +83,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {foldersData?.meta?.pagination?.total || 0}
+              {foldersData?.data?.length || folders.length || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Organized structure
