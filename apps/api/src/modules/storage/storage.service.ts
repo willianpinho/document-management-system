@@ -25,8 +25,25 @@ export class StorageService {
     this.bucket = this.configService.get<string>('S3_BUCKET', 'dms-documents-dev');
 
     const endpoint = this.configService.get<string>('S3_ENDPOINT');
-    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const isLocalEndpoint = endpoint?.includes('localhost') || endpoint?.includes('127.0.0.1');
+
+    // Helper to detect malformed env variables (self-referencing like ${VAR_NAME})
+    const isValidEnvValue = (value: string | undefined): boolean => {
+      if (!value) return false;
+      // Reject values that look like unresolved template variables
+      return !value.startsWith('${') && !value.endsWith('}');
+    };
+
+    // Use MinIO defaults for local development if credentials not provided or malformed
+    const rawAccessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const rawSecretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+
+    const accessKeyId = isValidEnvValue(rawAccessKeyId)
+      ? rawAccessKeyId
+      : (isLocalEndpoint ? 'minioadmin' : undefined);
+    const secretAccessKey = isValidEnvValue(rawSecretAccessKey)
+      ? rawSecretAccessKey
+      : (isLocalEndpoint ? 'minioadmin' : undefined);
 
     this.s3Client = new S3Client({
       region: this.configService.get<string>('S3_REGION', 'us-east-1'),
@@ -42,7 +59,14 @@ export class StorageService {
       }),
     });
 
-    this.logger.log(`Storage configured with endpoint: ${endpoint || 'AWS S3'}, bucket: ${this.bucket}`);
+    // Log credential source for debugging
+    const credentialSource = isValidEnvValue(rawAccessKeyId)
+      ? 'environment'
+      : (isLocalEndpoint ? 'MinIO defaults' : 'none');
+
+    this.logger.log(
+      `Storage configured: endpoint=${endpoint || 'AWS S3'}, bucket=${this.bucket}, credentials=${credentialSource}${isLocalEndpoint ? ' (local MinIO)' : ''}`,
+    );
   }
 
   async getPresignedUploadUrl(key: string, contentType: string, expiresIn = 3600) {
