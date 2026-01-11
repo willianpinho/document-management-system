@@ -19,23 +19,24 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
   // Configure WebSocket adapter with Redis for horizontal scaling
   const redisAdapter = await createRedisAdapter(app);
   app.useWebSocketAdapter(redisAdapter);
   logger.log('WebSocket adapter configured');
 
-  // Security headers
+  // Security headers - disable strict CSP in development to allow Swagger UI
   app.use(
     helmet({
-      contentSecurityPolicy: {
+      contentSecurityPolicy: nodeEnv === 'production' ? {
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
         },
-      },
+      } : false,
       crossOriginEmbedderPolicy: false,
     }),
   );
@@ -79,7 +80,6 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Swagger Documentation (non-production only)
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
   if (nodeEnv !== 'production') {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('DMS API')
@@ -142,6 +142,14 @@ All endpoints are versioned. Use \`/api/v1/\` prefix.
       },
     });
   }
+
+  // Redirect root to health endpoint
+  app.use('/', (req, res, next) => {
+    if (req.path === '/' && req.method === 'GET') {
+      return res.redirect('/api/v1/health');
+    }
+    next();
+  });
 
   // Graceful shutdown
   app.enableShutdownHooks();
