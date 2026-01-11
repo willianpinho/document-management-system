@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
+import { DocumentStatus, ProcessingStatus } from '@prisma/client';
 
 import { DocumentsService } from '../documents.service';
 
@@ -62,12 +63,17 @@ const mockDocument = {
   id: mockDocumentId,
   name: 'test-document.pdf',
   mimeType: 'application/pdf',
-  sizeBytes: 1024,
+  sizeBytes: BigInt(1024),
   s3Key: `${mockOrganizationId}/uuid/test-document.pdf`,
-  status: 'uploaded',
-  processingStatus: 'pending',
+  status: DocumentStatus.UPLOADED,
+  processingStatus: ProcessingStatus.PENDING,
   organizationId: mockOrganizationId,
   folderId: null,
+  thumbnailKey: null,
+  checksum: null,
+  metadata: null,
+  extractedText: null,
+  deletedAt: null,
   createdById: mockUserId,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
@@ -137,7 +143,8 @@ describe('DocumentsService', () => {
       mockPrisma.document.create.mockResolvedValue({
         ...mockDocument,
         name: createInput.name,
-        status: 'uploading',
+        status: DocumentStatus.PROCESSING,
+        processingStatus: ProcessingStatus.PENDING,
       });
       mockStorage.getPresignedUploadUrl.mockResolvedValue(expectedUploadUrl);
 
@@ -147,15 +154,15 @@ describe('DocumentsService', () => {
       expect(result).toHaveProperty('uploadUrl');
       expect(result.uploadUrl).toBe(expectedUploadUrl);
       expect(result.document.name).toBe(createInput.name);
-      expect(result.document.status).toBe('uploading');
+      expect(result.document.status).toBe(DocumentStatus.PROCESSING);
 
       expect(mockPrisma.document.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: createInput.name,
           mimeType: createInput.mimeType,
           sizeBytes: createInput.sizeBytes,
-          status: 'uploading',
-          processingStatus: 'pending',
+          status: DocumentStatus.PROCESSING,
+          processingStatus: ProcessingStatus.PENDING,
           organizationId: createInput.organizationId,
           createdById: createInput.createdById,
         }),
@@ -268,7 +275,7 @@ describe('DocumentsService', () => {
       expect(mockPrisma.document.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            status: { not: 'deleted' },
+            status: { not: 'DELETED' },
           }),
         }),
       );
@@ -341,14 +348,19 @@ describe('DocumentsService', () => {
 
       const result = await service.findOne(mockDocumentId, mockOrganizationId);
 
-      expect(result).toEqual(documentWithRelations);
+      // The service converts BigInt sizeBytes to Number via toApiResponse()
+      expect(result.id).toBe(documentWithRelations.id);
+      expect(result.name).toBe(documentWithRelations.name);
+      expect(result.sizeBytes).toBe(Number(documentWithRelations.sizeBytes));
       expect(mockPrisma.document.findFirst).toHaveBeenCalledWith({
         where: {
           id: mockDocumentId,
           organizationId: mockOrganizationId,
-          status: { not: 'deleted' },
+          status: { not: DocumentStatus.DELETED },
         },
-        include: expect.objectContaining({
+        select: expect.objectContaining({
+          id: true,
+          name: true,
           createdBy: expect.any(Object),
           folder: true,
           versions: expect.any(Object),
@@ -374,7 +386,7 @@ describe('DocumentsService', () => {
       expect(mockPrisma.document.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            status: { not: 'deleted' },
+            status: { not: DocumentStatus.DELETED },
           }),
         }),
       );
@@ -473,15 +485,15 @@ describe('DocumentsService', () => {
     });
 
     it('should soft delete document by updating status', async () => {
-      const deletedDocument = { ...mockDocument, status: 'deleted' };
+      const deletedDocument = { ...mockDocument, status: DocumentStatus.DELETED };
       mockPrisma.document.update.mockResolvedValue(deletedDocument);
 
       const result = await service.remove(mockDocumentId, mockOrganizationId);
 
-      expect(result.status).toBe('deleted');
+      expect(result.status).toBe(DocumentStatus.DELETED);
       expect(mockPrisma.document.update).toHaveBeenCalledWith({
         where: { id: mockDocumentId },
-        data: { status: 'deleted' },
+        data: { status: DocumentStatus.DELETED },
       });
     });
 
@@ -543,7 +555,7 @@ describe('DocumentsService', () => {
         id: 'job-123',
         documentId: mockDocumentId,
         jobType: processDto.type,
-        status: 'pending',
+        status: 'PENDING',
       };
 
       mockPrisma.processingJob.create.mockResolvedValue(mockJob);
@@ -569,7 +581,7 @@ describe('DocumentsService', () => {
 
       expect(mockPrisma.document.update).toHaveBeenCalledWith({
         where: { id: mockDocumentId },
-        data: { processingStatus: 'processing' },
+        data: { processingStatus: ProcessingStatus.OCR_IN_PROGRESS },
       });
     });
 
@@ -600,20 +612,20 @@ describe('DocumentsService', () => {
     beforeEach(() => {
       mockPrisma.document.findFirst.mockResolvedValue({
         ...mockDocument,
-        status: 'uploading',
+        status: DocumentStatus.PROCESSING,
       });
     });
 
     it('should update document status to uploaded', async () => {
-      const confirmedDocument = { ...mockDocument, status: 'uploaded' };
+      const confirmedDocument = { ...mockDocument, status: DocumentStatus.UPLOADED };
       mockPrisma.document.update.mockResolvedValue(confirmedDocument);
 
       const result = await service.confirmUpload(mockDocumentId, mockOrganizationId);
 
-      expect(result.status).toBe('uploaded');
+      expect(result.status).toBe(DocumentStatus.UPLOADED);
       expect(mockPrisma.document.update).toHaveBeenCalledWith({
         where: { id: mockDocumentId },
-        data: { status: 'uploaded' },
+        data: { status: DocumentStatus.UPLOADED },
       });
     });
 

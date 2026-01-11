@@ -5,51 +5,34 @@
  * token refresh, logout, and password validation.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcryptjs';
 
-// Mock @prisma/client before importing services
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn().mockImplementation(() => ({})),
-  AuthProvider: {
-    EMAIL: 'EMAIL',
-    GOOGLE: 'GOOGLE',
-    MICROSOFT: 'MICROSOFT',
-  },
-  MemberRole: {
-    OWNER: 'OWNER',
-    ADMIN: 'ADMIN',
-    EDITOR: 'EDITOR',
-    VIEWER: 'VIEWER',
-  },
-  Prisma: {},
-}));
-
-import { AuthService } from '../auth.service';
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { UsersService } from '../../users/users.service';
-
-// Mock bcrypt
+// Mock bcrypt module
 vi.mock('bcryptjs', () => ({
   hash: vi.fn(),
   compare: vi.fn(),
+  default: {
+    hash: vi.fn(),
+    compare: vi.fn(),
+  },
 }));
 
-// Mock factory for PrismaService
+// Import bcrypt after mocking
+import * as bcrypt from 'bcryptjs';
+
+// Mock PrismaService
 const createMockPrismaService = () => ({
   refreshToken: {
     create: vi.fn(),
     findFirst: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
+    findMany: vi.fn(),
   },
   organization: {
     create: vi.fn(),
@@ -60,20 +43,21 @@ const createMockPrismaService = () => ({
   },
 });
 
-// Mock factory for UsersService
+// Mock UsersService
 const createMockUsersService = () => ({
   create: vi.fn(),
   findById: vi.fn(),
   findByEmail: vi.fn(),
 });
 
-// Mock factory for JwtService
+// Mock JwtService
 const createMockJwtService = () => ({
   sign: vi.fn(),
   verify: vi.fn(),
+  decode: vi.fn(),
 });
 
-// Mock factory for ConfigService
+// Mock ConfigService
 const createMockConfigService = () => ({
   get: vi.fn((key: string, defaultValue?: string) => {
     const config: Record<string, string> = {
@@ -83,6 +67,13 @@ const createMockConfigService = () => ({
     };
     return config[key] || defaultValue;
   }),
+});
+
+// Mock EmailService
+const createMockEmailService = () => ({
+  sendPasswordResetEmail: vi.fn(),
+  sendVerificationEmail: vi.fn(),
+  sendWelcomeEmail: vi.fn(),
 });
 
 // Test fixtures
@@ -109,33 +100,62 @@ const mockSanitizedUser = {
   updatedAt: new Date('2025-01-01'),
 };
 
+// Import AuthService after setting up mocks
+// We need to dynamically import it to avoid issues with module resolution
 describe('AuthService', () => {
-  let service: AuthService;
+  let AuthService: any;
+  let service: any;
   let prismaService: ReturnType<typeof createMockPrismaService>;
   let usersService: ReturnType<typeof createMockUsersService>;
   let jwtService: ReturnType<typeof createMockJwtService>;
   let configService: ReturnType<typeof createMockConfigService>;
+  let emailService: ReturnType<typeof createMockEmailService>;
 
   beforeEach(async () => {
+    // Reset modules to ensure fresh imports
+    vi.resetModules();
+
+    // Mock @prisma/client
+    vi.doMock('@prisma/client', () => ({
+      PrismaClient: vi.fn().mockImplementation(() => ({})),
+      AuthProvider: {
+        EMAIL: 'EMAIL',
+        GOOGLE: 'GOOGLE',
+        MICROSOFT: 'MICROSOFT',
+      },
+      MemberRole: {
+        OWNER: 'OWNER',
+        ADMIN: 'ADMIN',
+        EDITOR: 'EDITOR',
+        VIEWER: 'VIEWER',
+      },
+      Prisma: {},
+    }));
+
+    // Create fresh mocks for each test
     prismaService = createMockPrismaService();
     usersService = createMockUsersService();
     jwtService = createMockJwtService();
     configService = createMockConfigService();
+    emailService = createMockEmailService();
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: PrismaService, useValue: prismaService },
-        { provide: UsersService, useValue: usersService },
-        { provide: JwtService, useValue: jwtService },
-        { provide: ConfigService, useValue: configService },
-      ],
-    }).compile();
+    // Dynamically import AuthService after mocks are set up
+    const authModule = await import('../auth.service');
+    AuthService = authModule.AuthService;
 
-    service = module.get<AuthService>(AuthService);
+    // Create service instance with mocks using Object.create to set up proper prototype chain
+    service = Object.create(AuthService.prototype);
 
-    // Reset all mocks
-    vi.clearAllMocks();
+    // Manually inject dependencies
+    Object.defineProperty(service, 'prisma', { value: prismaService, writable: true });
+    Object.defineProperty(service, 'usersService', { value: usersService, writable: true });
+    Object.defineProperty(service, 'jwtService', { value: jwtService, writable: true });
+    Object.defineProperty(service, 'configService', { value: configService, writable: true });
+    Object.defineProperty(service, 'emailService', { value: emailService, writable: true });
+    Object.defineProperty(service, 'logger', {
+      value: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+      writable: true
+    });
   });
 
   describe('register', () => {
@@ -150,7 +170,7 @@ describe('AuthService', () => {
       const newUser = { ...mockUser, email: registerDto.email, name: registerDto.name };
 
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue(hashedPassword);
+      (bcrypt.hash as Mock).mockResolvedValue(hashedPassword);
       usersService.create.mockResolvedValue(newUser);
       prismaService.organization.create.mockResolvedValue({});
       jwtService.sign
@@ -169,7 +189,7 @@ describe('AuthService', () => {
 
     it('should hash password before storing', async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
+      (bcrypt.hash as Mock).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
       prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
@@ -197,7 +217,7 @@ describe('AuthService', () => {
 
     it('should store refresh token hash in database', async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
+      (bcrypt.hash as Mock).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
       prismaService.organization.create.mockResolvedValue({});
       jwtService.sign
@@ -218,7 +238,7 @@ describe('AuthService', () => {
 
     it('should not include password in returned user object', async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
+      (bcrypt.hash as Mock).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
       prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
@@ -231,9 +251,14 @@ describe('AuthService', () => {
   });
 
   describe('validateUser', () => {
+    beforeEach(() => {
+      // Reset bcrypt mocks for validateUser tests
+      vi.mocked(bcrypt.compare).mockReset();
+    });
+
     it('should return sanitized user on valid credentials', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+      (bcrypt.compare as Mock).mockResolvedValue(true);
 
       const result = await service.validateUser('test@example.com', 'password');
 
@@ -252,7 +277,7 @@ describe('AuthService', () => {
 
     it('should return null when password is invalid', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(false);
+      (bcrypt.compare as Mock).mockResolvedValue(false);
 
       const result = await service.validateUser('test@example.com', 'wrongpassword');
 
@@ -542,7 +567,7 @@ describe('AuthService', () => {
   describe('password hashing', () => {
     it('should use bcrypt with cost factor 12', async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue('hashed');
+      (bcrypt.hash as Mock).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
       prismaService.organization.create.mockResolvedValue({});
       jwtService.sign.mockReturnValue('token');
@@ -559,7 +584,7 @@ describe('AuthService', () => {
 
     it('should use bcrypt compare for password validation', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+      (bcrypt.compare as Mock).mockResolvedValue(true);
 
       await service.validateUser('test@example.com', 'password');
 

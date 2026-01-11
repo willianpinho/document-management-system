@@ -6,12 +6,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-
-import { SearchService } from '../search.service';
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { EmbeddingService } from '../embedding.service';
 
 // Mock factory for PrismaService
 const createMockPrismaService = () => ({
@@ -75,29 +69,44 @@ const mockFolder = {
 };
 
 describe('SearchService', () => {
-  let service: SearchService;
+  let SearchService: any;
+  let service: any;
   let prismaService: ReturnType<typeof createMockPrismaService>;
   let embeddingService: ReturnType<typeof createMockEmbeddingService>;
   let configService: ReturnType<typeof createMockConfigService>;
 
   beforeEach(async () => {
+    // Reset modules to ensure fresh imports
+    vi.resetModules();
+
+    // Mock @prisma/client
+    vi.doMock('@prisma/client', () => ({
+      PrismaClient: vi.fn().mockImplementation(() => ({})),
+      Prisma: {
+        sql: vi.fn(),
+      },
+    }));
+
+    // Create fresh mocks for each test
     prismaService = createMockPrismaService();
     embeddingService = createMockEmbeddingService();
     configService = createMockConfigService();
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SearchService,
-        { provide: PrismaService, useValue: prismaService },
-        { provide: EmbeddingService, useValue: embeddingService },
-        { provide: ConfigService, useValue: configService },
-      ],
-    }).compile();
+    // Dynamically import SearchService after mocks are set up
+    const searchModule = await import('../search.service');
+    SearchService = searchModule.SearchService;
 
-    service = module.get<SearchService>(SearchService);
+    // Create service instance with mocks using Object.create
+    service = Object.create(SearchService.prototype);
 
-    // Reset all mocks
-    vi.clearAllMocks();
+    // Manually inject dependencies
+    Object.defineProperty(service, 'prisma', { value: prismaService, writable: true });
+    Object.defineProperty(service, 'embeddingService', { value: embeddingService, writable: true });
+    Object.defineProperty(service, 'configService', { value: configService, writable: true });
+    Object.defineProperty(service, 'logger', {
+      value: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+      writable: true
+    });
   });
 
   describe('search (full-text)', () => {
@@ -484,7 +493,7 @@ describe('SearchService', () => {
       // Both documents should be in results
       expect(result.data.length).toBe(2);
       // Results should have combined scores
-      expect(result.data.every((d) => d.score !== undefined)).toBe(true);
+      expect(result.data.every((d: any) => d.score !== undefined)).toBe(true);
     });
 
     it('should apply weights correctly', async () => {
@@ -584,7 +593,7 @@ describe('SearchService', () => {
 
       const result = await service.getSuggestions(mockOrganizationId, 'finance', 5);
 
-      const types = result.suggestions.map((s) => s.type);
+      const types = result.suggestions.map((s: any) => s.type);
       expect(types).toContain('document');
       expect(types).toContain('folder');
     });
