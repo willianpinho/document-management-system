@@ -44,9 +44,12 @@ export function useAuthSync() {
       lastSyncedStatus.current = status;
       lastSyncedToken.current = session.accessToken;
     } else if (status === 'unauthenticated' && lastSyncedStatus.current !== 'unauthenticated') {
-      // Only clear if we were previously authenticated or this is first run
-      // This prevents clearing on auth pages where user is intentionally unauthenticated
-      if (lastSyncedStatus.current === 'authenticated') {
+      // Clear stale tokens when session is unauthenticated
+      // This handles both:
+      // 1. User was authenticated and session expired
+      // 2. User lands on auth page with stale tokens in localStorage
+      const hasStaleTokens = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+      if (lastSyncedStatus.current === 'authenticated' || hasStaleTokens) {
         clearAuthTokens();
         logout();
       }

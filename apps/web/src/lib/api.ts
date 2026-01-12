@@ -167,9 +167,15 @@ async function request<T>(
         body: body ? JSON.stringify(body) : undefined,
       });
     } else {
-      // Redirect to login
+      // Redirect to login only if not already on auth pages
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        const currentPath = window.location.pathname;
+        const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
+        const isOnAuthPage = authPages.some(page => currentPath.startsWith(page));
+
+        if (!isOnAuthPage) {
+          window.location.href = '/login';
+        }
       }
       throw new ApiError('Session expired', 'SESSION_EXPIRED', 401);
     }
