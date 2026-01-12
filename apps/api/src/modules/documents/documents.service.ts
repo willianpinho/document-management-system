@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentStatus, ProcessingStatus } from '@prisma/client';
 import archiver from 'archiver';
@@ -7,6 +7,8 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { DocumentEventData, EventUser } from '../realtime/dto/realtime-events.dto';
+import { ProcessingService } from '../processing/processing.service';
+import { ProcessingJobType } from '../processing/queues/queue.constants';
 
 interface CreateDocumentInput {
   name: string;
@@ -37,6 +39,8 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
     private readonly realtimeService: RealtimeService,
+    @Inject(forwardRef(() => ProcessingService))
+    private readonly processingService: ProcessingService,
   ) {}
 
   /**
@@ -354,30 +358,71 @@ export class DocumentsService {
       throw new BadRequestException('At least one operation is required');
     }
 
-    const jobIds: string[] = [];
+    // Validate operations
+    const validOperations: ProcessingJobType[] = [
+      'OCR',
+      'THUMBNAIL',
+      'EMBEDDING',
+      'AI_CLASSIFY',
+      'PDF_SPLIT',
+      'PDF_MERGE',
+      'PDF_WATERMARK',
+      'PDF_COMPRESS',
+      'PDF_EXTRACT_PAGES',
+      'PDF_RENDER_PAGE',
+      'PDF_METADATA',
+    ];
 
-    // Create a processing job for each operation
-    for (const operation of operations) {
-      const job = await this.prisma.processingJob.create({
-        data: {
-          documentId: document.id,
-          jobType: operation as any,
-          status: 'PENDING',
-          inputParams: {} as any,
-        },
-      });
-      jobIds.push(job.id);
+    const normalizedOperations = operations.map((op) => {
+      // Handle common variations
+      const normalized = op.toUpperCase().replace(/-/g, '_');
+      if (normalized === 'AI_CLASSIFICATION') return 'AI_CLASSIFY';
+      if (normalized === 'FULL_PROCESSING') {
+        // Return array for full processing
+        return ['OCR', 'THUMBNAIL', 'EMBEDDING', 'AI_CLASSIFY'] as const;
+      }
+      return normalized;
+    }).flat() as ProcessingJobType[];
+
+    const invalidOps = normalizedOperations.filter(
+      (op) => !validOperations.includes(op),
+    );
+    if (invalidOps.length > 0) {
+      throw new BadRequestException(
+        `Invalid operations: ${invalidOps.join(', ')}. Valid operations: ${validOperations.join(', ')}`,
+      );
     }
 
-    // Update document status to indicate processing is in progress
-    await this.prisma.document.update({
-      where: { id },
-      data: { processingStatus: ProcessingStatus.OCR_IN_PROGRESS },
-    });
+    const jobResults: { jobId: string; operation: string; queueName: string }[] = [];
 
-    // TODO: Add jobs to queue (BullMQ)
+    // Add each operation to the appropriate queue via ProcessingService
+    for (const operation of normalizedOperations) {
+      try {
+        const result = await this.processingService.addJob(
+          document.id,
+          operation,
+          {}, // Options can be extended later
+        );
+        jobResults.push({
+          jobId: result.job.id,
+          operation,
+          queueName: result.queueName,
+        });
+      } catch (error) {
+        // Log error but continue with other operations
+        console.error(`Failed to add ${operation} job:`, error);
+      }
+    }
 
-    return { jobIds, message: `${jobIds.length} processing job(s) created` };
+    if (jobResults.length === 0) {
+      throw new BadRequestException('Failed to create any processing jobs');
+    }
+
+    return {
+      jobIds: jobResults.map((r) => r.jobId),
+      jobs: jobResults,
+      message: `${jobResults.length} processing job(s) queued successfully`,
+    };
   }
 
   async confirmUpload(id: string, organizationId: string) {
