@@ -132,7 +132,7 @@ Upload → S3 → EventBridge → SQS → Worker
 
 ---
 
-### Slide 10: Scalability & Performance
+### Slide 11: Scalability & Performance
 
 **Horizontal Scaling:**
 - ECS Fargate auto-scaling
@@ -148,7 +148,7 @@ Upload → S3 → EventBridge → SQS → Worker
 
 ---
 
-### Slide 11: CI/CD Pipeline
+### Slide 12: CI/CD Pipeline
 
 ```
 Push → GitHub Actions → Build → Test → Deploy
@@ -165,7 +165,7 @@ Push → GitHub Actions → Build → Test → Deploy
 
 ---
 
-### Slide 12: Observability
+### Slide 13: Observability
 
 **Three Pillars:**
 
@@ -180,7 +180,7 @@ Push → GitHub Actions → Build → Test → Deploy
 
 ---
 
-### Slide 13: Cost Optimization
+### Slide 14: Cost Optimization
 
 **Design decisions for cost:**
 
@@ -194,7 +194,7 @@ Push → GitHub Actions → Build → Test → Deploy
 
 ---
 
-### Slide 14: Development Process
+### Slide 15: Development Process
 
 **AI-assisted workflow:**
 
@@ -210,7 +210,7 @@ Push → GitHub Actions → Build → Test → Deploy
 
 ---
 
-### Slide 15: Demo / Q&A
+### Slide 16: Demo / Q&A
 
 **Live demo highlights:**
 - Document upload with drag-and-drop

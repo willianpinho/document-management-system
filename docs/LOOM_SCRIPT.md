@@ -2,129 +2,193 @@
 
 ## Document Management System - Executive Overview
 
-**Target Duration:** 5 minutes
+**Target Duration:** 5 minutes (max)
 **Format:** Screen recording with voiceover
+**Author:** Willian Pinho
 
 ---
 
-## [0:00 - 0:30] Opening - Problem Statement
+## Pre-Recording Checklist
 
-**[Show: Title slide or architecture diagram]**
-
-> "Hi, I'm Willian Pinho, and I'd like to walk you through my solution for the Document Management System challenge.
->
-> The problem is clear: we need a cloud-based system similar to OneDrive or Google Drive, but with enhanced document processing capabilities - specifically PDF splitting and AI-based OCR.
->
-> Let me show you how I approached this."
-
----
-
-## [0:30 - 1:30] Architecture Overview
-
-**[Show: High-level architecture diagram]**
-
-> "Here's the high-level architecture. The system is built on AWS with three main layers:
->
-> **First, the Client Layer** - a Next.js web application for users, plus an Electron-based desktop agent for automated folder syncing, and API access for machine-to-machine integrations.
->
-> **Second, the Compute Layer** - running on ECS Fargate, we have a NestJS API service handling all requests, and separate worker services for document processing.
->
-> **Third, the Data Layer** - PostgreSQL with pgvector for storing documents and enabling semantic search, Redis for caching and job queues, and S3 for actual file storage with CloudFront CDN."
+- [ ] Architecture diagram open in browser tab
+- [ ] Live demo environment running (localhost:3000 + localhost:4000)
+- [ ] Test documents uploaded (Invoice, Contract, Handbook)
+- [ ] Semantic search query ready ("employee guidelines")
+- [ ] Good lighting and audio quality
+- [ ] Loom recording ready
 
 ---
 
-## [1:30 - 2:30] Document Processing Pipeline
+## SCRIPT
 
-**[Show: Processing flow diagram]**
+### [0:00 - 0:25] Opening - Hook & Problem
 
-> "The document processing pipeline is where the interesting work happens.
+**[SHOW: Title slide or live application]**
+
+> "Hi, I'm Willian Pinho, and in the next 5 minutes I'll walk you through my solution for the Document Management System challenge.
 >
-> When a user uploads a document, it goes directly to S3 using a presigned URL - this keeps the API server lightweight.
+> The goal: build a cloud-based document system like OneDrive or Google Drive, but with AI-powered processing - PDF splitting, OCR, and intelligent document classification.
 >
-> S3 triggers an event that queues a processing job. Our workers then:
+> Let me show you what I built."
+
+---
+
+### [0:25 - 1:15] Architecture Overview
+
+**[SHOW: High-level architecture diagram]**
+
+> "Here's the high-level architecture running on AWS.
+>
+> **Three client types**: a Next.js 15 web app, a desktop upload agent built with Electron, and REST API access for integrations.
+>
+> **The backend** is a NestJS 11 API running on ECS Fargate, connecting to PostgreSQL with pgvector for semantic search, Redis for caching and job queues, and S3 for file storage with CloudFront CDN.
+>
+> **The key innovation** is the processing pipeline - when documents are uploaded, workers automatically extract text, generate AI embeddings, and classify documents using GPT-4."
+
+---
+
+### [1:15 - 2:00] Document Processing Pipeline
+
+**[SHOW: Processing flow diagram or live API logs]**
+
+> "Let me explain how document processing works.
+>
+> When a user uploads a file, it goes directly to S3 using presigned URLs - the API stays lightweight.
+>
+> Then, background workers powered by BullMQ:
 > - Extract text using AWS Textract for OCR
-> - Generate thumbnails with Sharp
-> - Create vector embeddings with OpenAI for semantic search
+> - Generate 1536-dimensional vector embeddings with OpenAI
+> - Classify documents automatically - identifying invoices, contracts, reports
 >
-> All of this happens asynchronously, so users don't wait. They see processing status in real-time through WebSockets."
+> Everything is async and scalable. Users see real-time progress through WebSockets."
 
 ---
 
-## [2:30 - 3:15] Key Technical Decisions
+### [2:00 - 2:45] Live Demo - Semantic Search
 
-**[Show: Tech stack table]**
+**[SHOW: Live application - perform semantic search]**
 
-> "Let me highlight a few key decisions:
+> "Let me show you the semantic search in action.
 >
-> **PostgreSQL with pgvector** instead of a separate vector database - this simplifies our architecture while still enabling powerful semantic search. We can always scale to Pinecone later if needed.
+> *[Type in search: "employee guidelines"]*
 >
-> **NestJS for the backend** - it gives us a modular, type-safe codebase that's easy to maintain and extend. The dependency injection makes testing straightforward.
+> Notice how it finds the Company Handbook even though I didn't search for those exact words. That's the power of vector embeddings - it understands meaning, not just keywords.
 >
-> **BullMQ for job processing** - built on Redis, it provides reliable job queues with retries, priorities, and rate limiting. Since we're already using Redis for caching, this was a natural fit."
+> *[Point to similarity scores]*
+>
+> Each result shows a similarity score - 81% match in this case. The system supports hybrid search, combining semantic and full-text results."
 
 ---
 
-## [3:15 - 4:00] Security & Multi-tenancy
+### [2:45 - 3:30] AI Classification Demo
 
-**[Show: Security model diagram]**
+**[SHOW: Document detail page with AI classification metadata]**
 
-> "Security is built in from the ground up.
+> "Now let's look at AI classification.
 >
-> For **authentication**, we support OAuth with Google and Microsoft, plus traditional email/password. API clients use JWT tokens, and the desktop agent uses API keys with HMAC signatures.
+> *[Click on Invoice document]*
 >
-> For **authorization**, we use role-based access control with four levels: Viewer, Editor, Admin, and Owner. But more importantly, we have Row-Level Security in PostgreSQL - every query is automatically filtered by organization ID, ensuring complete tenant isolation.
+> GPT-4 analyzed this document and identified it as an Invoice with 99% confidence. It extracted relevant tags - payment, billing, net 30 - and generated a summary.
 >
-> All data is encrypted at rest with AWS KMS, and in transit with TLS."
+> *[Click on Contract document]*
+>
+> For this NDA, it correctly identified it as a Contract with 98% confidence, tagged it as legal and confidential.
+>
+> This happens automatically for every uploaded document."
 
 ---
 
-## [4:00 - 4:45] Scalability & Operations
+### [3:30 - 4:15] Key Technical Decisions
 
-**[Show: Infrastructure diagram or CloudWatch dashboard]**
+**[SHOW: Tech stack slide]**
 
-> "The system is designed to scale horizontally.
+> "A few key decisions that make this production-ready:
 >
-> **ECS Fargate** auto-scales based on CPU and memory. For the workers, we use Spot instances for cost optimization - that's about 70% savings.
+> **PostgreSQL with pgvector** instead of a separate vector database. Simplifies operations, handles millions of documents.
 >
-> **Observability** is handled by CloudWatch - structured logs, custom metrics, and alerts for key SLOs like latency and error rates.
+> **BullMQ on Redis** for job processing - reliable retries and priorities.
 >
-> **Infrastructure is defined as code** using AWS CDK in TypeScript - the same language as our application. This makes deployment consistent and reviewable."
+> **Row-Level Security** ensures complete tenant isolation at the database level.
+>
+> The entire infrastructure is defined as code using AWS CDK in TypeScript."
 
 ---
 
-## [4:45 - 5:00] Closing
+### [4:15 - 4:50] Scalability & Operations
 
-**[Show: Summary slide or live demo]**
+**[SHOW: Infrastructure diagram]**
 
-> "To summarize: this is a production-ready architecture that balances cost, scalability, and developer experience.
+> "The system scales horizontally.
 >
-> The code is available for review, and I'm happy to dive deeper into any aspect during our interview.
+> ECS Fargate auto-scales based on load. Spot instances for workers - 70% cost savings.
 >
-> Thanks for watching, and I look forward to discussing this further."
+> Observability built-in: structured logs, custom metrics, alerts for SLOs.
+>
+> Target: 99.9% availability, under 500ms P99 latency.
+>
+> Estimated cost for 1000 users: $500-800 per month."
+
+---
+
+### [4:50 - 5:00] Closing
+
+**[SHOW: Running application]**
+
+> "To wrap up: this is a production-ready Document Management System with AI-powered search and classification.
+>
+> The code is available for review, and I'm excited to dive deeper during our interview.
+>
+> Thanks for watching."
 
 ---
 
 ## Recording Tips
 
-1. **Screen setup:** Have architecture diagrams ready in separate tabs
-2. **Pace:** Speak clearly, don't rush - 5 minutes is enough
-3. **Visuals:** Point to relevant parts of diagrams as you speak
-4. **Energy:** Be enthusiastic but professional
-5. **Backup:** Record audio separately in case of issues
+### Do's
+- Speak clearly and at moderate pace
+- Point to diagram sections as you explain
+- Show real working demos
+- Be enthusiastic but professional
 
-## Key Points to Emphasize
+### Don'ts
+- Don't rush - 5 minutes is plenty
+- Don't read word-for-word
+- Don't apologize for anything
 
-- **Practical choices** over over-engineering
-- **Cost-conscious** architecture
-- **Security-first** design
-- **AI-powered** features (OCR, semantic search)
-- **Real-time** collaboration capabilities
-- **Production-ready** with observability
+### Technical Setup
+1. **Resolution:** 1080p or higher
+2. **Audio:** Use headset mic
+3. **Browser:** Clear tabs, hide bookmarks
+4. **Demo URLs:** localhost:3000, localhost:4000/api/docs
+
+---
+
+## Key Metrics
+
+| Metric | Value |
+|--------|-------|
+| Processing queues | 5 (OCR, PDF, Thumbnail, Embedding, AI Classify) |
+| Embedding dimensions | 1536 (text-embedding-3-small) |
+| AI classification | 95-99% confidence |
+| Target latency | < 500ms P99 |
+| Spot savings | 70% |
+| Monthly cost | $500-800 (1000 users) |
+
+---
 
 ## Questions to Anticipate
 
-1. "Why PostgreSQL over DynamoDB?"
-2. "How does semantic search scale?"
-3. "What's the cost breakdown?"
-4. "How would you handle 10x traffic?"
-5. "What would you change with more time?"
+1. **"Why PostgreSQL over DynamoDB?"**
+   - ACID, complex queries, pgvector, single database
+
+2. **"How does semantic search scale?"**
+   - IVFFlat index, pagination, migrate to Pinecone if needed
+
+3. **"Cost breakdown?"**
+   - ECS ~$200, RDS ~$150, Redis ~$50, S3 ~$50, AI APIs ~$100-200
+
+4. **"Security?"**
+   - RLS, encryption, OAuth 2.0, RBAC
+
+5. **"What would you improve?"**
+   - Real-time collab, mobile apps, custom ML models
