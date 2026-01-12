@@ -1,3 +1,7 @@
+// Load environment variables BEFORE anything else, with override to fix shell pollution
+import * as dotenv from 'dotenv';
+dotenv.config({ override: true });
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
