@@ -326,6 +326,11 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
       AI_CLASSIFY: 'CLASSIFIED',
       PDF_SPLIT: 'READY',
       PDF_MERGE: 'READY',
+      PDF_WATERMARK: 'READY',
+      PDF_COMPRESS: 'READY',
+      PDF_EXTRACT_PAGES: 'READY',
+      PDF_RENDER_PAGE: 'READY',
+      PDF_METADATA: 'READY',
     };
 
     const updateData: Record<string, unknown> = {
