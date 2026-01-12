@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EmbeddingService } from '../services/embedding.service';
-import { DOCUMENT_PROCESSING_QUEUE } from '../queues/queue.constants';
+import { QUEUE_NAMES } from '../queues/queue.constants';
 import type { ProcessingJobData } from '../processing.service';
 
 interface EmbeddingResult {
@@ -34,7 +34,7 @@ interface ClassificationResult {
  * - Generate embeddings for each chunk
  * - Combine using weighted average
  */
-@Processor(DOCUMENT_PROCESSING_QUEUE)
+@Processor(QUEUE_NAMES.EMBEDDING)
 export class EmbeddingProcessor extends WorkerHost {
   private readonly logger = new Logger(EmbeddingProcessor.name);
   private readonly openaiApiKey: string | undefined;
@@ -49,11 +49,14 @@ export class EmbeddingProcessor extends WorkerHost {
   }
 
   async process(job: Job<ProcessingJobData>): Promise<EmbeddingResult> {
-    if (job.name !== 'embedding' && job.name !== 'ai_classify') {
+    const isEmbeddingJob = ['embedding', 'generate-embedding', 'update-embedding'].includes(job.name);
+    const isClassifyJob = ['ai_classify', 'classify-document'].includes(job.name);
+
+    if (!isEmbeddingJob && !isClassifyJob) {
       throw new Error(`Processor cannot handle job type: ${job.name}`);
     }
 
-    if (job.name === 'ai_classify') {
+    if (isClassifyJob) {
       return this.handleAiClassify(job);
     }
 
@@ -276,9 +279,23 @@ Respond only with valid JSON, no markdown formatting.`;
     const content = data.choices[0].message.content;
 
     try {
-      return JSON.parse(content) as ClassificationResult;
-    } catch {
-      this.logger.warn('Failed to parse classification response as JSON');
+      // Strip markdown code blocks if present (handles various formats including newlines)
+      let cleanContent = content.trim();
+
+      // Remove opening ```json or ``` with any following whitespace/newlines
+      cleanContent = cleanContent.replace(/^```(?:json)?\s*\n?/, '');
+      // Remove trailing ``` with any preceding whitespace/newlines
+      cleanContent = cleanContent.replace(/\n?\s*```\s*$/, '');
+      cleanContent = cleanContent.trim();
+
+      this.logger.debug(`Parsing classification response: ${cleanContent.substring(0, 100)}...`);
+
+      const parsed = JSON.parse(cleanContent) as ClassificationResult;
+      this.logger.debug(`Classification parsed successfully: category=${parsed.category}, confidence=${parsed.confidence}`);
+      return parsed;
+    } catch (e) {
+      this.logger.warn(`Failed to parse classification response as JSON: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      this.logger.debug(`Raw content: ${content.substring(0, 200)}...`);
       return { raw: content, parseError: true };
     }
   }

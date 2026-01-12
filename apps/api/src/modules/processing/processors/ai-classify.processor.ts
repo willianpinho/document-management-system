@@ -179,7 +179,15 @@ export class AiClassifyProcessor extends WorkerHost {
     const response = await this.callOpenAI(prompt);
 
     try {
-      const parsed = JSON.parse(response);
+      // Strip markdown code blocks if present (GPT sometimes wraps JSON in ```json blocks)
+      let cleanResponse = response.trim();
+      cleanResponse = cleanResponse.replace(/^```(?:json)?\s*\n?/, '');
+      cleanResponse = cleanResponse.replace(/\n?\s*```\s*$/, '');
+      cleanResponse = cleanResponse.trim();
+
+      this.logger.debug(`Parsing classification response: ${cleanResponse.substring(0, 100)}...`);
+
+      const parsed = JSON.parse(cleanResponse);
       return {
         category: parsed.category || 'Other',
         confidence: Math.min(Math.max(parsed.confidence || 0, 0), 1),
@@ -187,8 +195,9 @@ export class AiClassifyProcessor extends WorkerHost {
         tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [],
         summary: parsed.summary,
       };
-    } catch {
-      this.logger.warn('Failed to parse classification response, using defaults');
+    } catch (e) {
+      this.logger.warn(`Failed to parse classification response: ${e instanceof Error ? e.message : 'Unknown'}`);
+      this.logger.debug(`Raw response: ${response.substring(0, 200)}...`);
       return {
         category: 'Other',
         confidence: 0,
