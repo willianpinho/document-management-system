@@ -68,6 +68,11 @@ export class EmbeddingService {
     this.maxTokensPerRequest = 8191;
     // Maximum batch size for OpenAI embeddings API
     this.maxBatchSize = 2048;
+
+    // Debug logging
+    this.logger.log(
+      `EmbeddingService initialized: model=${this.embeddingModel}, dimensions=${this.embeddingDimensions}, apiKeySet=${!!this.openaiApiKey}`,
+    );
   }
 
   /**
@@ -382,17 +387,24 @@ export class EmbeddingService {
   // ==========================================================================
 
   private async callEmbeddingAPI(inputs: string[]): Promise<OpenAIEmbeddingResponse> {
+    // Build request body - only include dimensions for models that support it
+    const requestBody: Record<string, unknown> = {
+      model: this.embeddingModel,
+      input: inputs,
+    };
+
+    // Only text-embedding-3-* models support the dimensions parameter
+    if (this.embeddingModel.startsWith('text-embedding-3')) {
+      requestBody.dimensions = this.embeddingDimensions;
+    }
+
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.openaiApiKey}`,
       },
-      body: JSON.stringify({
-        model: this.embeddingModel,
-        input: inputs,
-        dimensions: this.embeddingDimensions,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
