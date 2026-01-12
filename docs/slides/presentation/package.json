@@ -1,0 +1,1 @@
+{"name":"dms-presentation","version":"1.0.0","scripts":{"dev":"slidev","build":"slidev build","export":"slidev export"},"devDependencies":{"@slidev/cli":"^52.11.2","@slidev/theme-default":"^0.25.0","@slidev/theme-seriph":"^0.25.0","playwright-chromium":"^1.57.0"}}
