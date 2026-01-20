@@ -39,23 +39,45 @@ import {
  * Provides complete document text extraction, table detection, and form parsing
  * using AWS Textract. Supports both synchronous (single-page) and asynchronous
  * (multi-page) document processing.
+ *
+ * In development mode with MinIO or missing AWS credentials, the service will
+ * indicate that Textract is unavailable, allowing the OCR processor to use
+ * a local fallback.
  */
 @Injectable()
 export class TextractService {
   private readonly logger = new Logger(TextractService.name);
-  private readonly client: TextractClient;
+  private readonly client: TextractClient | null;
   private readonly bucket: string;
   private readonly snsTopicArn: string | undefined;
   private readonly roleArn: string | undefined;
   private readonly outputBucket: string | undefined;
+  private readonly isAvailable: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const region = this.configService.get<string>('AWS_REGION', 'us-east-1');
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID', '');
+    const s3Endpoint = this.configService.get<string>('S3_ENDPOINT', '');
 
-    this.client = new TextractClient({
-      region,
-      // Credentials are picked up from environment or IAM role
-    });
+    // Check if we're using MinIO (local S3) or missing AWS credentials
+    const isMinIO = s3Endpoint.includes('localhost') || s3Endpoint.includes('minio');
+    const isMissingCredentials = !accessKeyId || accessKeyId === 'minioadmin';
+
+    if (isMinIO || isMissingCredentials) {
+      this.logger.warn(
+        'AWS Textract is NOT available. Using local fallback for OCR. ' +
+        'To enable Textract, configure real AWS credentials in .env',
+      );
+      this.client = null;
+      this.isAvailable = false;
+    } else {
+      this.client = new TextractClient({
+        region,
+        // Credentials are picked up from environment or IAM role
+      });
+      this.isAvailable = true;
+      this.logger.log(`TextractService initialized for region: ${region}`);
+    }
 
     this.bucket = this.configService.get<string>('S3_BUCKET', 'dms-documents-dev');
     this.snsTopicArn = this.configService.get<string>('TEXTRACT_SNS_TOPIC_ARN');
@@ -64,8 +86,13 @@ export class TextractService {
       'TEXTRACT_OUTPUT_BUCKET',
       this.bucket,
     );
+  }
 
-    this.logger.log(`TextractService initialized for region: ${region}`);
+  /**
+   * Check if AWS Textract is available
+   */
+  isTextractAvailable(): boolean {
+    return this.isAvailable;
   }
 
   /**
@@ -76,6 +103,10 @@ export class TextractService {
     s3Key: string,
     s3Bucket?: string,
   ): Promise<{ text: string; blocks: Block[]; confidence: number }> {
+    if (!this.client) {
+      throw new Error('AWS Textract is not available. Use local OCR fallback instead.');
+    }
+
     const bucket = s3Bucket || this.bucket;
 
     this.logger.log(`Detecting text in document: ${bucket}/${s3Key}`);
@@ -136,6 +167,10 @@ export class TextractService {
     features: FeatureType[] = ['FORMS', 'TABLES'],
     s3Bucket?: string,
   ): Promise<OcrResult> {
+    if (!this.client) {
+      throw new Error('AWS Textract is not available. Use local OCR fallback instead.');
+    }
+
     const bucket = s3Bucket || this.bucket;
     const startTime = Date.now();
 
@@ -171,6 +206,10 @@ export class TextractService {
     options: OcrProcessingOptions = { features: ['TABLES', 'FORMS'] },
     s3Bucket?: string,
   ): Promise<string> {
+    if (!this.client) {
+      throw new Error('AWS Textract is not available. Use local OCR fallback instead.');
+    }
+
     const bucket = s3Bucket || this.bucket;
 
     this.logger.log(
@@ -235,6 +274,10 @@ export class TextractService {
    * Returns null if job is still in progress
    */
   async getDocumentAnalysis(jobId: string): Promise<OcrResult | null> {
+    if (!this.client) {
+      throw new Error('AWS Textract is not available. Use local OCR fallback instead.');
+    }
+
     const startTime = Date.now();
     let nextToken: string | undefined;
     const allBlocks: Block[] = [];
