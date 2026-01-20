@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { StorageService } from '../../storage/storage.service';
 import { TextractService } from '../services/textract.service';
+import { LocalOcrService } from '../services/local-ocr.service';
 import { EmbeddingService } from '../services/embedding.service';
 import { DOCUMENT_PROCESSING_QUEUE } from '../queues/queue.constants';
 import type { ProcessingJobData } from '../processing.service';
@@ -58,6 +59,7 @@ export class OcrProcessor extends WorkerHost {
     private readonly storageService: StorageService,
     private readonly configService: ConfigService,
     private readonly textractService: TextractService,
+    private readonly localOcrService: LocalOcrService,
     private readonly embeddingService: EmbeddingService,
   ) {
     super();
@@ -122,19 +124,39 @@ export class OcrProcessor extends WorkerHost {
       // Determine processing options
       const ocrOptions = this.parseOptions(options);
 
-      // Determine if async processing is needed
-      const useAsync = this.textractService.shouldUseAsyncProcessing(
-        document.mimeType,
-        Number(document.sizeBytes),
-        ocrOptions,
-      );
-
       let ocrResult: OcrResult;
+      let useAsync = false;
+      let usedLocalFallback = false;
 
-      if (useAsync) {
-        ocrResult = await this.processAsync(job, s3Key, ocrOptions);
+      // Check if Textract is available, otherwise use local fallback
+      if (!this.textractService.isTextractAvailable()) {
+        this.logger.warn(
+          `AWS Textract not available. Using local OCR fallback for document ${documentId}`,
+        );
+
+        // Only PDF is supported for local OCR
+        if (!this.localOcrService.isSupported(document.mimeType)) {
+          throw new Error(
+            `Local OCR only supports PDF files. Document type: ${document.mimeType}. ` +
+            `To process images, configure AWS Textract credentials.`,
+          );
+        }
+
+        ocrResult = await this.processWithLocalFallback(job, s3Key);
+        usedLocalFallback = true;
       } else {
-        ocrResult = await this.processSync(job, s3Key, ocrOptions);
+        // Determine if async processing is needed
+        useAsync = this.textractService.shouldUseAsyncProcessing(
+          document.mimeType,
+          Number(document.sizeBytes),
+          ocrOptions,
+        );
+
+        if (useAsync) {
+          ocrResult = await this.processAsync(job, s3Key, ocrOptions);
+        } else {
+          ocrResult = await this.processSync(job, s3Key, ocrOptions);
+        }
       }
 
       await job.updateProgress(80);
@@ -265,6 +287,38 @@ export class OcrProcessor extends WorkerHost {
 
     // Poll for completion
     const result = await this.pollForCompletion(job, textractJobId);
+
+    return result;
+  }
+
+  /**
+   * Process document using local OCR fallback (for development without AWS)
+   * Downloads the file from S3/MinIO and uses pdf-parse for text extraction
+   */
+  private async processWithLocalFallback(
+    job: Job<ProcessingJobData>,
+    s3Key: string,
+  ): Promise<OcrResult> {
+    this.logger.debug(`Using local OCR fallback for ${s3Key}`);
+
+    await job.updateProgress(20);
+
+    // Download the file from S3/MinIO
+    const fileStream = await this.storageService.getObject(s3Key);
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of fileStream as AsyncIterable<Buffer>) {
+      chunks.push(chunk);
+    }
+
+    const buffer = Buffer.concat(chunks);
+
+    await job.updateProgress(40);
+
+    // Process with local OCR
+    const result = await this.localOcrService.extractTextFromPdf(buffer);
+
+    await job.updateProgress(70);
 
     return result;
   }
