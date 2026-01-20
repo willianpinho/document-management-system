@@ -31,6 +31,7 @@ import { AiClassifyProcessor } from './processors/ai-classify.processor';
 
 // Services
 import { TextractService } from './services/textract.service';
+import { LocalOcrService } from './services/local-ocr.service';
 import { EmbeddingService } from './services/embedding.service';
 import { PdfService } from './services/pdf.service';
 
@@ -122,6 +123,7 @@ export { DOCUMENT_PROCESSING_QUEUE } from './queues';
 
     // Specialized services
     TextractService,
+    LocalOcrService,
     EmbeddingService,
     PdfService,
 
