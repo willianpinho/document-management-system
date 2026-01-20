@@ -74,3 +74,8 @@ temp
 
 # Local development
 .localstack
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
