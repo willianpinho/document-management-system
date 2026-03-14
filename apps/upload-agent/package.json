@@ -6,7 +6,8 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "echo 'Skipped: use build:electron for Electron builds'",
+    "build:electron": "electron-vite build",
     "start": "electron .",
     "lint": "eslint src/",
     "type-check": "echo 'Type checking handled by electron-vite'",

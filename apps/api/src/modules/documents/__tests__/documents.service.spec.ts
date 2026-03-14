@@ -38,6 +38,7 @@ interface MockPrisma {
 interface MockStorage {
   getPresignedUploadUrl: Mock;
   getPresignedDownloadUrl: Mock;
+  getPresignedDownloadUrlIfExists: Mock;
   getObject: Mock;
 }
 
@@ -45,6 +46,10 @@ interface MockRealtime {
   emitDocumentCreated: Mock;
   emitDocumentUpdated: Mock;
   emitDocumentDeleted: Mock;
+}
+
+interface MockProcessing {
+  addJob: Mock;
 }
 
 // Test fixtures
@@ -91,6 +96,7 @@ describe('DocumentsService', () => {
   let mockPrisma: MockPrisma;
   let mockStorage: MockStorage;
   let mockRealtime: MockRealtime;
+  let mockProcessing: MockProcessing;
 
   beforeEach(() => {
     // Create fresh mocks for each test
@@ -111,6 +117,7 @@ describe('DocumentsService', () => {
     mockStorage = {
       getPresignedUploadUrl: vi.fn(),
       getPresignedDownloadUrl: vi.fn(),
+      getPresignedDownloadUrlIfExists: vi.fn(),
       getObject: vi.fn(),
     };
 
@@ -120,11 +127,16 @@ describe('DocumentsService', () => {
       emitDocumentDeleted: vi.fn(),
     };
 
+    mockProcessing = {
+      addJob: vi.fn().mockResolvedValue({ job: { id: 'job-123' }, queueName: 'processing' }),
+    };
+
     // Create service instance with mocks
     service = new DocumentsService(
       mockPrisma as any,
       mockStorage as any,
       mockRealtime as any,
+      mockProcessing as any,
     );
   });
 
@@ -511,7 +523,7 @@ describe('DocumentsService', () => {
 
     beforeEach(() => {
       mockPrisma.document.findFirst.mockResolvedValue(mockDocument);
-      mockStorage.getPresignedDownloadUrl.mockResolvedValue(expectedDownloadUrl);
+      mockStorage.getPresignedDownloadUrlIfExists.mockResolvedValue(expectedDownloadUrl);
     });
 
     it('should return presigned download URL', async () => {
@@ -526,7 +538,7 @@ describe('DocumentsService', () => {
     it('should generate URL for correct S3 key', async () => {
       await service.getDownloadUrl(mockDocumentId, mockOrganizationId);
 
-      expect(mockStorage.getPresignedDownloadUrl).toHaveBeenCalledWith(
+      expect(mockStorage.getPresignedDownloadUrlIfExists).toHaveBeenCalledWith(
         mockDocument.s3Key,
       );
     });
@@ -541,70 +553,51 @@ describe('DocumentsService', () => {
   });
 
   describe('triggerProcessing', () => {
-    const processDto = {
-      type: 'ocr',
-      options: { language: 'en' },
-    };
+    const operations = ['OCR'];
 
     beforeEach(() => {
       mockPrisma.document.findFirst.mockResolvedValue(mockDocument);
     });
 
-    it('should create processing job', async () => {
-      const mockJob = {
-        id: 'job-123',
-        documentId: mockDocumentId,
-        jobType: processDto.type,
-        status: 'PENDING',
-      };
-
-      mockPrisma.processingJob.create.mockResolvedValue(mockJob);
-      mockPrisma.document.update.mockResolvedValue(mockDocument);
-
+    it('should create processing jobs', async () => {
       const result = await service.triggerProcessing(
         mockDocumentId,
         mockOrganizationId,
-        processDto,
+        operations,
       );
 
-      expect(result).toHaveProperty('job');
-      expect(result).toHaveProperty('message', 'Processing job created');
-      expect(result.job.id).toBe('job-123');
+      expect(result).toHaveProperty('jobs');
+      expect(result).toHaveProperty('message');
+      expect(result.jobs).toHaveLength(1);
+      expect(result.jobs[0].jobId).toBe('job-123');
     });
 
-    it('should update document processing status', async () => {
-      const mockJob = { id: 'job-123' };
-      mockPrisma.processingJob.create.mockResolvedValue(mockJob);
-      mockPrisma.document.update.mockResolvedValue(mockDocument);
+    it('should call processingService.addJob for each operation', async () => {
+      await service.triggerProcessing(mockDocumentId, mockOrganizationId, operations);
 
-      await service.triggerProcessing(mockDocumentId, mockOrganizationId, processDto);
-
-      expect(mockPrisma.document.update).toHaveBeenCalledWith({
-        where: { id: mockDocumentId },
-        data: { processingStatus: ProcessingStatus.OCR_IN_PROGRESS },
-      });
+      expect(mockProcessing.addJob).toHaveBeenCalledWith(
+        mockDocumentId,
+        'OCR',
+        {},
+      );
     });
 
     it('should throw NotFoundException when document not found', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.triggerProcessing('non-existent-id', mockOrganizationId, processDto),
+        service.triggerProcessing('non-existent-id', mockOrganizationId, operations),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should pass processing options to job', async () => {
-      const mockJob = { id: 'job-123' };
-      mockPrisma.processingJob.create.mockResolvedValue(mockJob);
-      mockPrisma.document.update.mockResolvedValue(mockDocument);
+    it('should handle multiple operations', async () => {
+      const multiOps = ['OCR', 'THUMBNAIL'];
+      mockProcessing.addJob.mockResolvedValue({ job: { id: 'job-456' }, queueName: 'processing' });
 
-      await service.triggerProcessing(mockDocumentId, mockOrganizationId, processDto);
+      const result = await service.triggerProcessing(mockDocumentId, mockOrganizationId, multiOps);
 
-      expect(mockPrisma.processingJob.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          inputParams: processDto.options,
-        }),
-      });
+      expect(mockProcessing.addJob).toHaveBeenCalledTimes(2);
+      expect(result.jobs).toHaveLength(2);
     });
   });
 

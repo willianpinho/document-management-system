@@ -29,6 +29,7 @@
     "infra:deploy:staging": "pnpm --filter @dms/infrastructure deploy:staging",
     "infra:deploy:prod": "pnpm --filter @dms/infrastructure deploy:prod",
     "clean": "turbo clean && rm -rf node_modules",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma",
     "prepare": "husky"
   },
   "devDependencies": {
