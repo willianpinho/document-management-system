@@ -46,6 +46,7 @@
     "lint-staged": "^15.2.0",
     "pdf-lib": "^1.17.1",
     "prettier": "^3.4.0",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "prisma": "5.20.0",
     "tsx": "^4.19.0",
     "turbo": "^2.3.0",
