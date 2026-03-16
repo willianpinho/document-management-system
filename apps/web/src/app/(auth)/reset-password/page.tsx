@@ -3,15 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@dms/ui';
 import { ArrowLeft, KeyRound, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { authApi, ApiError } from '@/lib/api';
 
@@ -87,9 +79,7 @@ function ResetPasswordContent() {
           </CardHeader>
           <CardContent>
             <Link href="/login">
-              <Button className="w-full">
-                Continue to sign in
-              </Button>
+              <Button className="w-full">Continue to sign in</Button>
             </Link>
           </CardContent>
         </Card>
@@ -134,9 +124,7 @@ function ResetPasswordContent() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete="new-password"
               />
-              <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters
-              </p>
+              <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             </div>
 
             <div className="space-y-2">
@@ -193,9 +181,7 @@ function LoadingFallback() {
             <KeyRound className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Set new password</CardTitle>
-          <CardDescription>
-            Loading...
-          </CardDescription>
+          <CardDescription>Loading...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center py-8">

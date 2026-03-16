@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Bell, Mail, Smartphone, CheckCircle2, Loader2 } from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Switch,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Switch } from '@dms/ui';
 import { useUserPreferences, useUpdatePreferences } from '@/hooks/usePreferences';
 
 export default function NotificationsSettingsPage() {
@@ -123,9 +115,7 @@ export default function NotificationsSettingsPage() {
           Back to settings
         </Link>
         <h1 className="text-2xl font-bold">Notification Settings</h1>
-        <p className="text-muted-foreground">
-          Choose how and when you want to be notified
-        </p>
+        <p className="text-muted-foreground">Choose how and when you want to be notified</p>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -160,9 +150,7 @@ export default function NotificationsSettingsPage() {
                 <div key={setting.id} className="flex items-center justify-between gap-8">
                   <div className="flex-1">
                     <p className="text-sm font-medium">{setting.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {setting.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{setting.description}</p>
                   </div>
                   <Switch
                     checked={setting.value}

@@ -118,7 +118,16 @@ export function useSemanticSearch({
       hybridSearchMutation.mutate();
     }
     // For 'text' mode, the query handles it automatically
-  }, [debouncedQuery, mode, enabled, threshold, enableReranking, textWeight, semanticWeight, filters]);
+  }, [
+    debouncedQuery,
+    mode,
+    enabled,
+    threshold,
+    enableReranking,
+    textWeight,
+    semanticWeight,
+    filters,
+  ]);
 
   // Get current results based on mode
   const getCurrentResults = (): SearchResponse | undefined => {
@@ -183,7 +192,7 @@ export function useSemanticSearch({
 
   // Get active filter count
   const activeFilterCount = Object.keys(filters).filter(
-    (key) => filters[key as keyof SearchFilters] !== undefined
+    (key) => filters[key as keyof SearchFilters] !== undefined,
   ).length;
 
   return {

@@ -15,11 +15,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
-import {
-  OcrResult,
-  OcrTextBlock,
-  isSupportedOcrMimeType,
-} from '../dto/ocr-result.dto';
+import { OcrResult, OcrTextBlock, isSupportedOcrMimeType } from '../dto/ocr-result.dto';
 
 @Injectable()
 export class LocalOcrService {

@@ -31,7 +31,7 @@ function DocumentsPageContent() {
   const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
-    (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+    (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
   );
 
   // Filters from URL
@@ -97,7 +97,7 @@ function DocumentsPageContent() {
       params.set('sortOrder', newSortOrder);
       router.push(`/documents?${params.toString()}`);
     },
-    [searchParams, router]
+    [searchParams, router],
   );
 
   const handleFilterChange = useCallback(
@@ -110,7 +110,7 @@ function DocumentsPageContent() {
       }
       router.push(`/documents?${params.toString()}`);
     },
-    [searchParams, router]
+    [searchParams, router],
   );
 
   const clearFilters = useCallback(() => {
@@ -130,7 +130,7 @@ function DocumentsPageContent() {
         console.error('Download failed:', apiError.message || 'Unknown error');
       }
     },
-    [documentsData]
+    [documentsData],
   );
 
   const handleDelete = useCallback(
@@ -139,38 +139,41 @@ function DocumentsPageContent() {
         await deleteDocument.mutateAsync(id);
       }
     },
-    [deleteDocument]
+    [deleteDocument],
   );
 
   const handleRename = useCallback(
     (id: string) => {
       router.push(`/documents/${id}?edit=true`);
     },
-    [router]
+    [router],
   );
 
   const handleMove = useCallback(
     (id: string) => {
       router.push(`/documents/${id}?move=true`);
     },
-    [router]
+    [router],
   );
 
   const handleCopy = useCallback(
     (id: string) => {
       router.push(`/documents/${id}?copy=true`);
     },
-    [router]
+    [router],
   );
 
   const handlePreview = useCallback((id: string) => {
     setPreviewDocumentId(id);
   }, []);
 
-  const handleCreateFolder = useCallback(async (name: string) => {
-    await createFolder.mutateAsync({ name });
-    setIsCreateFolderOpen(false);
-  }, [createFolder]);
+  const handleCreateFolder = useCallback(
+    async (name: string) => {
+      await createFolder.mutateAsync({ name });
+      setIsCreateFolderOpen(false);
+    },
+    [createFolder],
+  );
 
   const documents = documentsData?.data || [];
 
@@ -182,7 +185,7 @@ function DocumentsPageContent() {
         type: 'document' as const,
         name: doc.name,
       })),
-    [documents]
+    [documents],
   );
 
   return (
@@ -192,9 +195,7 @@ function DocumentsPageContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Documents</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage and organize your documents
-            </p>
+            <p className="text-sm text-muted-foreground">Manage and organize your documents</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsCreateFolderOpen(true)}>

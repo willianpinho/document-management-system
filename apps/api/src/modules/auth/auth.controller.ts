@@ -35,12 +35,7 @@ import { TokensResponseDto, UserResponseDto } from './dto/tokens-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import {
-  AuditUser,
-  AuditLog,
-  AuditAction,
-  AuditResourceType,
-} from '../audit';
+import { AuditUser, AuditLog, AuditAction, AuditResourceType } from '../audit';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -271,10 +266,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.authService.resetPassword(
-      resetPasswordDto.token,
-      resetPasswordDto.newPassword,
-    );
+    return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
 
   // ============================================================================
@@ -302,10 +294,7 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const tokens = await this.authService.login(req.user);
-    const frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'http://localhost:3000',
-    );
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
 
     // Redirect to frontend with tokens
     const params = new URLSearchParams({
@@ -338,10 +327,7 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const tokens = await this.authService.login(req.user);
-    const frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'http://localhost:3000',
-    );
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
 
     // Redirect to frontend with tokens
     const params = new URLSearchParams({

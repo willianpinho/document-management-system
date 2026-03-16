@@ -7,19 +7,9 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test/**/*",
-    "**/__tests__/**/*",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test/**/*", "**/__tests__/**/*", "**/*.spec.ts"]
 }

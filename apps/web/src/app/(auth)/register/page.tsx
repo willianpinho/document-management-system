@@ -4,15 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@dms/ui';
 import { authApi } from '@/lib/api';
 import { isValidEmail } from '@/lib/utils';
 
@@ -98,9 +90,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
-            Get started with your free account
-          </CardDescription>
+          <CardDescription>Get started with your free account</CardDescription>
         </CardHeader>
         <CardContent>
           {/* OAuth buttons */}
@@ -153,9 +143,7 @@ export default function RegisterPage() {
               <div className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with email
-              </span>
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
@@ -212,9 +200,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 data-testid="password-input"
               />
-              <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters
-              </p>
+              <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             </div>
 
             <div className="space-y-2">
@@ -232,7 +218,12 @@ export default function RegisterPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading} data-testid="register-button">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              data-testid="register-button"
+            >
               {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  LayoutGrid,
-  List,
-  ArrowUpDown,
-  ChevronDown,
-  FileText,
-  Upload,
-} from 'lucide-react';
+import { LayoutGrid, List, ArrowUpDown, ChevronDown, FileText, Upload } from 'lucide-react';
 import {
   Button,
   Card,
@@ -119,10 +112,7 @@ export function DocumentList({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               {sortOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => handleSortChange(option.value)}
-                >
+                <DropdownMenuItem key={option.value} onClick={() => handleSortChange(option.value)}>
                   {option.label}
                   {sortBy === option.value && (
                     <span className="ml-auto text-xs text-muted-foreground">

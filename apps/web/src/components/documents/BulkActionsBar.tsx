@@ -73,13 +73,13 @@ export function BulkActionsBar({
     <>
       <div
         className={cn(
-          'fixed bottom-6 left-1/2 -translate-x-1/2 z-50',
-          'bg-background border rounded-lg shadow-lg',
+          'fixed bottom-6 left-1/2 z-50 -translate-x-1/2',
+          'rounded-lg border bg-background shadow-lg',
           'flex items-center gap-2 px-4 py-2',
-          className
+          className,
         )}
       >
-        <span className="text-sm font-medium mr-2">
+        <span className="mr-2 text-sm font-medium">
           {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
         </span>
 
@@ -93,8 +93,8 @@ export function BulkActionsBar({
           title={!hasDocuments ? 'Select documents to download' : 'Download selected items'}
         >
           {isDownloading ? (
-            <span className="animate-spin mr-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <span className="mr-1 animate-spin">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -111,12 +111,7 @@ export function BulkActionsBar({
               </svg>
             </span>
           ) : (
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -128,15 +123,10 @@ export function BulkActionsBar({
           Download
         </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onMove(null)}
-          disabled={isProcessing}
-        >
+        <Button variant="ghost" size="sm" onClick={() => onMove(null)} disabled={isProcessing}>
           {isMoving ? (
-            <span className="animate-spin mr-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <span className="mr-1 animate-spin">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -153,12 +143,7 @@ export function BulkActionsBar({
               </svg>
             </span>
           ) : (
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -171,15 +156,10 @@ export function BulkActionsBar({
         </Button>
 
         {hasDocuments && !hasFolders && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onCopy(null)}
-            disabled={isProcessing}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onCopy(null)} disabled={isProcessing}>
             {isCopying ? (
-              <span className="animate-spin mr-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <span className="mr-1 animate-spin">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -196,12 +176,7 @@ export function BulkActionsBar({
                 </svg>
               </span>
             ) : (
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -223,8 +198,8 @@ export function BulkActionsBar({
               disabled={isProcessing}
             >
               {isDeleting ? (
-                <span className="animate-spin mr-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <span className="mr-1 animate-spin">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -241,12 +216,7 @@ export function BulkActionsBar({
                   </svg>
                 </span>
               ) : (
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -256,12 +226,7 @@ export function BulkActionsBar({
                 </svg>
               )}
               Delete
-              <svg
-                className="w-3 h-3 ml-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -288,12 +253,7 @@ export function BulkActionsBar({
         <div className="h-4 w-px bg-border" />
 
         <Button variant="ghost" size="sm" onClick={onClearSelection}>
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -318,8 +278,8 @@ export function BulkActionsBar({
                 </>
               ) : (
                 <>
-                  Move {selectedCount} item{selectedCount !== 1 ? 's' : ''} to
-                  trash? You can restore them later from the trash.
+                  Move {selectedCount} item{selectedCount !== 1 ? 's' : ''} to trash? You can
+                  restore them later from the trash.
                 </>
               )}
             </AlertDialogDescription>

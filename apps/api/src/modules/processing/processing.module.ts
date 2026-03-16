@@ -138,11 +138,6 @@ export { DOCUMENT_PROCESSING_QUEUE } from './queues';
     AiClassifyProcessor,
   ],
 
-  exports: [
-    ProcessingService,
-    TextractService,
-    EmbeddingService,
-    PdfService,
-  ],
+  exports: [ProcessingService, TextractService, EmbeddingService, PdfService],
 })
 export class ProcessingModule {}

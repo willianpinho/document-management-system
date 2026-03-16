@@ -132,7 +132,7 @@ export class EventBridgeRulesConstruct extends Construct {
     id: string,
     ruleName: string,
     pattern: events.EventPattern,
-    target: events.IRuleTarget
+    target: events.IRuleTarget,
   ): events.Rule {
     return new events.Rule(this, id, {
       ruleName,

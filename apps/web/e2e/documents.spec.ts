@@ -24,9 +24,9 @@ async function login(page: Page) {
 
 // Helper to wait for documents page to load
 async function waitForDocumentsPage(page: Page) {
-  await expect(
-    page.getByRole('main').getByRole('heading', { name: /documents/i })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('main').getByRole('heading', { name: /documents/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 test.describe('Documents', () => {
@@ -68,7 +68,9 @@ test.describe('Documents', () => {
 
       await waitForDocumentsPage(page);
       // Scope to main content to avoid sidebar button
-      await expect(page.getByRole('main').getByRole('button', { name: /new folder/i })).toBeVisible();
+      await expect(
+        page.getByRole('main').getByRole('button', { name: /new folder/i }),
+      ).toBeVisible();
     });
 
     test('should display sort dropdown when documents exist', async ({ page }) => {
@@ -83,7 +85,9 @@ test.describe('Documents', () => {
 
       if (hasDocuments) {
         // Sort dropdown should be visible
-        const sortButton = page.getByRole('button', { name: /date created|date modified|name|size/i });
+        const sortButton = page.getByRole('button', {
+          name: /date created|date modified|name|size/i,
+        });
         await expect(sortButton).toBeVisible();
       }
     });
@@ -94,7 +98,10 @@ test.describe('Documents', () => {
       await page.goto('/documents');
 
       await waitForDocumentsPage(page);
-      await page.getByRole('button', { name: /upload/i }).first().click();
+      await page
+        .getByRole('button', { name: /upload/i })
+        .first()
+        .click();
 
       // Dialog should be visible with "Upload Documents" title
       await expect(page.getByRole('dialog')).toBeVisible();
@@ -105,7 +112,10 @@ test.describe('Documents', () => {
       await page.goto('/documents');
 
       await waitForDocumentsPage(page);
-      await page.getByRole('button', { name: /upload/i }).first().click();
+      await page
+        .getByRole('button', { name: /upload/i })
+        .first()
+        .click();
       await expect(page.getByRole('dialog')).toBeVisible();
 
       // Close dialog by pressing Escape
@@ -117,7 +127,10 @@ test.describe('Documents', () => {
       await page.goto('/documents');
 
       // Open upload dialog
-      await page.getByRole('button', { name: /upload/i }).first().click();
+      await page
+        .getByRole('button', { name: /upload/i })
+        .first()
+        .click();
 
       // Wait for dialog
       await expect(page.getByRole('dialog')).toBeVisible();
@@ -133,8 +146,7 @@ test.describe('Documents', () => {
       // Wait for upload progress or completion indicator
       // Upload may show progressbar, percentage, "completed", or simply close
       await expect(
-        page.getByText(/completed|uploaded|success/i)
-          .or(page.getByRole('progressbar'))
+        page.getByText(/completed|uploaded|success/i).or(page.getByRole('progressbar')),
       ).toBeVisible({ timeout: 30000 });
     });
 
@@ -142,7 +154,10 @@ test.describe('Documents', () => {
       await page.goto('/documents');
 
       // Open upload dialog
-      await page.getByRole('button', { name: /upload/i }).first().click();
+      await page
+        .getByRole('button', { name: /upload/i })
+        .first()
+        .click();
 
       // Wait for dialog
       await expect(page.getByRole('dialog')).toBeVisible();
@@ -167,7 +182,10 @@ test.describe('Documents', () => {
 
       await waitForDocumentsPage(page);
       // Scope to main content to avoid sidebar button
-      await page.getByRole('main').getByRole('button', { name: /new folder/i }).click();
+      await page
+        .getByRole('main')
+        .getByRole('button', { name: /new folder/i })
+        .click();
 
       // Dialog should open
       await expect(page.getByRole('dialog')).toBeVisible();
@@ -178,7 +196,10 @@ test.describe('Documents', () => {
       await page.goto('/documents');
 
       await waitForDocumentsPage(page);
-      await page.getByRole('main').getByRole('button', { name: /new folder/i }).click();
+      await page
+        .getByRole('main')
+        .getByRole('button', { name: /new folder/i })
+        .click();
 
       // Wait for dialog
       await expect(page.getByRole('dialog')).toBeVisible();
@@ -287,9 +308,9 @@ test.describe('Documents', () => {
         await expect(page).toHaveURL(/documents\/[a-f0-9-]+/);
 
         // Some metadata should be visible (created, size, type info)
-        await expect(
-          page.getByText(/created|uploaded|size|type|bytes/i).first()
-        ).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/created|uploaded|size|type|bytes/i).first()).toBeVisible({
+          timeout: 10000,
+        });
       }
     });
   });

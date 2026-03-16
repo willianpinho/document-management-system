@@ -98,19 +98,17 @@ export function CommentItem({
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-sm truncate">
+            <span className="truncate text-sm font-medium">
               {comment.author.name || comment.author.email}
             </span>
             <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
             </span>
-            {comment.editedAt && (
-              <span className="text-xs text-muted-foreground">(edited)</span>
-            )}
+            {comment.editedAt && <span className="text-xs text-muted-foreground">(edited)</span>}
             {comment.isResolved && (
-              <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 dark:bg-green-950 px-1.5 py-0.5 rounded">
+              <span className="inline-flex items-center gap-1 rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-600 dark:bg-green-950">
                 <Check className="h-3 w-3" />
                 Resolved
               </span>
@@ -122,10 +120,10 @@ export function CommentItem({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full min-h-[80px] p-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[80px] w-full resize-none rounded-md border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 autoFocus
               />
-              <div className="flex gap-2 mt-2">
+              <div className="mt-2 flex gap-2">
                 <Button size="sm" onClick={handleSaveEdit}>
                   Save
                 </Button>
@@ -135,24 +133,27 @@ export function CommentItem({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-foreground">
               {comment.content}
             </p>
           )}
 
           {/* Annotation info */}
           {comment.pageNumber && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Page {comment.pageNumber}
               {comment.positionX !== null && comment.positionY !== null && (
-                <span> at ({Math.round(comment.positionX)}%, {Math.round(comment.positionY)}%)</span>
+                <span>
+                  {' '}
+                  at ({Math.round(comment.positionX)}%, {Math.round(comment.positionY)}%)
+                </span>
               )}
             </p>
           )}
 
           {/* Actions */}
           {!isEditing && (
-            <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="mt-2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
               {depth < maxDepth && (
                 <Button
                   variant="ghost"
@@ -160,7 +161,7 @@ export function CommentItem({
                   className="h-7 text-xs"
                   onClick={() => setIsReplying(!isReplying)}
                 >
-                  <CornerDownRight className="h-3 w-3 mr-1" />
+                  <CornerDownRight className="mr-1 h-3 w-3" />
                   Reply
                 </Button>
               )}
@@ -171,7 +172,7 @@ export function CommentItem({
                   className="h-7 text-xs text-green-600"
                   onClick={() => onResolve?.(comment.id, true)}
                 >
-                  <Check className="h-3 w-3 mr-1" />
+                  <Check className="mr-1 h-3 w-3" />
                   Resolve
                 </Button>
               )}
@@ -195,10 +196,10 @@ export function CommentItem({
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="Write a reply..."
-                className="w-full min-h-[60px] p-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-[60px] w-full resize-none rounded-md border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 autoFocus
               />
-              <div className="flex gap-2 mt-2">
+              <div className="mt-2 flex gap-2">
                 <Button size="sm" onClick={handleSubmitReply}>
                   Reply
                 </Button>
@@ -232,15 +233,12 @@ export function CommentItem({
             <DropdownMenuContent align="end">
               {isAuthor && (
                 <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onClick={() => onDelete?.(comment.id)}
-                className="text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={() => onDelete?.(comment.id)} className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

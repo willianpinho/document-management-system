@@ -31,10 +31,7 @@ export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
         keyPrefix,
         keyHash,
         revokedAt: null,
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ],
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       include: {
         organization: true,

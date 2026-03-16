@@ -28,12 +28,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { ProcessingService } from '../processing/processing.service';
 import { PdfService } from '../processing/services/pdf.service';
-import {
-  AuditDocument,
-  AuditLog,
-  AuditAction,
-  AuditResourceType,
-} from '../audit';
+import { AuditDocument, AuditLog, AuditAction, AuditResourceType } from '../audit';
 import {
   SplitDocumentRequestDto,
   MergeDocumentsRequestDto,
@@ -42,11 +37,7 @@ import {
   ExtractPagesRequestDto,
   RenderPageRequestDto,
 } from '../processing/dto/pdf-options.dto';
-import {
-  PdfMetadataDto,
-  SplitResultDto,
-  MergeResultDto,
-} from '../processing/dto/pdf-result.dto';
+import { PdfMetadataDto, SplitResultDto, MergeResultDto } from '../processing/dto/pdf-result.dto';
 import {
   BulkDeleteDto,
   BulkMoveDto,
@@ -112,10 +103,7 @@ export class DocumentsController {
   @AuditDocument(AuditAction.DOCUMENT_READ)
   @ApiOperation({ summary: 'Get document by ID' })
   @ApiParam({ name: 'id', type: String })
-  async findOne(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async findOne(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.findOne(id, user.organizationId!);
   }
 
@@ -135,10 +123,7 @@ export class DocumentsController {
   @AuditDocument(AuditAction.DOCUMENT_DELETE)
   @ApiOperation({ summary: 'Delete document' })
   @ApiParam({ name: 'id', type: String })
-  async remove(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.remove(id, user.organizationId!);
   }
 
@@ -146,10 +131,7 @@ export class DocumentsController {
   @AuditDocument(AuditAction.DOCUMENT_DOWNLOAD)
   @ApiOperation({ summary: 'Get download URL' })
   @ApiParam({ name: 'id', type: String })
-  async getDownloadUrl(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getDownloadUrl(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.getDownloadUrl(id, user.organizationId!);
   }
 
@@ -159,10 +141,7 @@ export class DocumentsController {
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, description: 'Upload confirmed successfully' })
   @ApiResponse({ status: 404, description: 'Document not found' })
-  async confirmUpload(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async confirmUpload(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.confirmUpload(id, user.organizationId!);
   }
 
@@ -183,7 +162,11 @@ export class DocumentsController {
       required: ['operations'],
     },
   })
-  @ApiResponse({ status: 200, description: 'Processing jobs created', schema: { properties: { jobIds: { type: 'array', items: { type: 'string' } } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Processing jobs created',
+    schema: { properties: { jobIds: { type: 'array', items: { type: 'string' } } } },
+  })
   async triggerProcessing(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
@@ -200,7 +183,11 @@ export class DocumentsController {
     schema: {
       type: 'object',
       properties: {
-        folderId: { type: 'string', nullable: true, description: 'Target folder ID or null for root' },
+        folderId: {
+          type: 'string',
+          nullable: true,
+          description: 'Target folder ID or null for root',
+        },
       },
     },
   })
@@ -211,12 +198,11 @@ export class DocumentsController {
     @Param('id') id: string,
     @Body() moveDto: { folderId: string | null },
   ) {
-    return this.documentsService.move(
-      id,
-      user.organizationId!,
-      moveDto.folderId,
-      { id: user.id, name: user.name || null, email: user.email },
-    );
+    return this.documentsService.move(id, user.organizationId!, moveDto.folderId, {
+      id: user.id,
+      name: user.name || null,
+      email: user.email,
+    });
   }
 
   @Post(':id/copy')
@@ -227,7 +213,11 @@ export class DocumentsController {
     schema: {
       type: 'object',
       properties: {
-        folderId: { type: 'string', nullable: true, description: 'Target folder ID or null for root' },
+        folderId: {
+          type: 'string',
+          nullable: true,
+          description: 'Target folder ID or null for root',
+        },
         name: { type: 'string', description: 'Optional new name for the copy' },
       },
     },
@@ -239,13 +229,11 @@ export class DocumentsController {
     @Param('id') id: string,
     @Body() copyDto: { folderId: string | null; name?: string },
   ) {
-    return this.documentsService.copy(
-      id,
-      user.organizationId!,
-      copyDto.folderId,
-      copyDto.name,
-      { id: user.id, name: user.name || null, email: user.email },
-    );
+    return this.documentsService.copy(id, user.organizationId!, copyDto.folderId, copyDto.name, {
+      id: user.id,
+      name: user.name || null,
+      email: user.email,
+    });
   }
 
   // ==========================================
@@ -255,7 +243,8 @@ export class DocumentsController {
   @Get(':id/metadata')
   @ApiOperation({
     summary: 'Get PDF metadata',
-    description: 'Extract metadata from a PDF document including page count, author, title, bookmarks, etc.',
+    description:
+      'Extract metadata from a PDF document including page count, author, title, bookmarks, etc.',
   })
   @ApiParam({ name: 'id', type: String, description: 'Document ID' })
   @ApiResponse({
@@ -265,10 +254,7 @@ export class DocumentsController {
   })
   @ApiResponse({ status: 400, description: 'Document is not a PDF' })
   @ApiResponse({ status: 404, description: 'Document not found' })
-  async getMetadata(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getMetadata(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const document = await this.documentsService.findOne(id, user.organizationId!);
 
     if (!document.mimeType.includes('pdf')) {
@@ -298,10 +284,7 @@ export class DocumentsController {
   })
   @ApiResponse({ status: 400, description: 'Document is not a PDF' })
   @ApiResponse({ status: 404, description: 'Document not found' })
-  async getMetadataSync(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getMetadataSync(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const document = await this.documentsService.findOne(id, user.organizationId!);
 
     if (!document.mimeType.includes('pdf')) {
@@ -318,7 +301,8 @@ export class DocumentsController {
   @Post(':id/split')
   @ApiOperation({
     summary: 'Split a PDF document',
-    description: 'Split a PDF by page ranges, bookmarks, or every N pages. Creates new documents for each split.',
+    description:
+      'Split a PDF by page ranges, bookmarks, or every N pages. Creates new documents for each split.',
   })
   @ApiParam({ name: 'id', type: String, description: 'Document ID' })
   @ApiBody({ type: SplitDocumentRequestDto })
@@ -339,7 +323,11 @@ export class DocumentsController {
       throw new BadRequestException('Document is not a PDF');
     }
 
-    const result = await this.processingService.addJob(id, 'PDF_SPLIT', splitRequest.options as unknown as Record<string, unknown>);
+    const result = await this.processingService.addJob(
+      id,
+      'PDF_SPLIT',
+      splitRequest.options as unknown as Record<string, unknown>,
+    );
 
     return {
       jobId: result.job.id,
@@ -352,7 +340,8 @@ export class DocumentsController {
   @Post('merge')
   @ApiOperation({
     summary: 'Merge multiple PDF documents',
-    description: 'Merge multiple PDF documents into a single document. Documents are merged in the order provided.',
+    description:
+      'Merge multiple PDF documents into a single document. Documents are merged in the order provided.',
   })
   @ApiBody({ type: MergeDocumentsRequestDto })
   @ApiResponse({
@@ -420,7 +409,11 @@ export class DocumentsController {
       throw new BadRequestException('Document is not a PDF');
     }
 
-    const result = await this.processingService.addJob(id, 'PDF_WATERMARK' as any, watermarkRequest.options as unknown as Record<string, unknown>);
+    const result = await this.processingService.addJob(
+      id,
+      'PDF_WATERMARK' as any,
+      watermarkRequest.options as unknown as Record<string, unknown>,
+    );
 
     return {
       jobId: result.job.id,
@@ -454,7 +447,11 @@ export class DocumentsController {
       throw new BadRequestException('Document is not a PDF');
     }
 
-    const result = await this.processingService.addJob(id, 'PDF_COMPRESS' as any, compressRequest.options as unknown as Record<string, unknown>);
+    const result = await this.processingService.addJob(
+      id,
+      'PDF_COMPRESS' as any,
+      compressRequest.options as unknown as Record<string, unknown>,
+    );
 
     return {
       jobId: result.job.id,
@@ -467,7 +464,8 @@ export class DocumentsController {
   @Post(':id/extract-pages')
   @ApiOperation({
     summary: 'Extract pages from PDF',
-    description: 'Extract specific pages from a PDF document. Creates a new document with only the extracted pages.',
+    description:
+      'Extract specific pages from a PDF document. Creates a new document with only the extracted pages.',
   })
   @ApiParam({ name: 'id', type: String, description: 'Document ID' })
   @ApiBody({ type: ExtractPagesRequestDto })
@@ -488,7 +486,11 @@ export class DocumentsController {
       throw new BadRequestException('Document is not a PDF');
     }
 
-    const result = await this.processingService.addJob(id, 'PDF_EXTRACT_PAGES' as any, extractRequest.options as unknown as Record<string, unknown>);
+    const result = await this.processingService.addJob(
+      id,
+      'PDF_EXTRACT_PAGES' as any,
+      extractRequest.options as unknown as Record<string, unknown>,
+    );
 
     return {
       jobId: result.job.id,
@@ -541,8 +543,18 @@ export class DocumentsController {
     description: 'Get or generate a thumbnail for the first page of the PDF.',
   })
   @ApiParam({ name: 'id', type: String, description: 'Document ID' })
-  @ApiQuery({ name: 'width', required: false, type: Number, description: 'Thumbnail width (default: 200)' })
-  @ApiQuery({ name: 'format', required: false, enum: ['png', 'jpeg', 'webp'], description: 'Image format (default: png)' })
+  @ApiQuery({
+    name: 'width',
+    required: false,
+    type: Number,
+    description: 'Thumbnail width (default: 200)',
+  })
+  @ApiQuery({
+    name: 'format',
+    required: false,
+    enum: ['png', 'jpeg', 'webp'],
+    description: 'Image format (default: png)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Thumbnail URL or generation job',
@@ -595,7 +607,8 @@ export class DocumentsController {
   })
   @ApiOperation({
     summary: 'Bulk delete documents and folders',
-    description: 'Delete multiple documents and folders at once. Supports soft delete (default) or permanent deletion.',
+    description:
+      'Delete multiple documents and folders at once. Supports soft delete (default) or permanent deletion.',
   })
   @ApiBody({ type: BulkDeleteDto })
   @ApiResponse({
@@ -708,10 +721,7 @@ export class DocumentsController {
   })
   @ApiOperation({ summary: 'Get document version history' })
   @ApiParam({ name: 'id', description: 'Document ID' })
-  async getVersions(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getVersions(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.getVersions(id, user.organizationId!);
   }
 
@@ -723,10 +733,7 @@ export class DocumentsController {
   })
   @ApiOperation({ summary: 'Get document shares' })
   @ApiParam({ name: 'id', description: 'Document ID' })
-  async getShares(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getShares(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.documentsService.getShares(id, user.organizationId!);
   }
 }

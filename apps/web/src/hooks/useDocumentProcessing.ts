@@ -52,7 +52,7 @@ export function useDocumentProcessing({
           } catch {
             return null;
           }
-        })
+        }),
       );
       return results.filter((job): job is ProcessingJob => job !== null);
     },
@@ -62,8 +62,8 @@ export function useDocumentProcessing({
       const data = query.state.data as ProcessingJob[] | undefined;
       if (!data) return pollInterval;
 
-      const allDone = data.every(
-        (job) => ['completed', 'failed', 'cancelled'].includes(job.status)
+      const allDone = data.every((job) =>
+        ['completed', 'failed', 'cancelled'].includes(job.status),
       );
       return allDone ? false : pollInterval;
     },
@@ -205,12 +205,12 @@ export function useDocumentProcessing({
       }
       return triggerProcessingMutation.mutateAsync({ docId: documentId, operations });
     },
-    [documentId, triggerProcessingMutation]
+    [documentId, triggerProcessingMutation],
   );
 
   // Computed values
-  const hasActiveJobs = (jobStatuses || []).some(
-    (job) => ['pending', 'processing'].includes(job.status)
+  const hasActiveJobs = (jobStatuses || []).some((job) =>
+    ['pending', 'processing'].includes(job.status),
   );
 
   const overallProgress = jobStatuses?.length
@@ -232,7 +232,7 @@ export function useDocumentProcessing({
           failed: acc.failed + stats.failed,
           delayed: acc.delayed + stats.delayed,
         }),
-        { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 }
+        { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 },
       )
     : null;
 

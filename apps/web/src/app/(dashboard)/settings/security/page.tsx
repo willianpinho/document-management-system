@@ -52,7 +52,13 @@ export default function SecuritySettingsPage() {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
+    mutationFn: async ({
+      currentPassword,
+      newPassword,
+    }: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
       const response = await authApi.changePassword(currentPassword, newPassword);
       return response.data;
     },
@@ -143,9 +149,7 @@ export default function SecuritySettingsPage() {
           Back to settings
         </Link>
         <h1 className="text-2xl font-bold">Security Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your password and security preferences
-        </p>
+        <p className="text-muted-foreground">Manage your password and security preferences</p>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -237,16 +241,12 @@ export default function SecuritySettingsPage() {
               <Smartphone className="h-5 w-5" />
               Two-Factor Authentication
             </CardTitle>
-            <CardDescription>
-              Add an extra layer of security to your account
-            </CardDescription>
+            <CardDescription>Add an extra layer of security to your account</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">
-                  {twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                </p>
+                <p className="font-medium">{twoFactorEnabled ? 'Enabled' : 'Disabled'}</p>
                 <p className="text-sm text-muted-foreground">
                   {twoFactorEnabled
                     ? 'Your account is protected with 2FA'
@@ -343,7 +343,7 @@ export default function SecuritySettingsPage() {
                 </div>
 
                 {sessions.filter((s) => !s.current).length > 0 && (
-                  <div className="mt-4 pt-4 border-t">
+                  <div className="mt-4 border-t pt-4">
                     <Button
                       variant="outline"
                       className="w-full text-destructive hover:text-destructive"
@@ -365,9 +365,7 @@ export default function SecuritySettingsPage() {
             ) : (
               <div className="py-8 text-center">
                 <Monitor className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No other active sessions
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">No other active sessions</p>
               </div>
             )}
           </CardContent>
@@ -401,9 +399,7 @@ export default function SecuritySettingsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShow2FADialog(false)}>
-              Got it
-            </Button>
+            <Button onClick={() => setShow2FADialog(false)}>Got it</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

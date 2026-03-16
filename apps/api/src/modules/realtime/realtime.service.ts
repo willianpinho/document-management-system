@@ -60,16 +60,19 @@ interface UserConnection {
  */
 interface DocumentPresence {
   documentId: string;
-  viewers: Map<string, {
-    userId: string;
-    email: string;
-    name: string | null;
-    avatarUrl?: string | null;
-    socketId: string;
-    cursorPosition: CursorPosition | null;
-    color: string;
-    lastActiveAt: Date;
-  }>;
+  viewers: Map<
+    string,
+    {
+      userId: string;
+      email: string;
+      name: string | null;
+      avatarUrl?: string | null;
+      socketId: string;
+      cursorPosition: CursorPosition | null;
+      color: string;
+      lastActiveAt: Date;
+    }
+  >;
 }
 
 /**
@@ -191,9 +194,7 @@ export class RealtimeService implements OnModuleInit {
     const userRoom = this.getUserRoom(userId);
     socket.join(userRoom);
 
-    this.logger.log(
-      `User ${email} connected: socket=${socket.id}, org=${organizationId}`,
-    );
+    this.logger.log(`User ${email} connected: socket=${socket.id}, org=${organizationId}`);
   }
 
   /**
@@ -226,9 +227,7 @@ export class RealtimeService implements OnModuleInit {
       }
     }
 
-    this.logger.log(
-      `User ${connection.email} disconnected: socket=${socketId}`,
-    );
+    this.logger.log(`User ${connection.email} disconnected: socket=${socketId}`);
 
     return connection;
   }
@@ -311,11 +310,7 @@ export class RealtimeService implements OnModuleInit {
   /**
    * Emit an event to all users in an organization
    */
-  emitToOrganization<T>(
-    organizationId: string,
-    event: RealtimeEventName | string,
-    data: T,
-  ): void {
+  emitToOrganization<T>(organizationId: string, event: RealtimeEventName | string, data: T): void {
     if (!this.server) {
       this.logger.warn('Cannot emit: Socket.io server not initialized');
       return;
@@ -347,11 +342,7 @@ export class RealtimeService implements OnModuleInit {
   /**
    * Emit an event to users viewing a specific document
    */
-  emitToDocument<T>(
-    documentId: string,
-    event: RealtimeEventName | string,
-    data: T,
-  ): void {
+  emitToDocument<T>(documentId: string, event: RealtimeEventName | string, data: T): void {
     if (!this.server) {
       this.logger.warn('Cannot emit: Socket.io server not initialized');
       return;
@@ -384,11 +375,7 @@ export class RealtimeService implements OnModuleInit {
       uploadUrl,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.DOCUMENT_CREATED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.DOCUMENT_CREATED, payload);
   }
 
   /**
@@ -408,18 +395,10 @@ export class RealtimeService implements OnModuleInit {
       triggeredBy,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.DOCUMENT_UPDATED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.DOCUMENT_UPDATED, payload);
 
     // Also emit to document-specific room
-    this.emitToDocument(
-      document.id,
-      RealtimeEventName.DOCUMENT_UPDATED,
-      payload,
-    );
+    this.emitToDocument(document.id, RealtimeEventName.DOCUMENT_UPDATED, payload);
   }
 
   /**
@@ -439,11 +418,7 @@ export class RealtimeService implements OnModuleInit {
       triggeredBy,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.DOCUMENT_DELETED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.DOCUMENT_DELETED, payload);
 
     // Also emit to document-specific room
     this.emitToDocument(documentId, RealtimeEventName.DOCUMENT_DELETED, payload);
@@ -480,12 +455,7 @@ export class RealtimeService implements OnModuleInit {
         );
         break;
       case 'deleted':
-        this.emitDocumentDeleted(
-          document.id,
-          document.name,
-          organizationId,
-          triggeredBy,
-        );
+        this.emitDocumentDeleted(document.id, document.name, organizationId, triggeredBy);
         break;
     }
   }
@@ -497,11 +467,7 @@ export class RealtimeService implements OnModuleInit {
   /**
    * Emit a folder created event
    */
-  emitFolderCreated(
-    folder: FolderEventData,
-    organizationId: string,
-    triggeredBy: EventUser,
-  ): void {
+  emitFolderCreated(folder: FolderEventData, organizationId: string, triggeredBy: EventUser): void {
     const payload: FolderCreatedPayload = {
       timestamp: new Date().toISOString(),
       organizationId,
@@ -509,11 +475,7 @@ export class RealtimeService implements OnModuleInit {
       triggeredBy,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.FOLDER_CREATED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.FOLDER_CREATED, payload);
   }
 
   /**
@@ -533,11 +495,7 @@ export class RealtimeService implements OnModuleInit {
       triggeredBy,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.FOLDER_UPDATED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.FOLDER_UPDATED, payload);
   }
 
   /**
@@ -559,11 +517,7 @@ export class RealtimeService implements OnModuleInit {
       triggeredBy,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.FOLDER_DELETED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.FOLDER_DELETED, payload);
   }
 
   /**
@@ -578,11 +532,7 @@ export class RealtimeService implements OnModuleInit {
   ): void {
     switch (eventType) {
       case 'created':
-        this.emitFolderCreated(
-          folder as FolderEventData,
-          organizationId,
-          triggeredBy,
-        );
+        this.emitFolderCreated(folder as FolderEventData, organizationId, triggeredBy);
         break;
       case 'updated':
         this.emitFolderUpdated(
@@ -593,13 +543,7 @@ export class RealtimeService implements OnModuleInit {
         );
         break;
       case 'deleted':
-        this.emitFolderDeleted(
-          folder.id,
-          folder.name,
-          folder.path,
-          organizationId,
-          triggeredBy,
-        );
+        this.emitFolderDeleted(folder.id, folder.name, folder.path, organizationId, triggeredBy);
         break;
     }
   }
@@ -623,18 +567,10 @@ export class RealtimeService implements OnModuleInit {
       document,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.PROCESSING_STARTED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.PROCESSING_STARTED, payload);
 
     // Also emit to document-specific room
-    this.emitToDocument(
-      document.id,
-      RealtimeEventName.PROCESSING_STARTED,
-      payload,
-    );
+    this.emitToDocument(document.id, RealtimeEventName.PROCESSING_STARTED, payload);
   }
 
   /**
@@ -658,18 +594,10 @@ export class RealtimeService implements OnModuleInit {
       stage,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.PROCESSING_PROGRESS,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.PROCESSING_PROGRESS, payload);
 
     // Also emit to document-specific room
-    this.emitToDocument(
-      documentId,
-      RealtimeEventName.PROCESSING_PROGRESS,
-      payload,
-    );
+    this.emitToDocument(documentId, RealtimeEventName.PROCESSING_PROGRESS, payload);
   }
 
   /**
@@ -689,18 +617,10 @@ export class RealtimeService implements OnModuleInit {
       result,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.PROCESSING_COMPLETED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.PROCESSING_COMPLETED, payload);
 
     // Also emit to document-specific room
-    this.emitToDocument(
-      document.id,
-      RealtimeEventName.PROCESSING_COMPLETED,
-      payload,
-    );
+    this.emitToDocument(document.id, RealtimeEventName.PROCESSING_COMPLETED, payload);
   }
 
   /**
@@ -720,18 +640,10 @@ export class RealtimeService implements OnModuleInit {
       error,
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.PROCESSING_FAILED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.PROCESSING_FAILED, payload);
 
     // Also emit to document-specific room
-    this.emitToDocument(
-      document.id,
-      RealtimeEventName.PROCESSING_FAILED,
-      payload,
-    );
+    this.emitToDocument(document.id, RealtimeEventName.PROCESSING_FAILED, payload);
   }
 
   /**
@@ -798,21 +710,13 @@ export class RealtimeService implements OnModuleInit {
       totalConnected: this.getConnectedUserCount(organizationId),
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.USER_JOINED,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.USER_JOINED, payload);
   }
 
   /**
    * Emit a user left event
    */
-  emitUserLeft(
-    userId: string,
-    userEmail: string,
-    organizationId: string,
-  ): void {
+  emitUserLeft(userId: string, userEmail: string, organizationId: string): void {
     const payload: UserLeftPayload = {
       timestamp: new Date().toISOString(),
       organizationId,
@@ -821,11 +725,7 @@ export class RealtimeService implements OnModuleInit {
       totalConnected: this.getConnectedUserCount(organizationId),
     };
 
-    this.emitToOrganization(
-      organizationId,
-      RealtimeEventName.USER_LEFT,
-      payload,
-    );
+    this.emitToOrganization(organizationId, RealtimeEventName.USER_LEFT, payload);
   }
 
   // ============================================
@@ -903,8 +803,9 @@ export class RealtimeService implements OnModuleInit {
     const presence = this.documentPresence.get(documentId)!;
 
     // Check if user already in presence (different socket)
-    const existingEntry = Array.from(presence.viewers.values())
-      .find(v => v.userId === connection.userId);
+    const existingEntry = Array.from(presence.viewers.values()).find(
+      (v) => v.userId === connection.userId,
+    );
 
     if (!existingEntry) {
       // Add new viewer
@@ -933,7 +834,7 @@ export class RealtimeService implements OnModuleInit {
     // Emit join event to document room
     const joinPayload: PresenceJoinPayload = {
       documentId,
-      user: viewers.find(v => v.id === connection.userId)!,
+      user: viewers.find((v) => v.id === connection.userId)!,
       viewers,
     };
     this.emitToDocument(documentId, RealtimeEventName.PRESENCE_JOIN, joinPayload);

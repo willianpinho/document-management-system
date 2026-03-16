@@ -1,87 +1,43 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": [
-    ".env",
-    ".env.local",
-    "tsconfig.base.json"
-  ],
-  "globalEnv": [
-    "NODE_ENV",
-    "CI"
-  ],
+  "globalDependencies": [".env", ".env.local", "tsconfig.base.json"],
+  "globalEnv": ["NODE_ENV", "CI"],
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "build/**"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".next/**", "build/**"],
       "cache": true
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "**/*.test.ts",
-        "**/*.spec.ts"
-      ],
-      "outputs": [
-        "coverage/**"
-      ],
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.test.ts", "**/*.spec.ts"],
+      "outputs": ["coverage/**"],
       "cache": true
     },
     "test:unit": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "**/*.test.ts"
-      ],
-      "outputs": [
-        "coverage/**"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.test.ts"],
+      "outputs": ["coverage/**"],
       "cache": true
     },
     "test:integration": {
-      "dependsOn": [
-        "build"
-      ],
-      "env": [
-        "DATABASE_URL",
-        "REDIS_URL"
-      ],
+      "dependsOn": ["build"],
+      "env": ["DATABASE_URL", "REDIS_URL"],
       "cache": false
     },
     "test:e2e": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false
     },
     "lint": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".eslintrc*",
-        "eslint.config.*"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"],
       "outputs": [],
       "cache": true
     },
@@ -89,13 +45,8 @@
       "cache": false
     },
     "type-check": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "tsconfig.json"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig.json"],
       "outputs": [],
       "cache": true
     },

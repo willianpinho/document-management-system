@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentStatus, ProcessingStatus } from '@prisma/client';
 import archiver from 'archiver';
@@ -277,7 +283,11 @@ export class DocumentsService {
       changes.push({ field: 'name', oldValue: existingDocument.name, newValue: input.name });
     }
     if (input.folderId !== undefined && input.folderId !== existingDocument.folderId) {
-      changes.push({ field: 'folderId', oldValue: existingDocument.folderId, newValue: input.folderId });
+      changes.push({
+        field: 'folderId',
+        oldValue: existingDocument.folderId,
+        newValue: input.folderId,
+      });
     }
 
     const document = await this.prisma.document.update({
@@ -347,11 +357,7 @@ export class DocumentsService {
     };
   }
 
-  async triggerProcessing(
-    id: string,
-    organizationId: string,
-    operations: string[],
-  ) {
+  async triggerProcessing(id: string, organizationId: string, operations: string[]) {
     const document = await this.findOne(id, organizationId);
 
     if (!operations || operations.length === 0) {
@@ -373,20 +379,20 @@ export class DocumentsService {
       'PDF_METADATA',
     ];
 
-    const normalizedOperations = operations.map((op) => {
-      // Handle common variations
-      const normalized = op.toUpperCase().replace(/-/g, '_');
-      if (normalized === 'AI_CLASSIFICATION') return 'AI_CLASSIFY';
-      if (normalized === 'FULL_PROCESSING') {
-        // Return array for full processing
-        return ['OCR', 'THUMBNAIL', 'EMBEDDING', 'AI_CLASSIFY'] as const;
-      }
-      return normalized;
-    }).flat() as ProcessingJobType[];
+    const normalizedOperations = operations
+      .map((op) => {
+        // Handle common variations
+        const normalized = op.toUpperCase().replace(/-/g, '_');
+        if (normalized === 'AI_CLASSIFICATION') return 'AI_CLASSIFY';
+        if (normalized === 'FULL_PROCESSING') {
+          // Return array for full processing
+          return ['OCR', 'THUMBNAIL', 'EMBEDDING', 'AI_CLASSIFY'] as const;
+        }
+        return normalized;
+      })
+      .flat() as ProcessingJobType[];
 
-    const invalidOps = normalizedOperations.filter(
-      (op) => !validOperations.includes(op),
-    );
+    const invalidOps = normalizedOperations.filter((op) => !validOperations.includes(op));
     if (invalidOps.length > 0) {
       throw new BadRequestException(
         `Invalid operations: ${invalidOps.join(', ')}. Valid operations: ${validOperations.join(', ')}`,
@@ -661,10 +667,7 @@ export class DocumentsService {
           where: {
             organizationId,
             folder: {
-              OR: [
-                { id },
-                { path: { startsWith: folder.path + '/' } },
-              ],
+              OR: [{ id }, { path: { startsWith: folder.path + '/' } }],
             },
             status: { not: DocumentStatus.DELETED },
           },
@@ -683,12 +686,7 @@ export class DocumentsService {
           }
 
           if (triggeredBy) {
-            this.realtimeService.emitDocumentDeleted(
-              doc.id,
-              doc.name,
-              organizationId,
-              triggeredBy,
-            );
+            this.realtimeService.emitDocumentDeleted(doc.id, doc.name, organizationId, triggeredBy);
           }
         }
 
@@ -696,10 +694,7 @@ export class DocumentsService {
         await this.prisma.folder.deleteMany({
           where: {
             organizationId,
-            OR: [
-              { id },
-              { path: { startsWith: folder.path + '/' } },
-            ],
+            OR: [{ id }, { path: { startsWith: folder.path + '/' } }],
           },
         });
 
@@ -800,12 +795,19 @@ export class DocumentsService {
 
         // Prevent moving folder into itself or its descendants
         if (targetFolderId) {
-          const targetPath = (await this.prisma.folder.findUnique({
-            where: { id: targetFolderId },
-          }))?.path || '';
+          const targetPath =
+            (
+              await this.prisma.folder.findUnique({
+                where: { id: targetFolderId },
+              })
+            )?.path || '';
 
           if (targetPath.startsWith(folder.path)) {
-            results.push({ id, success: false, error: 'Cannot move folder into itself or its descendants' });
+            results.push({
+              id,
+              success: false,
+              error: 'Cannot move folder into itself or its descendants',
+            });
             continue;
           }
         }
@@ -948,8 +950,19 @@ export class DocumentsService {
     organizationId: string,
     documentIds: string[],
     folderIds: string[] = [],
-  ): Promise<{ downloadUrl: string; expiresIn: number; fileCount: number; totalSizeBytes: number }> {
-    const documents: { id: string; name: string; s3Key: string; sizeBytes: bigint; folderPath?: string }[] = [];
+  ): Promise<{
+    downloadUrl: string;
+    expiresIn: number;
+    fileCount: number;
+    totalSizeBytes: number;
+  }> {
+    const documents: {
+      id: string;
+      name: string;
+      s3Key: string;
+      sizeBytes: bigint;
+      folderPath?: string;
+    }[] = [];
 
     // Get documents by ID
     for (const id of documentIds) {
@@ -978,10 +991,7 @@ export class DocumentsService {
           where: {
             organizationId,
             status: { not: DocumentStatus.DELETED },
-            OR: [
-              { folderId },
-              { folder: { path: { startsWith: folder.path + '/' } } },
-            ],
+            OR: [{ folderId }, { folder: { path: { startsWith: folder.path + '/' } } }],
           },
           include: { folder: true },
         });

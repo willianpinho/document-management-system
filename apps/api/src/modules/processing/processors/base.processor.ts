@@ -59,10 +59,7 @@ export interface BaseJobData {
 /**
  * Abstract base processor class
  */
-export abstract class BaseProcessor<
-  TData extends BaseJobData,
-  TResult = unknown,
-> {
+export abstract class BaseProcessor<TData extends BaseJobData, TResult = unknown> {
   protected abstract readonly logger: Logger;
 
   constructor(protected readonly prisma: PrismaService) {}
@@ -79,10 +76,7 @@ export abstract class BaseProcessor<
     const startTime = Date.now();
     const { documentId } = job.data;
 
-    this.logger.log(
-      `Starting job ${job.id} for document ${documentId}`,
-      this.getLogContext(job),
-    );
+    this.logger.log(`Starting job ${job.id} for document ${documentId}`, this.getLogContext(job));
 
     try {
       // Update status to running
@@ -99,10 +93,7 @@ export abstract class BaseProcessor<
         durationMs: duration,
       });
 
-      this.logger.log(
-        `Job ${job.id} completed in ${duration}ms`,
-        this.getLogContext(job),
-      );
+      this.logger.log(`Job ${job.id} completed in ${duration}ms`, this.getLogContext(job));
 
       return result;
     } catch (error) {
@@ -131,9 +122,7 @@ export abstract class BaseProcessor<
 
         case ErrorCategory.RATE_LIMITED:
           // Retry after delay
-          throw new DelayedError(
-            String(categorizedError.retryAfterMs || 60000),
-          );
+          throw new DelayedError(String(categorizedError.retryAfterMs || 60000));
 
         case ErrorCategory.TRANSIENT:
         case ErrorCategory.UNKNOWN:
@@ -147,10 +136,7 @@ export abstract class BaseProcessor<
   /**
    * Update job progress with optional stage and details
    */
-  protected async updateProgress(
-    job: Job<TData>,
-    update: ProgressUpdate,
-  ): Promise<void> {
+  protected async updateProgress(job: Job<TData>, update: ProgressUpdate): Promise<void> {
     await job.updateProgress(update.percentage);
 
     if (update.stage || update.details) {
@@ -196,19 +182,14 @@ export abstract class BaseProcessor<
       });
     } catch (error) {
       // Log but don't fail the job due to status update failure
-      this.logger.warn(
-        `Failed to update job status for ${jobId}: ${(error as Error).message}`,
-      );
+      this.logger.warn(`Failed to update job status for ${jobId}: ${(error as Error).message}`);
     }
   }
 
   /**
    * Update document processing status
    */
-  protected async updateDocumentStatus(
-    documentId: string,
-    status: string,
-  ): Promise<void> {
+  protected async updateDocumentStatus(documentId: string, status: string): Promise<void> {
     try {
       await this.prisma.document.update({
         where: { id: documentId },
@@ -353,9 +334,7 @@ export abstract class BaseProcessor<
   /**
    * Stream file from S3 to buffer
    */
-  protected async streamToBuffer(
-    stream: AsyncIterable<Uint8Array>,
-  ): Promise<Buffer> {
+  protected async streamToBuffer(stream: AsyncIterable<Uint8Array>): Promise<Buffer> {
     const chunks: Buffer[] = [];
     for await (const chunk of stream) {
       chunks.push(Buffer.from(chunk));

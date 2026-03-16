@@ -49,7 +49,9 @@ export class EmbeddingProcessor extends WorkerHost {
   }
 
   async process(job: Job<ProcessingJobData>): Promise<EmbeddingResult> {
-    const isEmbeddingJob = ['embedding', 'generate-embedding', 'update-embedding'].includes(job.name);
+    const isEmbeddingJob = ['embedding', 'generate-embedding', 'update-embedding'].includes(
+      job.name,
+    );
     const isClassifyJob = ['ai_classify', 'classify-document'].includes(job.name);
 
     if (!isEmbeddingJob && !isClassifyJob) {
@@ -173,9 +175,7 @@ export class EmbeddingProcessor extends WorkerHost {
   // AI CLASSIFICATION
   // ===========================================================================
 
-  private async handleAiClassify(
-    job: Job<ProcessingJobData>,
-  ): Promise<EmbeddingResult> {
+  private async handleAiClassify(job: Job<ProcessingJobData>): Promise<EmbeddingResult> {
     const { documentId } = job.data;
     this.logger.log(`AI classifying document ${documentId}`);
 
@@ -218,7 +218,11 @@ export class EmbeddingProcessor extends WorkerHost {
 
       await job.updateProgress(90);
 
-      await this.updateJobStatus(job.id as string, 'COMPLETED', classification as unknown as Record<string, unknown>);
+      await this.updateJobStatus(
+        job.id as string,
+        'COMPLETED',
+        classification as unknown as Record<string, unknown>,
+      );
 
       await job.updateProgress(100);
 
@@ -275,7 +279,7 @@ Respond only with valid JSON, no markdown formatting.`;
       throw new Error(`OpenAI API error: ${error}`);
     }
 
-    const data = await response.json() as { choices: Array<{ message: { content: string } }> };
+    const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
     const content = data.choices[0].message.content;
 
     try {
@@ -291,10 +295,14 @@ Respond only with valid JSON, no markdown formatting.`;
       this.logger.debug(`Parsing classification response: ${cleanContent.substring(0, 100)}...`);
 
       const parsed = JSON.parse(cleanContent) as ClassificationResult;
-      this.logger.debug(`Classification parsed successfully: category=${parsed.category}, confidence=${parsed.confidence}`);
+      this.logger.debug(
+        `Classification parsed successfully: category=${parsed.category}, confidence=${parsed.confidence}`,
+      );
       return parsed;
     } catch (e) {
-      this.logger.warn(`Failed to parse classification response as JSON: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      this.logger.warn(
+        `Failed to parse classification response as JSON: ${e instanceof Error ? e.message : 'Unknown error'}`,
+      );
       this.logger.debug(`Raw content: ${content.substring(0, 200)}...`);
       return { raw: content, parseError: true };
     }

@@ -150,9 +150,9 @@ export function CommentsPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-background border-l shadow-lg z-50 flex flex-col">
+    <div className="fixed right-0 top-0 z-50 flex h-full w-96 flex-col border-l bg-background shadow-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
           <h2 className="font-semibold">Comments</h2>
@@ -164,17 +164,13 @@ export function CommentsPanel({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                <Filter className="h-4 w-4 mr-1" />
+                <Filter className="mr-1 h-4 w-4" />
                 {filter === 'all' ? 'All' : filter === 'open' ? 'Open' : 'Resolved'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setFilter('all')}>
-                All comments
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('open')}>
-                Open only
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('all')}>All comments</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('open')}>Open only</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('resolved')}>
                 Resolved only
               </DropdownMenuItem>
@@ -193,15 +189,15 @@ export function CommentsPanel({
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-destructive">{error}</p>
             <Button variant="outline" size="sm" className="mt-2" onClick={fetchComments}>
               Retry
             </Button>
           </div>
         ) : topLevelComments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <div className="py-8 text-center text-muted-foreground">
+            <MessageCircle className="mx-auto mb-2 h-12 w-12 opacity-50" />
             <p>No comments yet</p>
             <p className="text-sm">Be the first to add a comment</p>
           </div>
@@ -226,7 +222,7 @@ export function CommentsPanel({
       {/* New comment input */}
       <div className="border-t p-4">
         {replyToId && (
-          <div className="flex items-center justify-between mb-2 text-sm text-muted-foreground">
+          <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
             <span>Replying to comment</span>
             <Button
               variant="ghost"
@@ -244,7 +240,7 @@ export function CommentsPanel({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder={replyToId ? 'Write a reply...' : 'Add a comment...'}
-            className="flex-1 min-h-[60px] p-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            className="min-h-[60px] flex-1 resize-none rounded-md border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -253,7 +249,7 @@ export function CommentsPanel({
             }}
           />
         </div>
-        <div className="flex justify-between items-center mt-2">
+        <div className="mt-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
             Press {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter to send
           </span>
@@ -266,7 +262,7 @@ export function CommentsPanel({
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Send className="h-4 w-4 mr-1" />
+                <Send className="mr-1 h-4 w-4" />
                 Send
               </>
             )}

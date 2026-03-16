@@ -136,18 +136,14 @@ export function Header() {
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user?.avatarUrl || ''} alt={user?.name || 'User'} />
-                <AvatarFallback>
-                  {user?.name ? getInitials(user.name) : 'U'}
-                </AvatarFallback>
+                <AvatarFallback>{user?.name ? getInitials(user.name) : 'U'}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {user?.name || 'User'}
-                </p>
+                <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email || 'user@example.com'}
                 </p>

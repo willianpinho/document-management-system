@@ -48,17 +48,18 @@ export function startWatcher(config: WatchConfig): void {
     return;
   }
 
-  const globPatterns = config.patterns.length > 0
-    ? config.patterns.map((p) => path.join(config.path, config.recursive ? '**' : '', p))
-    : [config.recursive ? path.join(config.path, '**', '*') : path.join(config.path, '*')];
+  const globPatterns =
+    config.patterns.length > 0
+      ? config.patterns.map((p) => path.join(config.path, config.recursive ? '**' : '', p))
+      : [config.recursive ? path.join(config.path, '**', '*') : path.join(config.path, '*')];
 
   const watcher = chokidar.watch(globPatterns, {
     ignored: [
-      /(^|[\/\\])\../,      // Ignore dotfiles
-      /node_modules/,       // Ignore node_modules
-      /\.git/,              // Ignore .git
-      /\.DS_Store/,         // Ignore macOS metadata
-      /Thumbs\.db/,         // Ignore Windows thumbnails
+      /(^|[\/\\])\../, // Ignore dotfiles
+      /node_modules/, // Ignore node_modules
+      /\.git/, // Ignore .git
+      /\.DS_Store/, // Ignore macOS metadata
+      /Thumbs\.db/, // Ignore Windows thumbnails
     ],
     persistent: true,
     ignoreInitial: true,
@@ -135,7 +136,7 @@ export function addWatchConfig(config: Omit<WatchConfig, 'id'>): WatchConfig {
  */
 export async function updateWatchConfig(
   id: string,
-  updates: Partial<Omit<WatchConfig, 'id'>>
+  updates: Partial<Omit<WatchConfig, 'id'>>,
 ): Promise<WatchConfig | null> {
   const configs = store.get('watchConfigs');
   const index = configs.findIndex((c) => c.id === id);
@@ -210,7 +211,7 @@ export function initializeWatchers(): void {
  * Set the file detection callback
  */
 export function setFileDetectedCallback(
-  callback: (filePath: string, config: WatchConfig) => void
+  callback: (filePath: string, config: WatchConfig) => void,
 ): void {
   onFileDetected = callback;
 }
@@ -223,18 +224,15 @@ export function setupWatcherIPC(): void {
     return getWatchConfigs();
   });
 
-  ipcMain.handle(
-    'watcher:add-config',
-    (_, config: Omit<WatchConfig, 'id'>) => {
-      return addWatchConfig(config);
-    }
-  );
+  ipcMain.handle('watcher:add-config', (_, config: Omit<WatchConfig, 'id'>) => {
+    return addWatchConfig(config);
+  });
 
   ipcMain.handle(
     'watcher:update-config',
     async (_, id: string, updates: Partial<Omit<WatchConfig, 'id'>>) => {
       return updateWatchConfig(id, updates);
-    }
+    },
   );
 
   ipcMain.handle('watcher:remove-config', async (_, id: string) => {

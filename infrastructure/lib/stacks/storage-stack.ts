@@ -60,9 +60,10 @@ export class StorageStack extends cdk.Stack {
             s3.HttpMethods.DELETE,
             s3.HttpMethods.HEAD,
           ],
-          allowedOrigins: config.environment === 'production'
-            ? ['https://*.yourdomain.com'] // Replace with actual domain
-            : ['http://localhost:3000', 'http://localhost:4000', 'https://*.vercel.app'],
+          allowedOrigins:
+            config.environment === 'production'
+              ? ['https://*.yourdomain.com'] // Replace with actual domain
+              : ['http://localhost:3000', 'http://localhost:4000', 'https://*.vercel.app'],
           allowedHeaders: [
             'Authorization',
             'Content-Type',
@@ -70,11 +71,7 @@ export class StorageStack extends cdk.Stack {
             'Content-MD5',
             'x-amz-*',
           ],
-          exposedHeaders: [
-            'ETag',
-            'x-amz-version-id',
-            'x-amz-request-id',
-          ],
+          exposedHeaders: ['ETag', 'x-amz-version-id', 'x-amz-request-id'],
           maxAge: 3600,
         },
       ],
@@ -124,9 +121,8 @@ export class StorageStack extends cdk.Stack {
       ],
 
       // Removal policy
-      removalPolicy: config.environment === 'production'
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: config.environment !== 'production',
     });
 
@@ -147,9 +143,8 @@ export class StorageStack extends cdk.Stack {
         },
       ],
 
-      removalPolicy: config.environment === 'production'
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: config.environment !== 'production',
     });
 
@@ -163,9 +158,10 @@ export class StorageStack extends cdk.Stack {
       comment: `DMS CDN - ${config.environment}`,
       enabled: true,
       httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
-      priceClass: config.environment === 'production'
-        ? cloudfront.PriceClass.PRICE_CLASS_ALL
-        : cloudfront.PriceClass.PRICE_CLASS_100, // Only US, Canada, Europe for staging
+      priceClass:
+        config.environment === 'production'
+          ? cloudfront.PriceClass.PRICE_CLASS_ALL
+          : cloudfront.PriceClass.PRICE_CLASS_100, // Only US, Canada, Europe for staging
 
       // Default behavior for documents (downloads)
       defaultBehavior: {
@@ -175,7 +171,8 @@ export class StorageStack extends cdk.Stack {
         cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         originRequestPolicy: cloudfront.OriginRequestPolicy.CORS_S3_ORIGIN,
-        responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT,
+        responseHeadersPolicy:
+          cloudfront.ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT,
         compress: true,
       },
 

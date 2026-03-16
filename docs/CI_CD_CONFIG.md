@@ -35,9 +35,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s
           --health-retries 5
 
       redis:
@@ -45,10 +43,8 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout
+          5s --health-retries 5
 
     steps:
       - name: Checkout
@@ -76,7 +72,7 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-        continue-on-error: true  # TODO: Fix ESLint v9 migration
+        continue-on-error: true # TODO: Fix ESLint v9 migration
 
       - name: Build
         run: pnpm build
@@ -107,9 +103,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s
           --health-retries 5
 
       redis:
@@ -117,10 +111,8 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout
+          5s --health-retries 5
 
       minio:
         image: minio/minio
@@ -131,9 +123,7 @@ jobs:
           MINIO_ROOT_PASSWORD: minioadmin
         options: >-
           --health-cmd "curl -f http://localhost:9000/minio/health/live"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout
@@ -314,9 +304,9 @@ protection_rules:
   require_status_checks:
     strict: true
     contexts:
-      - "Build & Test"
-      - "E2E Tests"
-      - "Security Scan"
+      - 'Build & Test'
+      - 'E2E Tests'
+      - 'Security Scan'
 
   require_conversation_resolution: true
   require_signed_commits: false
@@ -330,14 +320,14 @@ protection_rules:
 
 ### Required Secrets:
 
-| Secret | Environment | Description |
-|--------|-------------|-------------|
-| `AWS_ACCESS_KEY_ID` | staging | AWS credentials for staging |
-| `AWS_SECRET_ACCESS_KEY` | staging | AWS credentials for staging |
-| `AWS_ACCOUNT_ID` | staging | AWS account ID for staging |
-| `AWS_ACCESS_KEY_ID_PROD` | production | AWS credentials for production |
-| `AWS_SECRET_ACCESS_KEY_PROD` | production | AWS credentials for production |
-| `AWS_ACCOUNT_ID_PROD` | production | AWS account ID for production |
+| Secret                       | Environment | Description                    |
+| ---------------------------- | ----------- | ------------------------------ |
+| `AWS_ACCESS_KEY_ID`          | staging     | AWS credentials for staging    |
+| `AWS_SECRET_ACCESS_KEY`      | staging     | AWS credentials for staging    |
+| `AWS_ACCOUNT_ID`             | staging     | AWS account ID for staging     |
+| `AWS_ACCESS_KEY_ID_PROD`     | production  | AWS credentials for production |
+| `AWS_SECRET_ACCESS_KEY_PROD` | production  | AWS credentials for production |
+| `AWS_ACCOUNT_ID_PROD`        | production  | AWS account ID for production  |
 
 ### Environment Variables (CDK):
 
@@ -413,29 +403,29 @@ alarms:
 
 ### CI/CD Infrastructure:
 
-| Component | Monthly Cost |
-|-----------|--------------|
-| GitHub Actions (free tier) | $0 |
-| GitHub Actions (paid) | ~$8/1000 min |
-| AWS CodeBuild (alternative) | ~$0.005/min |
+| Component                   | Monthly Cost |
+| --------------------------- | ------------ |
+| GitHub Actions (free tier)  | $0           |
+| GitHub Actions (paid)       | ~$8/1000 min |
+| AWS CodeBuild (alternative) | ~$0.005/min  |
 
 ### Staging Environment:
 
-| Component | Monthly Cost |
-|-----------|--------------|
-| ECS Fargate | ~$50 |
-| RDS PostgreSQL (t3.micro) | ~$15 |
-| ElastiCache (t3.micro) | ~$12 |
-| S3 + CloudFront | ~$5 |
-| **Total** | ~$82/month |
+| Component                 | Monthly Cost |
+| ------------------------- | ------------ |
+| ECS Fargate               | ~$50         |
+| RDS PostgreSQL (t3.micro) | ~$15         |
+| ElastiCache (t3.micro)    | ~$12         |
+| S3 + CloudFront           | ~$5          |
+| **Total**                 | ~$82/month   |
 
 ### Production Environment:
 
-| Component | Monthly Cost |
-|-----------|--------------|
-| ECS Fargate (2x) | ~$150 |
-| RDS PostgreSQL (t3.small) | ~$30 |
-| ElastiCache (t3.small) | ~$25 |
-| S3 + CloudFront | ~$20 |
-| Route 53 | ~$5 |
-| **Total** | ~$230/month |
+| Component                 | Monthly Cost |
+| ------------------------- | ------------ |
+| ECS Fargate (2x)          | ~$150        |
+| RDS PostgreSQL (t3.small) | ~$30         |
+| ElastiCache (t3.small)    | ~$25         |
+| S3 + CloudFront           | ~$20         |
+| Route 53                  | ~$5          |
+| **Total**                 | ~$230/month  |

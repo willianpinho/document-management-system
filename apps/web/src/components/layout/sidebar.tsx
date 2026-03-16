@@ -27,9 +27,7 @@ const navigation = [
   { name: 'Search', href: '/search', icon: Search },
 ];
 
-const bottomNavigation = [
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+const bottomNavigation = [{ name: 'Settings', href: '/settings', icon: Settings }];
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -41,9 +39,7 @@ export function Sidebar() {
   const { data: storageStats, isLoading: isLoadingStorage } = useStorageStats();
   const createFolder = useCreateFolder();
 
-  const storagePercentage = storageStats
-    ? storageStats.usagePercent
-    : 0;
+  const storagePercentage = storageStats ? storageStats.usagePercent : 0;
 
   const handleCreateFolder = (parentId?: string) => {
     setParentFolderId(parentId);
@@ -61,16 +57,14 @@ export function Sidebar() {
   };
 
   // Get current folder ID from pathname if on folder page
-  const currentFolderId = pathname.startsWith('/folders/')
-    ? pathname.split('/')[2]
-    : undefined;
+  const currentFolderId = pathname.startsWith('/folders/') ? pathname.split('/')[2] : undefined;
 
   return (
     <>
       <aside
         className={cn(
           'flex h-full flex-col border-r bg-card transition-all duration-300',
-          isCollapsed ? 'w-16' : 'w-64'
+          isCollapsed ? 'w-16' : 'w-64',
         )}
       >
         {/* Logo and collapse button */}
@@ -98,7 +92,8 @@ export function Sidebar() {
         {/* Main navigation */}
         <nav className="space-y-1 p-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href ||
+            const isActive =
+              pathname === item.href ||
               (item.href !== '/dashboard' && pathname.startsWith(item.href));
             return (
               <Link
@@ -109,7 +104,7 @@ export function Sidebar() {
                   isActive
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  isCollapsed && 'justify-center px-2'
+                  isCollapsed && 'justify-center px-2',
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
@@ -124,9 +119,7 @@ export function Sidebar() {
         {!isCollapsed && (
           <div className="flex-1 overflow-y-auto border-t">
             <div className="flex items-center justify-between px-4 py-2">
-              <span className="text-xs font-semibold uppercase text-muted-foreground">
-                Folders
-              </span>
+              <span className="text-xs font-semibold uppercase text-muted-foreground">Folders</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -179,7 +172,7 @@ export function Sidebar() {
                   isActive
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  isCollapsed && 'justify-center px-2'
+                  isCollapsed && 'justify-center px-2',
                 )}
                 title={isCollapsed ? item.name : undefined}
               >

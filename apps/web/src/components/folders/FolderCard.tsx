@@ -1,13 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Folder,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  FolderInput,
-} from 'lucide-react';
+import { Folder, MoreVertical, Pencil, Trash2, FolderInput } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -28,12 +22,7 @@ interface FolderCardProps {
   onMove?: (id: string) => void;
 }
 
-export function FolderCard({
-  folder,
-  onRename,
-  onDelete,
-  onMove,
-}: FolderCardProps) {
+export function FolderCard({ folder, onRename, onDelete, onMove }: FolderCardProps) {
   return (
     <Card className="group relative transition-all hover:shadow-md" data-testid="folder-card">
       <Link href={`/folders/${folder.id}`}>
@@ -50,8 +39,7 @@ export function FolderCard({
             </h3>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                {folder.documentCount}{' '}
-                {pluralize(folder.documentCount, 'item')}
+                {folder.documentCount} {pluralize(folder.documentCount, 'item')}
               </span>
               <span>-</span>
               <span>{formatRelativeTime(folder.createdAt)}</span>

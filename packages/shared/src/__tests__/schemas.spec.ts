@@ -344,9 +344,7 @@ describe('User Schemas', () => {
     });
 
     it('should require at least one scope', () => {
-      expect(() =>
-        createApiKeySchema.parse({ name: 'Key', scopes: [] }),
-      ).toThrow(ZodError);
+      expect(() => createApiKeySchema.parse({ name: 'Key', scopes: [] })).toThrow(ZodError);
     });
   });
 });
@@ -531,18 +529,14 @@ describe('Document Schemas', () => {
     });
 
     it('should reject query longer than 1000 chars', () => {
-      expect(() =>
-        semanticSearchSchema.parse({ query: 'a'.repeat(1001) }),
-      ).toThrow(ZodError);
+      expect(() => semanticSearchSchema.parse({ query: 'a'.repeat(1001) })).toThrow(ZodError);
     });
 
     it('should reject threshold outside 0-1 range', () => {
-      expect(() =>
-        semanticSearchSchema.parse({ query: 'test', threshold: 1.5 }),
-      ).toThrow(ZodError);
-      expect(() =>
-        semanticSearchSchema.parse({ query: 'test', threshold: -0.1 }),
-      ).toThrow(ZodError);
+      expect(() => semanticSearchSchema.parse({ query: 'test', threshold: 1.5 })).toThrow(ZodError);
+      expect(() => semanticSearchSchema.parse({ query: 'test', threshold: -0.1 })).toThrow(
+        ZodError,
+      );
     });
   });
 
@@ -775,15 +769,11 @@ describe('Search Schemas', () => {
     });
 
     it('should reject query longer than 500 chars', () => {
-      expect(() => searchQuerySchema.parse({ query: 'a'.repeat(501) })).toThrow(
-        ZodError,
-      );
+      expect(() => searchQuerySchema.parse({ query: 'a'.repeat(501) })).toThrow(ZodError);
     });
 
     it('should reject limit greater than 100', () => {
-      expect(() =>
-        searchQuerySchema.parse({ query: 'test', limit: 101 }),
-      ).toThrow(ZodError);
+      expect(() => searchQuerySchema.parse({ query: 'test', limit: 101 })).toThrow(ZodError);
     });
   });
 
@@ -795,9 +785,7 @@ describe('Search Schemas', () => {
     });
 
     it('should reject limit greater than 20', () => {
-      expect(() =>
-        autocompleteQuerySchema.parse({ query: 'test', limit: 21 }),
-      ).toThrow(ZodError);
+      expect(() => autocompleteQuerySchema.parse({ query: 'test', limit: 21 })).toThrow(ZodError);
     });
   });
 
@@ -831,12 +819,8 @@ describe('Search Schemas', () => {
     });
 
     it('should accept valid threshold values', () => {
-      expect(() =>
-        semanticSearchQuerySchema.parse({ query: 'test', threshold: 0 }),
-      ).not.toThrow();
-      expect(() =>
-        semanticSearchQuerySchema.parse({ query: 'test', threshold: 1 }),
-      ).not.toThrow();
+      expect(() => semanticSearchQuerySchema.parse({ query: 'test', threshold: 0 })).not.toThrow();
+      expect(() => semanticSearchQuerySchema.parse({ query: 'test', threshold: 1 })).not.toThrow();
       expect(() =>
         semanticSearchQuerySchema.parse({ query: 'test', threshold: 0.5 }),
       ).not.toThrow();

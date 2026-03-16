@@ -56,7 +56,8 @@ export ORG_ID="your-organization-id"
 
 ## Testing Semantic Search
 
-Semantic search uses OpenAI embeddings to find documents based on meaning, not just keyword matching.
+Semantic search uses OpenAI embeddings to find documents based on meaning, not
+just keyword matching.
 
 ### Generate Embeddings for Documents
 
@@ -103,25 +104,26 @@ curl "http://localhost:4000/api/v1/search?q=employee%20guidelines&type=semantic"
 
 ### Key Indicators of Working Semantic Search
 
-| Field | Expected Value | Meaning |
-|-------|----------------|---------|
-| `searchType` | `"semantic"` | Semantic search was used (not fallback) |
-| `queryEmbeddingGenerated` | `true` | Query was converted to embedding |
-| `similarity` | 0.0-1.0 | Cosine similarity score |
+| Field                     | Expected Value | Meaning                                 |
+| ------------------------- | -------------- | --------------------------------------- |
+| `searchType`              | `"semantic"`   | Semantic search was used (not fallback) |
+| `queryEmbeddingGenerated` | `true`         | Query was converted to embedding        |
+| `similarity`              | 0.0-1.0        | Cosine similarity score                 |
 
 ### Test Queries
 
-| Query | Should Find | Why |
-|-------|-------------|-----|
-| `"employee guidelines"` | Company Handbook | Semantic match to HR policies |
-| `"payment terms"` | Invoice documents | Matches billing/payment content |
-| `"confidential agreement"` | NDA documents | Semantic match to legal contracts |
+| Query                      | Should Find       | Why                               |
+| -------------------------- | ----------------- | --------------------------------- |
+| `"employee guidelines"`    | Company Handbook  | Semantic match to HR policies     |
+| `"payment terms"`          | Invoice documents | Matches billing/payment content   |
+| `"confidential agreement"` | NDA documents     | Semantic match to legal contracts |
 
 ---
 
 ## Testing Hybrid Search
 
-Hybrid search combines full-text search with semantic search using Reciprocal Rank Fusion (RRF).
+Hybrid search combines full-text search with semantic search using Reciprocal
+Rank Fusion (RRF).
 
 ### Perform Hybrid Search
 
@@ -155,11 +157,11 @@ curl "http://localhost:4000/api/v1/search?q=invoice%20payment&type=hybrid" \
 
 ### Key Indicators
 
-| Field | Meaning |
-|-------|---------|
-| `textRank` | Position in full-text search results |
-| `semanticRank` | Position in semantic search results |
-| `score` | Combined RRF score (higher = better) |
+| Field          | Meaning                              |
+| -------------- | ------------------------------------ |
+| `textRank`     | Position in full-text search results |
+| `semanticRank` | Position in semantic search results  |
+| `score`        | Combined RRF score (higher = better) |
 
 ---
 
@@ -200,7 +202,12 @@ curl "http://localhost:4000/api/v1/documents/{documentId}" \
         "category": "Invoice",
         "confidence": 0.99,
         "language": "en",
-        "tags": ["payment", "billing", "net 30", "document management services"],
+        "tags": [
+          "payment",
+          "billing",
+          "net 30",
+          "document management services"
+        ],
         "summary": "Invoice from Acme Corp for document management services...",
         "classifiedAt": "2026-01-11T...",
         "model": "gpt-4-turbo-preview"
@@ -214,23 +221,23 @@ curl "http://localhost:4000/api/v1/documents/{documentId}" \
 
 The AI classifier recognizes these categories:
 
-| Category | Examples |
-|----------|----------|
-| Invoice | Bills, payment requests, receipts |
-| Contract | Agreements, NDAs, terms of service |
-| Report | Analysis documents, summaries |
-| Letter | Correspondence, formal communications |
-| Form | Applications, questionnaires |
-| Presentation | Slides, pitch decks |
-| Other | Documents that don't fit above categories |
+| Category     | Examples                                  |
+| ------------ | ----------------------------------------- |
+| Invoice      | Bills, payment requests, receipts         |
+| Contract     | Agreements, NDAs, terms of service        |
+| Report       | Analysis documents, summaries             |
+| Letter       | Correspondence, formal communications     |
+| Form         | Applications, questionnaires              |
+| Presentation | Slides, pitch decks                       |
+| Other        | Documents that don't fit above categories |
 
 ### Expected Results by Document Type
 
-| Document | Expected Category | Confidence |
-|----------|-------------------|------------|
-| Invoice-2024-001.pdf | Invoice | >0.95 |
-| NDA - Partner Corp.pdf | Contract | >0.95 |
-| Company Handbook.pdf | Other (or Report) | >0.90 |
+| Document               | Expected Category | Confidence |
+| ---------------------- | ----------------- | ---------- |
+| Invoice-2024-001.pdf   | Invoice           | >0.95      |
+| NDA - Partner Corp.pdf | Contract          | >0.95      |
+| Company Handbook.pdf   | Other (or Report) | >0.90      |
 
 ---
 
@@ -271,11 +278,13 @@ Displays current AI classification metadata for all documents.
 **Symptom:** Response shows `"searchType": "text"` instead of `"semantic"`
 
 **Causes:**
+
 1. OpenAI API key not configured
 2. Documents don't have embeddings generated
 3. OpenAI API error
 
 **Solutions:**
+
 1. Check `OPENAI_API_KEY` in `apps/api/.env`
 2. Run embedding generation for documents
 3. Check API logs for errors: `pnpm --filter @dms/api dev`
@@ -285,11 +294,13 @@ Displays current AI classification metadata for all documents.
 **Symptom:** All documents classified as "Other" with confidence 0
 
 **Causes:**
+
 1. OpenAI API key not configured
 2. Document has no extracted text (run OCR first)
 3. JSON parsing error in GPT response
 
 **Solutions:**
+
 1. Verify `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env`
 2. Check document has `extractedText` field populated
 3. Check API logs for parsing errors
@@ -300,13 +311,15 @@ Displays current AI classification metadata for all documents.
 
 **Cause:** Using older embedding model that doesn't support dimensions parameter
 
-**Solution:** Ensure `OPENAI_EMBEDDING_MODEL=text-embedding-3-small` (or `text-embedding-3-large`)
+**Solution:** Ensure `OPENAI_EMBEDDING_MODEL=text-embedding-3-small` (or
+`text-embedding-3-large`)
 
 ### Port 4000 Already in Use
 
 **Symptom:** `EADDRINUSE: address already in use :::4000`
 
 **Solution (Windows):**
+
 ```powershell
 # Find process using port 4000
 netstat -ano | findstr :4000
@@ -316,6 +329,7 @@ Stop-Process -Id <PID> -Force
 ```
 
 **Solution (macOS/Linux):**
+
 ```bash
 lsof -i :4000
 kill -9 <PID>
@@ -331,14 +345,14 @@ kill -9 <PID>
 GET /api/v1/search
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `q` | string | Search query (required) |
-| `type` | string | `text`, `semantic`, or `hybrid` (default: `hybrid`) |
-| `folderId` | string | Filter by folder |
-| `mimeType` | string | Filter by MIME type |
-| `page` | number | Page number (default: 1) |
-| `limit` | number | Results per page (default: 20) |
+| Parameter  | Type   | Description                                         |
+| ---------- | ------ | --------------------------------------------------- |
+| `q`        | string | Search query (required)                             |
+| `type`     | string | `text`, `semantic`, or `hybrid` (default: `hybrid`) |
+| `folderId` | string | Filter by folder                                    |
+| `mimeType` | string | Filter by MIME type                                 |
+| `page`     | number | Page number (default: 1)                            |
+| `limit`    | number | Results per page (default: 20)                      |
 
 ### Process Document Endpoint
 
@@ -346,13 +360,13 @@ GET /api/v1/search
 POST /api/v1/documents/:id/process
 ```
 
-| Operation | Description |
-|-----------|-------------|
-| `OCR` | Extract text using Textract |
-| `THUMBNAIL` | Generate preview images |
-| `EMBEDDING` | Generate semantic embeddings |
-| `AI_CLASSIFY` | Classify with GPT-4 |
-| `PDF_SPLIT` | Split PDF into pages |
+| Operation     | Description                  |
+| ------------- | ---------------------------- |
+| `OCR`         | Extract text using Textract  |
+| `THUMBNAIL`   | Generate preview images      |
+| `EMBEDDING`   | Generate semantic embeddings |
+| `AI_CLASSIFY` | Classify with GPT-4          |
+| `PDF_SPLIT`   | Split PDF into pages         |
 
 ---
 

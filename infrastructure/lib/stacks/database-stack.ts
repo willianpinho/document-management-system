@@ -61,14 +61,14 @@ export class DatabaseStack extends cdk.Stack {
         // Enable logical replication for future CDC
         'rds.logical_replication': '1',
         // Performance tuning
-        'shared_preload_libraries': 'pg_stat_statements',
-        'log_statement': 'ddl',
-        'log_min_duration_statement': '1000', // Log queries > 1s
+        shared_preload_libraries: 'pg_stat_statements',
+        log_statement: 'ddl',
+        log_min_duration_statement: '1000', // Log queries > 1s
         // Connection settings
-        'max_connections': '200',
+        max_connections: '200',
         // Memory settings (will be auto-tuned by RDS)
-        'work_mem': '16384', // 16MB
-        'maintenance_work_mem': '524288', // 512MB
+        work_mem: '16384', // 16MB
+        maintenance_work_mem: '524288', // 512MB
       },
     });
 
@@ -92,7 +92,7 @@ export class DatabaseStack extends cdk.Stack {
       // Instance configuration
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T3,
-        this.getInstanceSize(config.database.instanceClass)
+        this.getInstanceSize(config.database.instanceClass),
       ),
 
       // Network configuration
@@ -133,9 +133,8 @@ export class DatabaseStack extends cdk.Stack {
 
       // Protection
       deletionProtection: config.database.deletionProtection,
-      removalPolicy: config.environment === 'production'
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
 
       // Auto minor version upgrade
       autoMinorVersionUpgrade: true,
@@ -164,9 +163,8 @@ export class DatabaseStack extends cdk.Stack {
 
       // Availability
       azMode: config.cache.numCacheNodes > 1 ? 'cross-az' : 'single-az',
-      preferredAvailabilityZone: config.cache.numCacheNodes === 1
-        ? vpc.availabilityZones[0]
-        : undefined,
+      preferredAvailabilityZone:
+        config.cache.numCacheNodes === 1 ? vpc.availabilityZones[0] : undefined,
 
       // Configuration
       port: 6379,

@@ -74,10 +74,7 @@ export class PrismaService
   /**
    * Execute a callback within an organization context
    */
-  async withOrganizationContext<T>(
-    organizationId: string,
-    callback: () => Promise<T>,
-  ): Promise<T> {
+  async withOrganizationContext<T>(organizationId: string, callback: () => Promise<T>): Promise<T> {
     await this.setOrganizationContext(organizationId);
     try {
       return await callback();

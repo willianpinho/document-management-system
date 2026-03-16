@@ -88,7 +88,7 @@ export function VersionHistoryModal({
         setDownloadingVersion(null);
       }
     },
-    [onDownloadVersion]
+    [onDownloadVersion],
   );
 
   const handleRestore = useCallback(
@@ -101,13 +101,11 @@ export function VersionHistoryModal({
         setRestoringVersion(null);
       }
     },
-    [onRestoreVersion, onOpenChange]
+    [onRestoreVersion, onOpenChange],
   );
 
   // Sort versions by version number descending
-  const sortedVersions = [...versions].sort(
-    (a, b) => b.versionNumber - a.versionNumber
-  );
+  const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -126,9 +124,7 @@ export function VersionHistoryModal({
           {versions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <History className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                No previous versions available
-              </p>
+              <p className="mt-4 text-sm text-muted-foreground">No previous versions available</p>
               <p className="text-xs text-muted-foreground">
                 Versions are created when you upload a new file
               </p>
@@ -146,7 +142,7 @@ export function VersionHistoryModal({
                     className={cn(
                       'rounded-lg border p-3 transition-colors',
                       isCurrent && 'border-primary bg-primary/5',
-                      !isCurrent && 'hover:bg-muted/50'
+                      !isCurrent && 'hover:bg-muted/50',
                     )}
                   >
                     {/* Version header */}
@@ -157,16 +153,14 @@ export function VersionHistoryModal({
                             'flex h-10 w-10 items-center justify-center rounded-full',
                             isCurrent
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
+                              : 'bg-muted text-muted-foreground',
                           )}
                         >
                           <FileText className="h-5 w-5" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              Version {version.versionNumber}
-                            </span>
+                            <span className="font-medium">Version {version.versionNumber}</span>
                             {isCurrent && (
                               <Badge variant="default" className="text-xs">
                                 Current
@@ -228,9 +222,7 @@ export function VersionHistoryModal({
                       <div className="mt-3 space-y-2 border-t pt-3">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-xs text-muted-foreground">
-                              Created
-                            </p>
+                            <p className="text-xs text-muted-foreground">Created</p>
                             <p>{formatDateTime(version.createdAt)}</p>
                           </div>
                           <div>
@@ -239,12 +231,8 @@ export function VersionHistoryModal({
                           </div>
                           {version.checksum && (
                             <div className="col-span-2">
-                              <p className="text-xs text-muted-foreground">
-                                Checksum (SHA-256)
-                              </p>
-                              <p className="truncate font-mono text-xs">
-                                {version.checksum}
-                              </p>
+                              <p className="text-xs text-muted-foreground">Checksum (SHA-256)</p>
+                              <p className="truncate font-mono text-xs">{version.checksum}</p>
                             </div>
                           )}
                         </div>
@@ -254,9 +242,7 @@ export function VersionHistoryModal({
                             <Avatar className="h-6 w-6">
                               <AvatarImage
                                 src={version.createdBy.avatarUrl}
-                                alt={
-                                  version.createdBy.name || version.createdBy.email
-                                }
+                                alt={version.createdBy.name || version.createdBy.email}
                               />
                               <AvatarFallback className="text-xs">
                                 {(
@@ -267,17 +253,14 @@ export function VersionHistoryModal({
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">
-                              Uploaded by{' '}
-                              {version.createdBy.name || version.createdBy.email}
+                              Uploaded by {version.createdBy.name || version.createdBy.email}
                             </span>
                           </div>
                         )}
 
                         {version.changeNote && (
                           <div className="rounded-md bg-muted p-2">
-                            <p className="text-xs text-muted-foreground">
-                              Change note
-                            </p>
+                            <p className="text-xs text-muted-foreground">Change note</p>
                             <p className="text-sm">{version.changeNote}</p>
                           </div>
                         )}

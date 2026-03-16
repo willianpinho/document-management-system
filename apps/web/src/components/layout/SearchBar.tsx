@@ -2,16 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Search,
-  X,
-  FileText,
-  Folder,
-  Clock,
-  ArrowRight,
-  Filter,
-  Loader2,
-} from 'lucide-react';
+import { Search, X, FileText, Folder, Clock, ArrowRight, Filter, Loader2 } from 'lucide-react';
 import {
   Button,
   Input,
@@ -37,25 +28,14 @@ export function SearchBar({ className, onResultClick }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const {
-    query,
-    filters,
-    results,
-    isLoading,
-    setQuery,
-    setFilter,
-    clearFilters,
-  } = useSearch();
+  const { query, filters, results, isLoading, setQuery, setFilter, clearFilters } = useSearch();
 
   const { suggestions } = useSearchSuggestions();
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -143,12 +123,7 @@ export function SearchBar({ className, onResultClick }: SearchBarProps) {
             )}
             <DropdownMenu open={showFilters} onOpenChange={setShowFilters}>
               <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                >
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6">
                   <Filter className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -195,9 +170,7 @@ export function SearchBar({ className, onResultClick }: SearchBarProps) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{result.name}</p>
                     {result.snippet && (
-                      <p className="truncate text-xs text-muted-foreground">
-                        {result.snippet}
-                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{result.snippet}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {result.path} - {formatRelativeTime(result.createdAt)}
@@ -227,10 +200,7 @@ export function SearchBar({ className, onResultClick }: SearchBarProps) {
               <p className="text-sm text-muted-foreground">
                 No results found for &quot;{query}&quot;
               </p>
-              <button
-                className="mt-2 text-sm text-primary hover:underline"
-                onClick={handleSearch}
-              >
+              <button className="mt-2 text-sm text-primary hover:underline" onClick={handleSearch}>
                 Search all documents
               </button>
             </div>

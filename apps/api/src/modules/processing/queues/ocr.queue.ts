@@ -37,12 +37,7 @@ export const OCR_CONFIG = {
   // Maximum document size for synchronous OCR (5MB)
   maxSyncDocumentSize: 5 * 1024 * 1024,
   // Supported document types
-  supportedTypes: [
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'image/tiff',
-  ],
+  supportedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/tiff'],
   // Timeout for OCR operations (5 minutes)
   timeout: 5 * 60 * 1000,
 };

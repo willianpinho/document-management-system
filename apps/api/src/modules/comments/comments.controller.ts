@@ -142,7 +142,11 @@ export class CommentsController {
   @ApiOperation({ summary: 'Resolve or unresolve a comment' })
   @ApiParam({ name: 'documentId', description: 'Document ID' })
   @ApiParam({ name: 'commentId', description: 'Comment ID' })
-  @ApiResponse({ status: 200, description: 'Comment resolved/unresolved', type: CommentResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment resolved/unresolved',
+    type: CommentResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Comment not found' })
   async resolve(
     @Param('documentId', ParseUUIDPipe) _documentId: string,
@@ -150,7 +154,12 @@ export class CommentsController {
     @Body() dto: ResolveCommentDto,
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<CommentResponseDto> {
-    return this.commentsService.resolve(commentId, user.id, user.organizationId, dto.resolved ?? true);
+    return this.commentsService.resolve(
+      commentId,
+      user.id,
+      user.organizationId,
+      dto.resolved ?? true,
+    );
   }
 
   @Delete(':commentId')

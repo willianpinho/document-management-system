@@ -6,4 +6,8 @@
 
 export { SqsQueuesConstruct, type SqsQueuesProps, type ProcessingQueues } from './sqs-queues';
 export { EventBridgeRulesConstruct, type EventBridgeRulesProps } from './eventbridge-rules';
-export { LambdaProcessorsConstruct, type LambdaProcessorsProps, type ProcessorLambdas } from './lambda-processors';
+export {
+  LambdaProcessorsConstruct,
+  type LambdaProcessorsProps,
+  type ProcessorLambdas,
+} from './lambda-processors';

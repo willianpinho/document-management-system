@@ -101,19 +101,14 @@ export class RedisIoAdapter extends IoAdapter {
     // Create the adapter with both clients
     this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
 
-    this.logger.log(
-      `Redis adapter connected to ${redisHost}:${redisPort}`,
-    );
+    this.logger.log(`Redis adapter connected to ${redisHost}:${redisPort}`);
   }
 
   /**
    * Create the Socket.io server with Redis adapter
    */
   override createIOServer(port: number, options?: ServerOptions): Server {
-    const corsOrigins = this.configService.get<string>(
-      'CORS_ORIGINS',
-      'http://localhost:3000',
-    );
+    const corsOrigins = this.configService.get<string>('CORS_ORIGINS', 'http://localhost:3000');
 
     const serverOptions: Partial<ServerOptions> = {
       ...options,
@@ -148,9 +143,7 @@ export class RedisIoAdapter extends IoAdapter {
       server.adapter(this.adapterConstructor);
       this.logger.log('Socket.io server using Redis adapter');
     } else {
-      this.logger.warn(
-        'Socket.io server running without Redis adapter (single instance mode)',
-      );
+      this.logger.warn('Socket.io server running without Redis adapter (single instance mode)');
     }
 
     return server;
@@ -201,9 +194,7 @@ export class RedisIoAdapter extends IoAdapter {
 /**
  * Factory function to create and initialize the Redis adapter
  */
-export async function createRedisAdapter(
-  app: INestApplication,
-): Promise<RedisIoAdapter> {
+export async function createRedisAdapter(app: INestApplication): Promise<RedisIoAdapter> {
   const configService = app.get(ConfigService);
   const adapter = new RedisIoAdapter(app, configService);
 

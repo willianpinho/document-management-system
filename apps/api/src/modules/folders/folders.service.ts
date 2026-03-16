@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { DocumentStatus, SharePermission } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -162,7 +167,11 @@ export class FoldersService {
         throw new BadRequestException('Cannot move folder into itself');
       }
 
-      changes.push({ field: 'parentId', oldValue: existingFolder.parentId, newValue: input.parentId });
+      changes.push({
+        field: 'parentId',
+        oldValue: existingFolder.parentId,
+        newValue: input.parentId,
+      });
 
       if (input.parentId) {
         const newParent = await this.prisma.folder.findFirst({
@@ -240,7 +249,9 @@ export class FoldersService {
   async getTree(id: string, organizationId: string) {
     const folder = await this.findOne(id, organizationId);
 
-    const buildTree = async (folderId: string): Promise<{
+    const buildTree = async (
+      folderId: string,
+    ): Promise<{
       id: string;
       name: string;
       path: string;
@@ -280,7 +291,9 @@ export class FoldersService {
       orderBy: { name: 'asc' },
     });
 
-    const buildTree = async (folderId: string): Promise<{
+    const buildTree = async (
+      folderId: string,
+    ): Promise<{
       id: string;
       name: string;
       path: string;
@@ -363,7 +376,7 @@ export class FoldersService {
           canShare: false, // Not implemented in current schema
           sharedAt: share.createdAt.toISOString(),
         };
-      })
+      }),
     );
 
     // Get share link
@@ -675,7 +688,7 @@ export class FoldersService {
               name: user?.name || null,
               permission: share.permission,
             };
-          })
+          }),
         );
 
         inherited.push({

@@ -74,7 +74,7 @@ export function ResumableUploader({
         await startUpload(file, folderId, metadata);
       }
     },
-    [folderId, metadata, startUpload]
+    [folderId, metadata, startUpload],
   );
 
   const handleInputChange = useCallback(
@@ -85,7 +85,7 @@ export function ResumableUploader({
         inputRef.current.value = '';
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -108,7 +108,7 @@ export function ResumableUploader({
         handleFileSelect(e.dataTransfer.files);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   const handleBrowse = () => {
@@ -118,11 +118,11 @@ export function ResumableUploader({
   const renderIdleState = () => (
     <div
       className={cn(
-        'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+        'rounded-lg border-2 border-dashed p-8 text-center transition-colors',
         dragActive
           ? 'border-primary bg-primary/5'
           : 'border-muted-foreground/25 hover:border-muted-foreground/50',
-        className
+        className,
       )}
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
@@ -140,7 +140,7 @@ export function ResumableUploader({
       <div className="flex flex-col items-center gap-4">
         <div className="text-4xl">
           <svg
-            className="w-12 h-12 text-muted-foreground"
+            className="h-12 w-12 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -156,15 +156,11 @@ export function ResumableUploader({
         <div>
           <p className="text-sm font-medium">
             Drag and drop your file here, or{' '}
-            <button
-              type="button"
-              onClick={handleBrowse}
-              className="text-primary hover:underline"
-            >
+            <button type="button" onClick={handleBrowse} className="text-primary hover:underline">
               browse
             </button>
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="mt-1 text-xs text-muted-foreground">
             Large files are automatically uploaded in chunks for reliability
           </p>
         </div>
@@ -173,11 +169,11 @@ export function ResumableUploader({
   );
 
   const renderUploadingState = () => (
-    <div className={cn('border rounded-lg p-4', className)}>
+    <div className={cn('rounded-lg border p-4', className)}>
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-10 h-10 bg-muted rounded flex items-center justify-center">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-muted">
           <svg
-            className="w-5 h-5 text-muted-foreground"
+            className="h-5 w-5 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -190,10 +186,10 @@ export function ResumableUploader({
             />
           </svg>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-sm font-medium truncate">{progress.fileName}</p>
-            <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="truncate text-sm font-medium">{progress.fileName}</p>
+            <div className="flex flex-shrink-0 items-center gap-2">
               {isPaused ? (
                 <Button size="sm" variant="outline" onClick={resumeUpload}>
                   Resume
@@ -209,17 +205,16 @@ export function ResumableUploader({
             </div>
           </div>
           <Progress value={progress.progress} className="h-2" />
-          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              {formatBytes(progress.uploadedBytes)} /{' '}
-              {formatBytes(progress.totalBytes)}
+              {formatBytes(progress.uploadedBytes)} / {formatBytes(progress.totalBytes)}
             </span>
             <span className="flex items-center gap-3">
               <span>{formatBytes(progress.uploadSpeed)}/s</span>
               <span>{formatTime(progress.remainingTime)} remaining</span>
             </span>
           </div>
-          <div className="flex items-center gap-1 mt-2">
+          <div className="mt-2 flex items-center gap-1">
             {progress.chunks.map((chunk) => (
               <div
                 key={chunk.chunkNumber}
@@ -228,10 +223,10 @@ export function ResumableUploader({
                   chunk.status === 'completed'
                     ? 'bg-primary'
                     : chunk.status === 'uploading'
-                    ? 'bg-primary/50 animate-pulse'
-                    : chunk.status === 'error'
-                    ? 'bg-destructive'
-                    : 'bg-muted'
+                      ? 'animate-pulse bg-primary/50'
+                      : chunk.status === 'error'
+                        ? 'bg-destructive'
+                        : 'bg-muted',
                 )}
                 title={`Chunk ${chunk.chunkNumber + 1}: ${chunk.status}`}
               />
@@ -243,21 +238,16 @@ export function ResumableUploader({
   );
 
   const renderCompletedState = () => (
-    <div className={cn('border rounded-lg p-4', className)}>
+    <div className={cn('rounded-lg border p-4', className)}>
       <div className="flex items-center gap-4">
-        <div className="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
           <svg
-            className="w-5 h-5 text-green-600 dark:text-green-400"
+            className="h-5 w-5 text-green-600 dark:text-green-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <div className="flex-1">
@@ -274,11 +264,11 @@ export function ResumableUploader({
   );
 
   const renderErrorState = () => (
-    <div className={cn('border border-destructive/50 rounded-lg p-4', className)}>
+    <div className={cn('rounded-lg border border-destructive/50 p-4', className)}>
       <div className="flex items-center gap-4">
-        <div className="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-destructive/10">
           <svg
-            className="w-5 h-5 text-destructive"
+            className="h-5 w-5 text-destructive"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

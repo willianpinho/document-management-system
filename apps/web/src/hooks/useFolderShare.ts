@@ -71,10 +71,7 @@ export function useFolderShare({
   });
 
   // Query to get inherited shares
-  const {
-    data: inheritedShares,
-    isLoading: isLoadingInherited,
-  } = useQuery({
+  const { data: inheritedShares, isLoading: isLoadingInherited } = useQuery({
     queryKey: ['folder-inherited-shares', folderId],
     queryFn: async () => {
       const response = await foldersApi.getInheritedShares(folderId);

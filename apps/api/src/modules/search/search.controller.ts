@@ -1,19 +1,10 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 import { SearchService } from './search.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrganizationGuard } from '@/common/guards/organization.guard';
-import {
-  CurrentUser,
-  CurrentUserPayload,
-} from '@/common/decorators/current-user.decorator';
+import { CurrentUser, CurrentUserPayload } from '@/common/decorators/current-user.decorator';
 import {
   SearchQueryDto,
   SemanticSearchDto,
@@ -93,10 +84,7 @@ Supports pagination, filtering, and sorting.
     type: SearchResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async search(
-    @CurrentUser() user: CurrentUserPayload,
-    @Query() query: SearchQueryDto,
-  ) {
+  async search(@CurrentUser() user: CurrentUserPayload, @Query() query: SearchQueryDto) {
     // Build filters from query params
     const filters = {
       ...(query.mimeType && { mimeTypes: [query.mimeType] }),
@@ -142,10 +130,7 @@ Falls back to text search if embeddings are unavailable.
     type: SearchResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async semanticSearch(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() body: SemanticSearchDto,
-  ) {
+  async semanticSearch(@CurrentUser() user: CurrentUserPayload, @Body() body: SemanticSearchDto) {
     return this.searchService.semanticSearch({
       organizationId: user.organizationId!,
       query: body.query,
@@ -184,10 +169,7 @@ Best for most search use cases where you want both precision and recall.
     type: SearchResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async hybridSearch(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() body: HybridSearchDto,
-  ) {
+  async hybridSearch(@CurrentUser() user: CurrentUserPayload, @Body() body: HybridSearchDto) {
     return this.searchService.hybridSearch({
       organizationId: user.organizationId!,
       query: body.query,
@@ -236,14 +218,7 @@ Minimum query length: 2 characters.
     type: SuggestResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async suggest(
-    @CurrentUser() user: CurrentUserPayload,
-    @Query() query: SuggestQueryDto,
-  ) {
-    return this.searchService.getSuggestions(
-      user.organizationId!,
-      query.q,
-      query.limit || 5,
-    );
+  async suggest(@CurrentUser() user: CurrentUserPayload, @Query() query: SuggestQueryDto) {
+    return this.searchService.getSuggestions(user.organizationId!, query.q, query.limit || 5);
   }
 }

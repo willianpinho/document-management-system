@@ -46,14 +46,13 @@ function getDocumentIcon(mimeType: string) {
   if (mimeType.startsWith('video/')) return Video;
   if (mimeType.startsWith('audio/')) return Music;
   if (mimeType === 'application/pdf') return FileText;
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))
-    return FileSpreadsheet;
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return FileSpreadsheet;
   if (mimeType.includes('text') || mimeType.includes('code')) return FileCode;
   return File;
 }
 
 function getStatusBadgeVariant(
-  status: string
+  status: string,
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'ready':
@@ -89,9 +88,7 @@ export function DocumentCard({
             >
               <Icon className="h-6 w-6" />
             </div>
-            <Badge variant={getStatusBadgeVariant(document.status)}>
-              {document.status}
-            </Badge>
+            <Badge variant={getStatusBadgeVariant(document.status)}>{document.status}</Badge>
           </div>
 
           <div className="mt-4">

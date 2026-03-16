@@ -56,7 +56,10 @@ export class ProcessingController {
   @ApiOperation({ summary: 'Retry a failed job' })
   @ApiParam({ name: 'id', description: 'Processing job ID' })
   @ApiResponse({ status: 200, description: 'Job queued for retry' })
-  @ApiResponse({ status: 400, description: 'Job cannot be retried (not failed or max attempts reached)' })
+  @ApiResponse({
+    status: 400,
+    description: 'Job cannot be retried (not failed or max attempts reached)',
+  })
   @ApiResponse({ status: 404, description: 'Job not found' })
   async retryJob(@Param('id') jobId: string) {
     return this.processingService.retryJob(jobId);
@@ -74,13 +77,20 @@ export class ProcessingController {
 
   @Get('jobs/failed')
   @ApiOperation({ summary: 'Get list of failed jobs' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max jobs to return (default: 50)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset for pagination (default: 0)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max jobs to return (default: 50)',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Offset for pagination (default: 0)',
+  })
   @ApiResponse({ status: 200, description: 'List of failed jobs' })
-  async getFailedJobs(
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-  ) {
+  async getFailedJobs(@Query('limit') limit?: string, @Query('offset') offset?: string) {
     return this.processingService.getFailedJobs(
       limit ? parseInt(limit, 10) : 50,
       offset ? parseInt(offset, 10) : 0,
@@ -177,9 +187,7 @@ export class ProcessingController {
     description: 'Cleanup result with count of removed jobs',
   })
   async cleanOldJobs(@Query('olderThanDays') olderThanDays?: string) {
-    return this.processingService.cleanOldJobs(
-      olderThanDays ? parseInt(olderThanDays, 10) : 7,
-    );
+    return this.processingService.cleanOldJobs(olderThanDays ? parseInt(olderThanDays, 10) : 7);
   }
 
   // ==========================================
@@ -207,8 +215,10 @@ export class ProcessingController {
       OCR: 'Text extraction using AWS Textract (rate limited: 10/min, concurrency: 2)',
       PDF: 'PDF operations - split, merge, extract (concurrency: 5)',
       THUMBNAIL: 'Image thumbnail generation (concurrency: 10)',
-      EMBEDDING: 'Vector embedding generation for semantic search (rate limited: 60/min, concurrency: 3)',
-      AI_CLASSIFY: 'AI-powered document classification using GPT-4 (rate limited: 20/min, concurrency: 2)',
+      EMBEDDING:
+        'Vector embedding generation for semantic search (rate limited: 60/min, concurrency: 3)',
+      AI_CLASSIFY:
+        'AI-powered document classification using GPT-4 (rate limited: 20/min, concurrency: 2)',
     };
     return descriptions[key] || 'Unknown queue';
   }

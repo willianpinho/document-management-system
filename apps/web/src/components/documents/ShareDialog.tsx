@@ -1,17 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import {
-  Link2,
-  Copy,
-  Check,
-  Users,
-  Globe,
-  Lock,
-  X,
-  Mail,
-  Trash2,
-} from 'lucide-react';
+import { Link2, Copy, Check, Users, Globe, Lock, X, Mail, Trash2 } from 'lucide-react';
 import {
   Button,
   Dialog,
@@ -111,19 +101,22 @@ export function ShareDialog({
     setTimeout(() => setCopied(false), 2000);
   }, [shareLink]);
 
-  const handleToggleLink = useCallback(async (enabled: boolean) => {
-    setLinkEnabled(enabled);
-    if (enabled && !shareLink) {
-      setIsCreatingLink(true);
-      try {
-        await onCreateLink('VIEW');
-      } finally {
-        setIsCreatingLink(false);
+  const handleToggleLink = useCallback(
+    async (enabled: boolean) => {
+      setLinkEnabled(enabled);
+      if (enabled && !shareLink) {
+        setIsCreatingLink(true);
+        try {
+          await onCreateLink('VIEW');
+        } finally {
+          setIsCreatingLink(false);
+        }
+      } else if (!enabled && shareLink) {
+        await onDeleteLink();
       }
-    } else if (!enabled && shareLink) {
-      await onDeleteLink();
-    }
-  }, [shareLink, onCreateLink, onDeleteLink]);
+    },
+    [shareLink, onCreateLink, onDeleteLink],
+  );
 
   const shareUrl = shareLink
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/share/${shareLink.token}`
@@ -171,11 +164,7 @@ export function ShareDialog({
                   </option>
                 ))}
               </select>
-              <Button
-                onClick={handleShare}
-                disabled={!email.trim() || isSharing}
-                size="sm"
-              >
+              <Button onClick={handleShare} disabled={!email.trim() || isSharing} size="sm">
                 {isSharing ? 'Sharing...' : 'Share'}
               </Button>
             </div>
@@ -199,12 +188,8 @@ export function ShareDialog({
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">
-                          {user.name || user.email}
-                        </p>
-                        {user.name && (
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
-                        )}
+                        <p className="text-sm font-medium">{user.name || user.email}</p>
+                        {user.name && <p className="text-xs text-muted-foreground">{user.email}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -253,16 +238,8 @@ export function ShareDialog({
             {linkEnabled && shareLink && (
               <div className="space-y-3 rounded-md bg-muted p-3">
                 <div className="flex items-center gap-2">
-                  <Input
-                    value={shareUrl}
-                    readOnly
-                    className="bg-background text-sm"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopyLink}
-                  >
+                  <Input value={shareUrl} readOnly className="bg-background text-sm" />
+                  <Button variant="outline" size="icon" onClick={handleCopyLink}>
                     {copied ? (
                       <Check className="h-4 w-4 text-green-500" />
                     ) : (
@@ -276,9 +253,7 @@ export function ShareDialog({
                     <Lock className="h-3 w-3" />
                     <span>Anyone with the link can view</span>
                   </div>
-                  {shareLink.downloadCount > 0 && (
-                    <span>{shareLink.downloadCount} downloads</span>
-                  )}
+                  {shareLink.downloadCount > 0 && <span>{shareLink.downloadCount} downloads</span>}
                 </div>
               </div>
             )}

@@ -100,7 +100,7 @@ export function generateSignature(
   method: string,
   path: string,
   timestamp: string,
-  body?: string
+  body?: string,
 ): string {
   const credentials = loadCredentials();
   if (!credentials) {
@@ -120,7 +120,7 @@ export function generateSignature(
 export function createAuthHeaders(
   method: string,
   path: string,
-  body?: string
+  body?: string,
 ): Record<string, string> {
   const credentials = loadCredentials();
   if (!credentials) {

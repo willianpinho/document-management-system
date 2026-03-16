@@ -19,7 +19,7 @@ export const TEST_USER = {
 export async function login(
   page: Page,
   email: string = TEST_USER.email,
-  password: string = TEST_USER.password
+  password: string = TEST_USER.password,
 ): Promise<void> {
   await page.goto('/login');
   await page.getByTestId('email-input').fill(email);
@@ -47,18 +47,18 @@ export async function logout(page: Page): Promise<void> {
  * Wait for documents page to fully load
  */
 export async function waitForDocumentsPage(page: Page): Promise<void> {
-  await expect(
-    page.getByRole('main').getByRole('heading', { name: /documents/i })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('main').getByRole('heading', { name: /documents/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 /**
  * Wait for search page to fully load
  */
 export async function waitForSearchPage(page: Page): Promise<void> {
-  await expect(
-    page.getByRole('main').getByRole('heading', { name: /search/i })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 /**
@@ -89,10 +89,13 @@ export function generateUniqueFolderName(): string {
 export async function uploadTestFile(
   page: Page,
   fileName: string = 'test-document.txt',
-  content: string = 'Test document content for E2E testing'
+  content: string = 'Test document content for E2E testing',
 ): Promise<void> {
   // Open upload dialog
-  await page.getByRole('button', { name: /upload/i }).first().click();
+  await page
+    .getByRole('button', { name: /upload/i })
+    .first()
+    .click();
   await expect(page.getByRole('dialog')).toBeVisible();
 
   // Upload file
@@ -105,8 +108,7 @@ export async function uploadTestFile(
 
   // Wait for upload to complete
   await expect(
-    page.getByText(/completed|uploaded|success/i)
-      .or(page.getByRole('progressbar'))
+    page.getByText(/completed|uploaded|success/i).or(page.getByRole('progressbar')),
   ).toBeVisible({ timeout: 30000 });
 }
 
@@ -114,7 +116,10 @@ export async function uploadTestFile(
  * Create a new folder via the dialog
  */
 export async function createFolder(page: Page, folderName: string): Promise<void> {
-  await page.getByRole('main').getByRole('button', { name: /new folder/i }).click();
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /new folder/i })
+    .click();
   await expect(page.getByRole('dialog')).toBeVisible();
 
   await page.getByLabel(/folder name/i).fill(folderName);
@@ -138,7 +143,6 @@ export async function performSearch(page: Page, query: string): Promise<void> {
  */
 export async function waitForSearchResults(page: Page): Promise<void> {
   await expect(
-    page.getByText(/found \d+ result/i)
-      .or(page.getByText(/no results found/i))
+    page.getByText(/found \d+ result/i).or(page.getByText(/no results found/i)),
   ).toBeVisible({ timeout: 10000 });
 }

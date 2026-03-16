@@ -16,12 +16,7 @@ import {
   FileVideo,
   File,
 } from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  Badge,
-} from '@dms/ui';
+import { Button, Card, CardContent, Badge } from '@dms/ui';
 import { cn } from '@/lib/utils';
 import type { SearchResult } from '@/lib/api';
 import type { UseSemanticSearchReturn } from '@/hooks/useSemanticSearch';
@@ -85,32 +80,26 @@ function highlightSnippet(snippet: string, highlights?: string[]): React.ReactNo
   let result = snippet;
   highlights.forEach((highlight) => {
     const regex = new RegExp(`(${highlight})`, 'gi');
-    result = result.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-900 px-0.5 rounded">$1</mark>');
+    result = result.replace(
+      regex,
+      '<mark class="bg-yellow-200 dark:bg-yellow-900 px-0.5 rounded">$1</mark>',
+    );
   });
 
   return <span dangerouslySetInnerHTML={{ __html: result }} />;
 }
 
-function SearchResultCard({
-  result,
-  onClick,
-}: {
-  result: SearchResult;
-  onClick: () => void;
-}) {
+function SearchResultCard({ result, onClick }: { result: SearchResult; onClick: () => void }) {
   const isFolder = result.type === 'folder';
 
   return (
-    <Card
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer transition-colors hover:bg-muted/50" onClick={onClick}>
       <CardContent className="flex items-start gap-4 p-4">
         {/* Icon */}
         <div
           className={cn(
             'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-            isFolder ? 'bg-blue-100 dark:bg-blue-950' : 'bg-muted'
+            isFolder ? 'bg-blue-100 dark:bg-blue-950' : 'bg-muted',
           )}
         >
           {isFolder ? (
@@ -121,11 +110,11 @@ function SearchResultCard({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium truncate">{result.name}</h3>
+            <h3 className="truncate font-medium">{result.name}</h3>
             {result.similarityScore && result.similarityScore > 0.8 && (
-              <Badge variant="secondary" className="gap-1 shrink-0">
+              <Badge variant="secondary" className="shrink-0 gap-1">
                 <Sparkles className="h-3 w-3" />
                 {(result.similarityScore * 100).toFixed(0)}% match
               </Badge>
@@ -133,7 +122,7 @@ function SearchResultCard({
           </div>
 
           {result.snippet && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="line-clamp-2 text-sm text-muted-foreground">
               {highlightSnippet(result.snippet, result.highlights)}
             </p>
           )}
@@ -163,7 +152,7 @@ function SearchResultCard({
             }}
             title={`Relevance: ${(result.score * 100).toFixed(0)}%`}
           >
-            <div className="h-6 w-6 rounded-full bg-background flex items-center justify-center">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-background">
               {(result.score * 100).toFixed(0)}
             </div>
           </div>
@@ -197,10 +186,10 @@ export function SearchResults({
   // No query yet
   if (!search.hasQuery) {
     return (
-      <div className={cn('text-center py-12 text-muted-foreground', className)}>
-        <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <div className={cn('py-12 text-center text-muted-foreground', className)}>
+        <Sparkles className="mx-auto mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">Start typing to search</p>
-        <p className="text-sm mt-1">
+        <p className="mt-1 text-sm">
           Use AI-powered semantic search to find documents by meaning, not just keywords
         </p>
       </div>
@@ -214,11 +203,11 @@ export function SearchResults({
         {[...Array(3)].map((_, i) => (
           <Card key={i}>
             <CardContent className="flex items-start gap-4 p-4">
-              <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
+              <div className="h-10 w-10 animate-pulse rounded-lg bg-muted" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-48 rounded bg-muted animate-pulse" />
-                <div className="h-3 w-full rounded bg-muted animate-pulse" />
-                <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                <div className="h-3 w-32 animate-pulse rounded bg-muted" />
               </div>
             </CardContent>
           </Card>
@@ -230,18 +219,12 @@ export function SearchResults({
   // No results
   if (!search.hasResults) {
     return (
-      <div className={cn('text-center py-12 text-muted-foreground', className)}>
-        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <div className={cn('py-12 text-center text-muted-foreground', className)}>
+        <FileText className="mx-auto mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">No results found</p>
-        <p className="text-sm mt-1">
-          Try different keywords or adjust your search filters
-        </p>
+        <p className="mt-1 text-sm">Try different keywords or adjust your search filters</p>
         {search.mode !== 'hybrid' && (
-          <Button
-            variant="link"
-            className="mt-4"
-            onClick={() => search.setMode('hybrid')}
-          >
+          <Button variant="link" className="mt-4" onClick={() => search.setMode('hybrid')}>
             Try hybrid search for better results
           </Button>
         )}
@@ -276,7 +259,7 @@ export function SearchResults({
               onClick={() => search.setPage(search.page - 1)}
               disabled={search.page === 1}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="mr-1 h-4 w-4" />
               Previous
             </Button>
             <Button
@@ -286,7 +269,7 @@ export function SearchResults({
               disabled={!search.hasMore}
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>

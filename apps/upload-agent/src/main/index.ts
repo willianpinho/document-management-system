@@ -86,10 +86,10 @@ export function createTray(): Tray {
     const size = 16;
     const buffer = Buffer.alloc(size * size * 4);
     for (let i = 0; i < size * size; i++) {
-      buffer[i * 4 + 0] = 79;   // R
-      buffer[i * 4 + 1] = 156;  // G
-      buffer[i * 4 + 2] = 249;  // B
-      buffer[i * 4 + 3] = 255;  // A
+      buffer[i * 4 + 0] = 79; // R
+      buffer[i * 4 + 1] = 156; // G
+      buffer[i * 4 + 2] = 249; // B
+      buffer[i * 4 + 3] = 255; // A
     }
     icon = nativeImage.createFromBuffer(buffer, { width: size, height: size });
   }

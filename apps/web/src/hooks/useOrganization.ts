@@ -1,7 +1,12 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { organizationsApi, type OrganizationMember, type ApiKey, type ApiKeyCreated } from '@/lib/api';
+import {
+  organizationsApi,
+  type OrganizationMember,
+  type ApiKey,
+  type ApiKeyCreated,
+} from '@/lib/api';
 import { useAuth } from './useAuth';
 
 export function useOrganizationMembers() {
@@ -39,11 +44,7 @@ export function useInviteMember() {
   return useMutation({
     mutationFn: async ({ email, role }: { email: string; role?: string }) => {
       if (!currentOrganization?.id) throw new Error('No organization selected');
-      const response = await organizationsApi.inviteMember(
-        currentOrganization.id,
-        email,
-        role
-      );
+      const response = await organizationsApi.inviteMember(currentOrganization.id, email, role);
       return response.data;
     },
     onSuccess: () => {
@@ -64,7 +65,7 @@ export function useUpdateMemberRole() {
       const response = await organizationsApi.updateMemberRole(
         currentOrganization.id,
         memberId,
-        role
+        role,
       );
       return response.data;
     },

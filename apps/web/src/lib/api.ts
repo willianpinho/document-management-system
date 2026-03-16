@@ -30,12 +30,7 @@ export class ApiError extends Error {
   status: number;
   details?: Record<string, unknown>;
 
-  constructor(
-    message: string,
-    code: string,
-    status: number,
-    details?: Record<string, unknown>
-  ) {
+  constructor(message: string, code: string, status: number, details?: Record<string, unknown>) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
@@ -89,7 +84,10 @@ async function refreshAccessToken(): Promise<string | null> {
       }
 
       const data = await response.json();
-      setAuthTokens(data.data?.accessToken || data.accessToken, data.data?.refreshToken || data.refreshToken);
+      setAuthTokens(
+        data.data?.accessToken || data.accessToken,
+        data.data?.refreshToken || data.refreshToken,
+      );
       return data.data?.accessToken || data.accessToken;
     } catch {
       clearAuthTokens();
@@ -110,10 +108,7 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   skipOrganization?: boolean;
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<ApiResponse<T>> {
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
   const { body, params, skipAuth = false, skipOrganization = false, ...init } = options;
 
   let url = `${API_BASE_URL}${endpoint}`;
@@ -171,7 +166,7 @@ async function request<T>(
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
         const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
-        const isOnAuthPage = authPages.some(page => currentPath.startsWith(page));
+        const isOnAuthPage = authPages.some((page) => currentPath.startsWith(page));
 
         if (!isOnAuthPage) {
           window.location.href = '/login';
@@ -189,7 +184,7 @@ async function request<T>(
       errorData.error?.message || 'An error occurred',
       errorData.error?.code || 'UNKNOWN_ERROR',
       response.status,
-      errorData.error?.details
+      errorData.error?.details,
     );
   }
 
@@ -207,16 +202,18 @@ export interface Session {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ accessToken: string; refreshToken: string; expiresIn: number }>(
-      '/auth/login',
-      { method: 'POST', body: { email, password }, skipAuth: true }
-    ),
+    request<{ accessToken: string; refreshToken: string; expiresIn: number }>('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      skipAuth: true,
+    }),
 
   register: (name: string, email: string, password: string) =>
-    request<{ accessToken: string; refreshToken: string; expiresIn: number }>(
-      '/auth/register',
-      { method: 'POST', body: { name, email, password }, skipAuth: true }
-    ),
+    request<{ accessToken: string; refreshToken: string; expiresIn: number }>('/auth/register', {
+      method: 'POST',
+      body: { name, email, password },
+      skipAuth: true,
+    }),
 
   logout: () => request<void>('/auth/logout', { method: 'POST' }),
 
@@ -304,18 +301,23 @@ export interface DocumentDetail extends DocumentListItem {
 
 export const documentsApi = {
   list: (params?: DocumentSearchParams) =>
-    request<DocumentListItem[]>('/documents', { params: params as Record<string, string | number | boolean | undefined> }),
+    request<DocumentListItem[]>('/documents', {
+      params: params as Record<string, string | number | boolean | undefined>,
+    }),
 
   get: (id: string) => request<DocumentDetail>(`/documents/${id}`),
 
   create: (data: { name: string; mimeType: string; sizeBytes: number; folderId?: string }) =>
-    request<{ document: DocumentListItem; uploadUrl: string; uploadFields?: Record<string, string> }>(
-      '/documents',
-      { method: 'POST', body: data }
-    ),
+    request<{
+      document: DocumentListItem;
+      uploadUrl: string;
+      uploadFields?: Record<string, string>;
+    }>('/documents', { method: 'POST', body: data }),
 
-  update: (id: string, data: { name?: string; folderId?: string | null; metadata?: Record<string, unknown> }) =>
-    request<DocumentListItem>(`/documents/${id}`, { method: 'PATCH', body: data }),
+  update: (
+    id: string,
+    data: { name?: string; folderId?: string | null; metadata?: Record<string, unknown> },
+  ) => request<DocumentListItem>(`/documents/${id}`, { method: 'PATCH', body: data }),
 
   delete: (id: string) => request<void>(`/documents/${id}`, { method: 'DELETE' }),
 
@@ -395,20 +397,22 @@ export const documentsApi = {
 
   // Version history
   getVersions: (id: string) =>
-    request<Array<{
-      id: string;
-      versionNumber: number;
-      sizeBytes: number;
-      checksum?: string;
-      changeNote?: string;
-      createdAt: string;
-      createdBy?: {
+    request<
+      Array<{
         id: string;
-        name?: string;
-        email: string;
-        avatarUrl?: string;
-      };
-    }>>(`/documents/${id}/versions`),
+        versionNumber: number;
+        sizeBytes: number;
+        checksum?: string;
+        changeNote?: string;
+        createdAt: string;
+        createdBy?: {
+          id: string;
+          name?: string;
+          email: string;
+          avatarUrl?: string;
+        };
+      }>
+    >(`/documents/${id}/versions`),
 
   getVersionDownloadUrl: (id: string, versionId: string) =>
     request<{ url: string; expiresIn: number }>(`/documents/${id}/versions/${versionId}/download`),
@@ -446,7 +450,9 @@ export interface FolderTreeItem {
 
 export const foldersApi = {
   list: (params?: PaginationParams & SortParams & { parentId?: string }) =>
-    request<FolderListItem[]>('/folders', { params: params as Record<string, string | number | boolean | undefined> }),
+    request<FolderListItem[]>('/folders', {
+      params: params as Record<string, string | number | boolean | undefined>,
+    }),
 
   get: (id: string) => request<FolderDetail>(`/folders/${id}`),
 
@@ -490,7 +496,10 @@ export const foldersApi = {
       } | null;
     }>(`/folders/${id}/shares`),
 
-  shareWithUser: (id: string, data: { email: string; permission: 'VIEW' | 'EDIT' | 'ADMIN'; canShare?: boolean }) =>
+  shareWithUser: (
+    id: string,
+    data: { email: string; permission: 'VIEW' | 'EDIT' | 'ADMIN'; canShare?: boolean },
+  ) =>
     request<{
       id: string;
       email: string;
@@ -504,7 +513,11 @@ export const foldersApi = {
       body: data,
     }),
 
-  updateShare: (id: string, userId: string, data: { permission?: 'VIEW' | 'EDIT' | 'ADMIN'; canShare?: boolean }) =>
+  updateShare: (
+    id: string,
+    userId: string,
+    data: { permission?: 'VIEW' | 'EDIT' | 'ADMIN'; canShare?: boolean },
+  ) =>
     request<{
       id: string;
       email: string;
@@ -520,12 +533,15 @@ export const foldersApi = {
   removeShare: (id: string, userId: string) =>
     request<void>(`/folders/${id}/shares/${userId}`, { method: 'DELETE' }),
 
-  createShareLink: (id: string, data: {
-    permission: 'VIEW' | 'EDIT' | 'ADMIN';
-    expiresAt?: string;
-    password?: string;
-    maxUses?: number;
-  }) =>
+  createShareLink: (
+    id: string,
+    data: {
+      permission: 'VIEW' | 'EDIT' | 'ADMIN';
+      expiresAt?: string;
+      password?: string;
+      maxUses?: number;
+    },
+  ) =>
     request<{
       id: string;
       token: string;
@@ -540,23 +556,24 @@ export const foldersApi = {
       body: data,
     }),
 
-  deleteShareLink: (id: string) =>
-    request<void>(`/folders/${id}/share-link`, { method: 'DELETE' }),
+  deleteShareLink: (id: string) => request<void>(`/folders/${id}/share-link`, { method: 'DELETE' }),
 
   getInheritedShares: (id: string) =>
-    request<Array<{
-      folderId: string;
-      folderName: string;
-      users: Array<{
-        id: string;
-        email: string;
-        name?: string | null;
-        avatarUrl?: string | null;
-        permission: 'VIEW' | 'EDIT' | 'ADMIN';
-        canShare: boolean;
-        sharedAt: string;
-      }>;
-    }>>(`/folders/${id}/inherited-shares`),
+    request<
+      Array<{
+        folderId: string;
+        folderName: string;
+        users: Array<{
+          id: string;
+          email: string;
+          name?: string | null;
+          avatarUrl?: string | null;
+          permission: 'VIEW' | 'EDIT' | 'ADMIN';
+          canShare: boolean;
+          sharedAt: string;
+        }>;
+      }>
+    >(`/folders/${id}/inherited-shares`),
 };
 
 // Search API
@@ -671,7 +688,7 @@ export interface StorageStats {
 export const storageApi = {
   getStats: (organizationId: string) =>
     request<{ usedBytes: number; quotaBytes: number; usagePercent: number }>(
-      `/organizations/${organizationId}/storage`
+      `/organizations/${organizationId}/storage`,
     ),
 };
 
@@ -692,7 +709,9 @@ export interface ProcessingJob {
 
 export const jobsApi = {
   list: (params?: PaginationParams & { documentId?: string; status?: string }) =>
-    request<ProcessingJob[]>('/jobs', { params: params as Record<string, string | number | boolean | undefined> }),
+    request<ProcessingJob[]>('/jobs', {
+      params: params as Record<string, string | number | boolean | undefined>,
+    }),
 
   get: (id: string) => request<ProcessingJob>(`/jobs/${id}`),
 };
@@ -743,11 +762,9 @@ export interface ApiKeyCreated extends ApiKey {
 }
 
 export const organizationsApi = {
-  list: () =>
-    request<OrganizationListItem[]>('/organizations', { skipOrganization: true }),
+  list: () => request<OrganizationListItem[]>('/organizations', { skipOrganization: true }),
 
-  get: (id: string) =>
-    request<OrganizationDetail>(`/organizations/${id}`),
+  get: (id: string) => request<OrganizationDetail>(`/organizations/${id}`),
 
   create: (data: { name: string; slug?: string }) =>
     request<OrganizationListItem>('/organizations', {
@@ -764,11 +781,10 @@ export const organizationsApi = {
 
   getStorageUsage: (id: string) =>
     request<{ usedBytes: number; quotaBytes: number; usagePercent: number }>(
-      `/organizations/${id}/storage`
+      `/organizations/${id}/storage`,
     ),
 
-  getMembers: (id: string) =>
-    request<OrganizationMember[]>(`/organizations/${id}/members`),
+  getMembers: (id: string) => request<OrganizationMember[]>(`/organizations/${id}/members`),
 
   inviteMember: (id: string, email: string, role: string = 'VIEWER') =>
     request<OrganizationMember>(`/organizations/${id}/members`, {
@@ -788,8 +804,7 @@ export const organizationsApi = {
     }),
 
   // API Keys
-  getApiKeys: (id: string) =>
-    request<ApiKey[]>(`/organizations/${id}/api-keys`),
+  getApiKeys: (id: string) => request<ApiKey[]>(`/organizations/${id}/api-keys`),
 
   createApiKey: (id: string, data: { name: string; scopes?: string[]; expiresAt?: string }) =>
     request<ApiKeyCreated>(`/organizations/${id}/api-keys`, {
@@ -847,17 +862,14 @@ export const usersApi = {
   updateProfile: (data: { name?: string; avatarUrl?: string }) =>
     request<UserProfile>('/users/me', { method: 'PATCH', body: data }),
 
-  getPreferences: () =>
-    request<UserPreferences>('/users/me/preferences'),
+  getPreferences: () => request<UserPreferences>('/users/me/preferences'),
 
   updatePreferences: (preferences: UserPreferences) =>
     request<UserPreferences>('/users/me/preferences', { method: 'PUT', body: preferences }),
 
-  exportData: () =>
-    request<UserDataExport>('/users/me/export'),
+  exportData: () => request<UserDataExport>('/users/me/export'),
 
-  deleteAccount: () =>
-    request<{ success: boolean }>('/users/me', { method: 'DELETE' }),
+  deleteAccount: () => request<{ success: boolean }>('/users/me', { method: 'DELETE' }),
 };
 
 // Comments API
@@ -921,7 +933,10 @@ export interface CommentListResponse {
 }
 
 export const commentsApi = {
-  list: (documentId: string, params?: { page?: number; limit?: number; includeReplies?: boolean }) =>
+  list: (
+    documentId: string,
+    params?: { page?: number; limit?: number; includeReplies?: boolean },
+  ) =>
     request<CommentListResponse>(`/documents/${documentId}/comments`, {
       params: params as Record<string, string | number | boolean | undefined>,
     }),
@@ -1010,8 +1025,7 @@ export const uploadsApi = {
       body: data,
     }),
 
-  getSession: (sessionId: string) =>
-    request<UploadSession>(`/uploads/sessions/${sessionId}`),
+  getSession: (sessionId: string) => request<UploadSession>(`/uploads/sessions/${sessionId}`),
 
   listSessions: (userId?: string) =>
     request<UploadSession[]>('/uploads/sessions', {
@@ -1105,8 +1119,7 @@ export interface QueueInfo {
 
 export const processingApi = {
   // Job management
-  getJobStatus: (jobId: string) =>
-    request<ProcessingJob>(`/processing/jobs/${jobId}`),
+  getJobStatus: (jobId: string) => request<ProcessingJob>(`/processing/jobs/${jobId}`),
 
   retryJob: (jobId: string) =>
     request<{ success: boolean; message: string }>(`/processing/jobs/${jobId}/retry`, {
@@ -1124,11 +1137,9 @@ export const processingApi = {
     }),
 
   // Queue management
-  getQueues: () =>
-    request<{ queues: QueueInfo[] }>('/processing/queues'),
+  getQueues: () => request<{ queues: QueueInfo[] }>('/processing/queues'),
 
-  getQueueStats: () =>
-    request<Record<string, QueueStats>>('/processing/queues/stats'),
+  getQueueStats: () => request<Record<string, QueueStats>>('/processing/queues/stats'),
 
   getQueueStatsByName: (queueName: string) =>
     request<QueueStats>(`/processing/queues/${queueName}/stats`),

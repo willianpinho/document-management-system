@@ -117,7 +117,11 @@ test.describe('Reset Password', () => {
 
         if (hasForm) {
           // Check for password inputs
-          const hasPasswordInput = await page.getByLabel(/password/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+          const hasPasswordInput = await page
+            .getByLabel(/password/i)
+            .first()
+            .isVisible({ timeout: 3000 })
+            .catch(() => false);
           expect(hasPasswordInput || true).toBe(true);
         }
       }

@@ -91,7 +91,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         return newProgress;
       });
     },
-    [onProgress]
+    [onProgress],
   );
 
   const calculateSpeed = useCallback((bytesUploaded: number) => {
@@ -100,9 +100,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
 
     // Keep only last 5 seconds of samples
     const cutoff = now - 5000;
-    speedSamplesRef.current = speedSamplesRef.current.filter(
-      (s) => s.time > cutoff
-    );
+    speedSamplesRef.current = speedSamplesRef.current.filter((s) => s.time > cutoff);
 
     if (speedSamplesRef.current.length < 2) return 0;
 
@@ -120,16 +118,13 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
       session: UploadSession,
       file: File,
       chunkNumber: number,
-      retryCount = 0
+      retryCount = 0,
     ): Promise<UploadChunkResult | null> => {
       if (isPausedRef.current) return null;
 
       try {
         // Get presigned URL for this chunk
-        const urlResponse = await uploadsApi.getChunkUploadUrl(
-          session.id,
-          chunkNumber
-        );
+        const urlResponse = await uploadsApi.getChunkUploadUrl(session.id, chunkNumber);
         const { uploadUrl } = urlResponse.data!;
 
         // Calculate chunk boundaries
@@ -140,9 +135,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         // Update chunk status to uploading
         updateProgress({
           chunks: progress.chunks.map((c) =>
-            c.chunkNumber === chunkNumber
-              ? { ...c, status: 'uploading' as const }
-              : c
+            c.chunkNumber === chunkNumber ? { ...c, status: 'uploading' as const } : c,
           ),
         });
 
@@ -169,7 +162,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
           session.id,
           chunkNumber,
           cleanEtag,
-          end - start
+          end - start,
         );
 
         const result = confirmResponse.data!;
@@ -189,7 +182,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
           chunks: progress.chunks.map((c) =>
             c.chunkNumber === chunkNumber
               ? { ...c, status: 'completed' as const, progress: 100 }
-              : c
+              : c,
           ),
         });
 
@@ -201,25 +194,21 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
 
         if (retryCount < maxRetries) {
           // Exponential backoff
-          await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-          );
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
           return uploadChunk(session, file, chunkNumber, retryCount + 1);
         }
 
         // Mark chunk as error
         updateProgress({
           chunks: progress.chunks.map((c) =>
-            c.chunkNumber === chunkNumber
-              ? { ...c, status: 'error' as const }
-              : c
+            c.chunkNumber === chunkNumber ? { ...c, status: 'error' as const } : c,
           ),
         });
 
         throw error;
       }
     },
-    [chunkSize, maxRetries, calculateSpeed, progress.chunks, updateProgress]
+    [chunkSize, maxRetries, calculateSpeed, progress.chunks, updateProgress],
   );
 
   const startUpload = useCallback(
@@ -253,14 +242,11 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         sessionRef.current = session;
 
         // Initialize chunk progress tracking
-        const chunks: ChunkProgress[] = Array.from(
-          { length: session.totalChunks },
-          (_, i) => ({
-            chunkNumber: i,
-            status: session.completedChunks.includes(i) ? 'completed' : 'pending',
-            progress: session.completedChunks.includes(i) ? 100 : 0,
-          })
-        );
+        const chunks: ChunkProgress[] = Array.from({ length: session.totalChunks }, (_, i) => ({
+          chunkNumber: i,
+          status: session.completedChunks.includes(i) ? 'completed' : 'pending',
+          progress: session.completedChunks.includes(i) ? 100 : 0,
+        }));
 
         updateProgress({
           status: 'uploading',
@@ -289,10 +275,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
           }
 
           // Start new uploads up to concurrency limit
-          while (
-            uploadQueue.length > 0 &&
-            activeUploads.size < concurrentChunks
-          ) {
+          while (uploadQueue.length > 0 && activeUploads.size < concurrentChunks) {
             const chunkNumber = uploadQueue.shift()!;
             const uploadPromise = uploadChunk(session, file, chunkNumber)
               .then(() => {
@@ -332,8 +315,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         onComplete?.(result);
         return result;
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Upload failed';
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
 
         updateProgress({
           status: 'error',
@@ -344,7 +326,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         return null;
       }
     },
-    [chunkSize, concurrentChunks, updateProgress, uploadChunk, onComplete, onError]
+    [chunkSize, concurrentChunks, updateProgress, uploadChunk, onComplete, onError],
   );
 
   const resumeUpload = useCallback(async () => {
@@ -368,8 +350,8 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
       status: session.completedChunks.includes(c.chunkNumber)
         ? 'completed'
         : c.status === 'error'
-        ? 'pending'
-        : c.status,
+          ? 'pending'
+          : c.status,
     }));
 
     updateProgress({
@@ -379,9 +361,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
     });
 
     // Find pending chunks
-    const pendingChunks = chunks
-      .filter((c) => c.status === 'pending')
-      .map((c) => c.chunkNumber);
+    const pendingChunks = chunks.filter((c) => c.status === 'pending').map((c) => c.chunkNumber);
 
     // Upload remaining chunks
     const uploadQueue = [...pendingChunks];
@@ -393,10 +373,7 @@ export function useResumableUpload(options: UseResumableUploadOptions = {}) {
         break;
       }
 
-      while (
-        uploadQueue.length > 0 &&
-        activeUploads.size < concurrentChunks
-      ) {
+      while (uploadQueue.length > 0 && activeUploads.size < concurrentChunks) {
         const chunkNumber = uploadQueue.shift()!;
         const uploadPromise = uploadChunk(session, file, chunkNumber)
           .then(() => {

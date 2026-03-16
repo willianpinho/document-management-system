@@ -80,7 +80,8 @@ export function getMimeTypeColor(mimeType: string): string {
   if (mimeType === 'application/pdf') return 'text-red-500';
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'text-emerald-500';
   if (mimeType.includes('document') || mimeType.includes('word')) return 'text-blue-500';
-  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'text-orange-500';
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint'))
+    return 'text-orange-500';
   return 'text-gray-500';
 }
 
@@ -116,7 +117,7 @@ export function generateId(): string {
 
 export function debounce<TArgs extends unknown[]>(
   func: (...args: TArgs) => void,
-  wait: number
+  wait: number,
 ): (...args: TArgs) => void {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -128,7 +129,7 @@ export function debounce<TArgs extends unknown[]>(
 
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
 
@@ -159,11 +160,7 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function sortByKey<T>(
-  array: T[],
-  key: keyof T,
-  order: 'asc' | 'desc' = 'asc'
-): T[] {
+export function sortByKey<T>(array: T[], key: keyof T, order: 'asc' | 'desc' = 'asc'): T[] {
   return [...array].sort((a, b) => {
     const aVal = a[key];
     const bVal = b[key];
@@ -183,7 +180,7 @@ export function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
         [group]: [...(groups[group] || []), item],
       };
     },
-    {} as Record<string, T[]>
+    {} as Record<string, T[]>,
   );
 }
 

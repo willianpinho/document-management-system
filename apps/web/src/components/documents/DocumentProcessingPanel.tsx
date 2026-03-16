@@ -33,10 +33,7 @@ import {
   TooltipTrigger,
 } from '@dms/ui';
 import { cn } from '@/lib/utils';
-import {
-  useDocumentProcessing,
-  type ProcessingOperationType,
-} from '@/hooks/useDocumentProcessing';
+import { useDocumentProcessing, type ProcessingOperationType } from '@/hooks/useDocumentProcessing';
 import type { ProcessingJob } from '@/lib/api';
 
 interface DocumentProcessingPanelProps {
@@ -143,11 +140,9 @@ function JobRow({
         <div>
           <div className="flex items-center gap-2">
             {option?.icon}
-            <span className="font-medium text-sm">{option?.label || job.type}</span>
+            <span className="text-sm font-medium">{option?.label || job.type}</span>
           </div>
-          {job.error && (
-            <p className="text-xs text-destructive mt-1">{job.error}</p>
-          )}
+          {job.error && <p className="mt-1 text-xs text-destructive">{job.error}</p>}
         </div>
       </div>
 
@@ -161,13 +156,7 @@ function JobRow({
         {getStatusBadge(job.status)}
 
         {job.status === 'failed' && (job.attempts ?? 0) < (job.maxAttempts ?? 3) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onRetry}
-            disabled={isRetrying}
-            title="Retry"
-          >
+          <Button variant="ghost" size="icon" onClick={onRetry} disabled={isRetrying} title="Retry">
             <RefreshCw className={cn('h-4 w-4', isRetrying && 'animate-spin')} />
           </Button>
         )}
@@ -220,7 +209,7 @@ export function DocumentProcessingPanel({
 
   const toggleOperation = (type: ProcessingOperationType) => {
     setSelectedOperations((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
@@ -245,15 +234,13 @@ export function DocumentProcessingPanel({
           <Brain className="h-5 w-5" />
           Document Processing
         </CardTitle>
-        <CardDescription>
-          Process &quot;{documentName}&quot; with AI-powered tools
-        </CardDescription>
+        <CardDescription>Process &quot;{documentName}&quot; with AI-powered tools</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Current status */}
         {currentProcessingStatus && (
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+          <div className="flex items-center gap-2 rounded-md bg-muted p-3">
             <span className="text-sm">Current status:</span>
             {getStatusBadge(currentProcessingStatus)}
           </div>
@@ -266,7 +253,7 @@ export function DocumentProcessingPanel({
               <h4 className="font-medium">Active Jobs</h4>
               {hasActiveJobs && (
                 <div className="flex items-center gap-2">
-                  <Progress value={overallProgress} className="w-24 h-2" />
+                  <Progress value={overallProgress} className="h-2 w-24" />
                   <span className="text-xs text-muted-foreground">
                     {Math.round(overallProgress)}%
                   </span>
@@ -310,8 +297,8 @@ export function DocumentProcessingPanel({
                   <TooltipTrigger asChild>
                     <label
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-md border cursor-pointer hover:bg-muted/50 transition-colors',
-                        selectedOperations.includes(option.type) && 'border-primary bg-primary/5'
+                        'flex cursor-pointer items-center gap-3 rounded-md border p-3 transition-colors hover:bg-muted/50',
+                        selectedOperations.includes(option.type) && 'border-primary bg-primary/5',
                       )}
                     >
                       <Checkbox
@@ -323,9 +310,7 @@ export function DocumentProcessingPanel({
                           {option.icon}
                           <span className="font-medium">{option.label}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {option.description}
-                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{option.description}</p>
                       </div>
                     </label>
                   </TooltipTrigger>
@@ -346,24 +331,24 @@ export function DocumentProcessingPanel({
         >
           {isProcessing ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Starting...
             </>
           ) : hasActiveJobs ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Processing in progress...
             </>
           ) : (
             <>
-              <Play className="h-4 w-4 mr-2" />
+              <Play className="mr-2 h-4 w-4" />
               Start Processing ({selectedOperations.length} selected)
             </>
           )}
         </Button>
 
         {/* Processing info */}
-        <div className="text-xs text-muted-foreground space-y-1">
+        <div className="space-y-1 text-xs text-muted-foreground">
           <p>
             Processing may take a few minutes depending on document size and selected operations.
           </p>

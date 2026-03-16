@@ -40,17 +40,16 @@ const uploadAPI = {
   getQueue: () => ipcRenderer.invoke('upload:get-queue'),
   clearCompleted: () => ipcRenderer.invoke('upload:clear-completed'),
   onQueueUpdate: (callback: (queue: unknown[]) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, queue: unknown[]) =>
-      callback(queue);
+    const handler = (_event: Electron.IpcRendererEvent, queue: unknown[]) => callback(queue);
     ipcRenderer.on('upload:queue-update', handler);
     return () => ipcRenderer.off('upload:queue-update', handler);
   },
   onProgress: (
-    callback: (data: { jobId: string; progress: number; uploadedBytes: number }) => void
+    callback: (data: { jobId: string; progress: number; uploadedBytes: number }) => void,
   ) => {
     const handler = (
       _event: Electron.IpcRendererEvent,
-      data: { jobId: string; progress: number; uploadedBytes: number }
+      data: { jobId: string; progress: number; uploadedBytes: number },
     ) => callback(data);
     ipcRenderer.on('upload:progress', handler);
     return () => ipcRenderer.off('upload:progress', handler);
@@ -76,7 +75,7 @@ const watcherAPI = {
       recursive: boolean;
       patterns: string[];
       enabled: boolean;
-    }>
+    }>,
   ) => ipcRenderer.invoke('watcher:update-config', id, updates),
   removeConfig: (id: string) => ipcRenderer.invoke('watcher:remove-config', id),
   start: (id: string) => ipcRenderer.invoke('watcher:start', id),
@@ -96,8 +95,7 @@ const appAPI = {
 // Navigation/Events APIs
 const eventsAPI = {
   onNavigate: (callback: (route: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, route: string) =>
-      callback(route);
+    const handler = (_event: Electron.IpcRendererEvent, route: string) => callback(route);
     ipcRenderer.on('navigate', handler);
     return () => ipcRenderer.off('navigate', handler);
   },

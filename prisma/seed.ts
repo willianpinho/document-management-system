@@ -70,7 +70,7 @@ async function uploadToS3(key: string, buffer: Buffer, contentType: string): Pro
       Key: key,
       Body: buffer,
       ContentType: contentType,
-    })
+    }),
   );
 }
 
@@ -664,7 +664,7 @@ async function main() {
       extractedText?: string;
       createdById: string;
     },
-    fileGenerator: () => Promise<Buffer> | Buffer
+    fileGenerator: () => Promise<Buffer> | Buffer,
   ) {
     const s3Key = generateS3Key(data.organizationId, data.folderId, data.name);
     const buffer = await fileGenerator();
@@ -744,9 +744,9 @@ Chapter 2: Company Values
 
 Chapter 3: Policies
 Please refer to your department head for specific policies.`,
-          5
-        )
-    )
+          5,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -777,9 +777,9 @@ This agreement is effective for 12 months.
 
 3. PAYMENT
 Client agrees to pay monthly service fees.`,
-          3
-        )
-    )
+          3,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -808,9 +808,9 @@ Both parties agree to protect confidential information.
 
 2. TERM
 This agreement remains in effect for 5 years.`,
-          2
-        )
-    )
+          2,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -845,9 +845,9 @@ Document Management Services - January 2024
 Amount Due: $5,000.00
 
 Payment Terms: Net 30`,
-          1
-        )
-    )
+          1,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -882,9 +882,9 @@ Premium Document Management Services - February 2024
 Amount Due: $7,500.00
 
 Payment Terms: Net 30`,
-          1
-        )
-    )
+          1,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -923,9 +923,9 @@ Body: Inter Regular
 
 4. VOICE AND TONE
 Professional yet approachable`,
-          4
-        )
-    )
+          4,
+        ),
+    ),
   );
 
   // Text Files
@@ -960,8 +960,8 @@ Features:
 - Real-time collaboration
 - Secure sharing with permissions
 
-For support, contact: support@acme-corp.com`)
-    )
+For support, contact: support@acme-corp.com`),
+    ),
   );
 
   // CSV Files
@@ -994,9 +994,9 @@ For support, contact: support@acme-corp.com`)
             ['2024-03-01', 'Basic Plan', '18', '9000'],
             ['2024-03-08', 'Pro Plan', '10', '15000'],
             ['2024-03-15', 'Enterprise', '4', '20000'],
-          ]
-        )
-    )
+          ],
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1022,9 +1022,9 @@ For support, contact: support@acme-corp.com`)
             ['C003', 'Global Corp', 'info@globalcorp.com', 'Enterprise'],
             ['C004', 'Local Business', 'owner@localbiz.com', 'Basic'],
             ['C005', 'StartupXYZ', 'team@startupxyz.co', 'Pro'],
-          ]
-        )
-    )
+          ],
+        ),
+    ),
   );
 
   // Image Files (BMP for simplicity - browsers can display these)
@@ -1043,8 +1043,8 @@ For support, contact: support@acme-corp.com`)
         Blue corporate logo official company trademark marketing asset`,
         createdById: janeUser.id,
       },
-      () => generatePlaceholderImage(100, 50, '#2563EB')
-    )
+      () => generatePlaceholderImage(100, 50, '#2563EB'),
+    ),
   );
 
   createdDocuments.push(
@@ -1060,8 +1060,8 @@ For support, contact: support@acme-corp.com`)
         Green gradient marketing banner call to action promotional image`,
         createdById: janeUser.id,
       },
-      () => generatePlaceholderImage(200, 100, '#10B981')
-    )
+      () => generatePlaceholderImage(200, 100, '#10B981'),
+    ),
   );
 
   createdDocuments.push(
@@ -1077,8 +1077,8 @@ For support, contact: support@acme-corp.com`)
         Engineering product sales marketing operations team members office`,
         createdById: adminUser.id,
       },
-      () => generatePlaceholderImage(150, 100, '#F59E0B')
-    )
+      () => generatePlaceholderImage(150, 100, '#F59E0B'),
+    ),
   );
 
   // Startup Inc documents
@@ -1112,9 +1112,9 @@ Financial Projections:
 - Year 1: $500K revenue
 - Year 2: $2M revenue
 - Year 3: $5M revenue`,
-          3
-        )
-    )
+          3,
+        ),
+    ),
   );
 
   // =============================================================================
@@ -1171,9 +1171,9 @@ GEOGRAPHIC DISTRIBUTION
 - North America: 60%
 - Europe: 25%
 - Asia Pacific: 15%`,
-          8
-        )
-    )
+          8,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1220,9 +1220,9 @@ CONTINGENCY: 5%
 
 REVENUE TARGET: $65M
 GROSS MARGIN TARGET: 40%`,
-          12
-        )
-    )
+          12,
+        ),
+    ),
   );
 
   // --- TECHNICAL DOCUMENTS ---
@@ -1274,9 +1274,9 @@ DATA LAYER:
 DEPLOYMENT:
 - Kubernetes with HPA
 - GitHub Actions CI/CD`,
-          15
-        )
-    )
+          15,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1336,9 +1336,9 @@ ENDPOINTS:
 /webhooks - Event subscriptions
 
 SDKs: JS, Python, Java, Go`,
-          25
-        )
-    )
+          25,
+        ),
+    ),
   );
 
   // --- HR DOCUMENTS ---
@@ -1391,9 +1391,9 @@ TIME OFF
 DEVELOPMENT
 - $3,000 learning budget
 - $5,250 tuition reimbursement`,
-          18
-        )
-    )
+          18,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1442,9 +1442,9 @@ SECURITY
 - VPN required
 - Encrypted devices
 - No public WiFi`,
-          6
-        )
-    )
+          6,
+        ),
+    ),
   );
 
   // --- LEGAL DOCUMENTS ---
@@ -1495,9 +1495,9 @@ By using our services, you agree to these terms.
 4. LEGAL
 - Arbitration in San Francisco
 - 30-day termination notice`,
-          20
-        )
-    )
+          20,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1545,9 +1545,9 @@ SECURITY MEASURES
 DATA SUBJECT RIGHTS
 - Access, rectification, erasure
 - 72-hour breach notification`,
-          14
-        )
-    )
+          14,
+        ),
+    ),
   );
 
   // --- MARKETING DOCUMENTS ---
@@ -1600,9 +1600,9 @@ TIMELINE
 SUCCESS METRICS
 - 1000 trial signups
 - 50 enterprise demos`,
-          10
-        )
-    )
+          10,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1652,9 +1652,9 @@ Strengths: AI, unified platform
 Weaknesses: Brand recognition
 Opportunities: AI demand growth
 Threats: Big tech bundling`,
-          22
-        )
-    )
+          22,
+        ),
+    ),
   );
 
   // --- ADDITIONAL SPREADSHEETS ---
@@ -1684,19 +1684,33 @@ Threats: Big tech bundling`,
         generateCSV(
           ['Project', 'Status', 'Owner', 'Start Date', 'Target Date', 'Budget'],
           [
-            ['AI Classification v2', 'In Progress', 'Engineering', '2024-10-01', '2025-03-01', '$500K'],
+            [
+              'AI Classification v2',
+              'In Progress',
+              'Engineering',
+              '2024-10-01',
+              '2025-03-01',
+              '$500K',
+            ],
             ['API v3 Migration', 'Planning', 'Engineering', '2025-04-01', '2025-06-30', '$200K'],
             ['Mobile App', 'Design', 'Product', '2025-01-15', '2025-08-01', '$750K'],
             ['SOC 2 Certification', 'In Progress', 'Security', '2024-09-01', '2025-05-01', '$150K'],
             ['EU Data Center', 'Planning', 'DevOps', '2025-06-01', '2025-09-30', '$1.2M'],
             ['Customer Portal', 'Requirements', 'Product', '2025-02-01', '2025-07-01', '$300K'],
-            ['Integration Marketplace', 'Approved', 'Partnerships', '2025-03-01', '2025-10-01', '$400K'],
+            [
+              'Integration Marketplace',
+              'Approved',
+              'Partnerships',
+              '2025-03-01',
+              '2025-10-01',
+              '$400K',
+            ],
             ['Performance Optimization', 'Ongoing', 'DevOps', '2024-01-01', '2025-12-31', '$100K'],
             ['Security Remediation', 'In Progress', 'Security', '2024-11-01', '2025-02-28', '$75K'],
             ['Analytics Dashboard', 'Development', 'Data', '2024-12-01', '2025-04-01', '$150K'],
-          ]
-        )
-    )
+          ],
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1721,21 +1735,39 @@ Threats: Big tech bundling`,
           ['Name', 'Department', 'Title', 'Email', 'Location'],
           [
             ['Sarah Chen', 'Engineering', 'VP Engineering', 'sarah.chen@acme.com', 'San Francisco'],
-            ['Michael Rodriguez', 'Engineering', 'Senior Developer', 'michael.r@acme.com', 'Remote'],
+            [
+              'Michael Rodriguez',
+              'Engineering',
+              'Senior Developer',
+              'michael.r@acme.com',
+              'Remote',
+            ],
             ['Emily Watson', 'Engineering', 'DevOps Lead', 'emily.w@acme.com', 'San Francisco'],
             ['David Kim', 'Product', 'Product Manager', 'david.kim@acme.com', 'New York'],
             ['Lisa Thompson', 'Product', 'UX Designer', 'lisa.t@acme.com', 'Remote'],
             ['James Brown', 'Sales', 'VP Sales', 'james.b@acme.com', 'Chicago'],
             ['Amanda Miller', 'Sales', 'Account Executive', 'amanda.m@acme.com', 'Boston'],
-            ['Chris Johnson', 'Marketing', 'Marketing Director', 'chris.j@acme.com', 'San Francisco'],
+            [
+              'Chris Johnson',
+              'Marketing',
+              'Marketing Director',
+              'chris.j@acme.com',
+              'San Francisco',
+            ],
             ['Rachel Green', 'Marketing', 'Content Manager', 'rachel.g@acme.com', 'Remote'],
             ['Tom Wilson', 'Operations', 'HR Manager', 'tom.w@acme.com', 'San Francisco'],
-            ['Jennifer Lee', 'Operations', 'Finance Manager', 'jennifer.l@acme.com', 'San Francisco'],
+            [
+              'Jennifer Lee',
+              'Operations',
+              'Finance Manager',
+              'jennifer.l@acme.com',
+              'San Francisco',
+            ],
             ['Kevin Martinez', 'Engineering', 'AI Engineer', 'kevin.m@acme.com', 'Remote'],
             ['Ashley Davis', 'Sales', 'Customer Success', 'ashley.d@acme.com', 'Denver'],
-          ]
-        )
-    )
+          ],
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -1777,9 +1809,9 @@ Threats: Big tech bundling`,
             ['Travel', 'Client Meetings', '$4,500', 'Pending'],
             ['Travel', 'Conference Attendance', '$3,200', 'Paid'],
             ['Professional', 'Legal Fees', '$8,000', 'Paid'],
-          ]
-        )
-    )
+          ],
+        ),
+    ),
   );
 
   // --- ADDITIONAL IMAGES WITH METADATA ---
@@ -1800,8 +1832,8 @@ Threats: Big tech bundling`,
         User activity feed showing recent document activity`,
         createdById: janeUser.id,
       },
-      () => generatePlaceholderImage(400, 300, '#1E40AF')
-    )
+      () => generatePlaceholderImage(400, 300, '#1E40AF'),
+    ),
   );
 
   createdDocuments.push(
@@ -1822,8 +1854,8 @@ Threats: Big tech bundling`,
         External integrations OAuth providers webhook endpoints`,
         createdById: johnUser.id,
       },
-      () => generatePlaceholderImage(600, 400, '#047857')
-    )
+      () => generatePlaceholderImage(600, 400, '#047857'),
+    ),
   );
 
   createdDocuments.push(
@@ -1845,8 +1877,8 @@ Threats: Big tech bundling`,
         Server room and IT equipment storage`,
         createdById: adminUser.id,
       },
-      () => generatePlaceholderImage(500, 400, '#7C3AED')
-    )
+      () => generatePlaceholderImage(500, 400, '#7C3AED'),
+    ),
   );
 
   // --- TEXT/MARKDOWN DOCUMENTS ---
@@ -1915,8 +1947,8 @@ ACTION ITEMS:
 - [ ] Marketing launch plan by Jan 22
 - [ ] Sales targets finalized by Jan 29
 
-NEXT MEETING: February 1, 2025`)
-    )
+NEXT MEETING: February 1, 2025`),
+    ),
   );
 
   createdDocuments.push(
@@ -1985,8 +2017,8 @@ Extended: Japanese, Chinese, Korean, Arabic
 - Kubernetes deployment
 - Horizontal auto-scaling
 - Queue-based processing
-- Regional distribution`)
-    )
+- Regional distribution`),
+    ),
   );
 
   // --- JSON DATA FILES ---
@@ -2042,10 +2074,10 @@ Extended: Japanese, Chinese, Korean, Arabic
               },
             },
             null,
-            2
-          )
-        )
-    )
+            2,
+          ),
+        ),
+    ),
   );
 
   // --- VIDEO METADATA (represented as PDF with video info) ---
@@ -2109,9 +2141,9 @@ CHAPTER 5: Security (10:00 - 12:34)
 End-to-end encryption.
 SOC 2 Type II certified.
 GDPR and CCPA compliant.`,
-          4
-        )
-    )
+          4,
+        ),
+    ),
   );
 
   createdDocuments.push(
@@ -2170,9 +2202,9 @@ TOOLS & COMMUNICATION (20:00 - 25:00)
 - Slack channels and etiquette
 - Zoom meeting best practices
 - Email guidelines`,
-          6
-        )
-    )
+          6,
+        ),
+    ),
   );
 
   // --- PRESENTATION-STYLE DOCUMENTS ---
@@ -2237,12 +2269,14 @@ USE OF FUNDS
 - 50% Engineering
 - 30% Sales
 - 20% Operations`,
-          15
-        )
-    )
+          15,
+        ),
+    ),
   );
 
-  console.log(`  Created ${createdDocuments.length} documents${s3Connected ? ' with files uploaded to MinIO' : ''}\n`);
+  console.log(
+    `  Created ${createdDocuments.length} documents${s3Connected ? ' with files uploaded to MinIO' : ''}\n`,
+  );
 
   // For compatibility with rest of seed, create documents array
   const documents = createdDocuments.filter(Boolean);
@@ -2374,7 +2408,9 @@ USE OF FUNDS
   const processingJobs: Prisma.ProcessingJobCreateManyInput[] = [];
 
   // Add OCR jobs for documents
-  for (const doc of allDocuments.filter((d) => d.mimeType === 'application/pdf' && d.status === 'READY')) {
+  for (const doc of allDocuments.filter(
+    (d) => d.mimeType === 'application/pdf' && d.status === 'READY',
+  )) {
     processingJobs.push({
       documentId: doc.id,
       jobType: 'OCR',

@@ -2,16 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PaginationParams, SortParams } from '@dms/shared';
-import {
-  foldersApi,
-  type FolderListItem,
-  type FolderDetail,
-  type FolderTreeItem,
-} from '@/lib/api';
+import { foldersApi, type FolderListItem, type FolderDetail, type FolderTreeItem } from '@/lib/api';
 
-export function useFolders(
-  params?: PaginationParams & SortParams & { parentId?: string }
-) {
+export function useFolders(params?: PaginationParams & SortParams & { parentId?: string }) {
   return useQuery({
     queryKey: ['folders', params],
     queryFn: async () => {

@@ -64,29 +64,38 @@ export default function FoldersPage() {
   const deleteFolderMutation = useDeleteFolder();
 
   // Handlers
-  const handleSortChange = useCallback((value: string) => {
-    if (value === sortBy) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(value);
-      setSortOrder('asc');
-    }
-  }, [sortBy]);
+  const handleSortChange = useCallback(
+    (value: string) => {
+      if (value === sortBy) {
+        setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortBy(value);
+        setSortOrder('asc');
+      }
+    },
+    [sortBy],
+  );
 
-  const handleCreateFolder = useCallback(async (name: string) => {
-    await createFolder.mutateAsync({ name });
-    setIsCreateOpen(false);
-  }, [createFolder]);
+  const handleCreateFolder = useCallback(
+    async (name: string) => {
+      await createFolder.mutateAsync({ name });
+      setIsCreateOpen(false);
+    },
+    [createFolder],
+  );
 
-  const handleRenameFolder = useCallback(async (newName: string) => {
-    if (renameFolder) {
-      await updateFolder.mutateAsync({
-        id: renameFolder.id,
-        data: { name: newName },
-      });
-      setRenameFolder(null);
-    }
-  }, [renameFolder, updateFolder]);
+  const handleRenameFolder = useCallback(
+    async (newName: string) => {
+      if (renameFolder) {
+        await updateFolder.mutateAsync({
+          id: renameFolder.id,
+          data: { name: newName },
+        });
+        setRenameFolder(null);
+      }
+    },
+    [renameFolder, updateFolder],
+  );
 
   const handleDeleteFolder = useCallback(async () => {
     if (deleteFolder) {
@@ -95,13 +104,16 @@ export default function FoldersPage() {
     }
   }, [deleteFolder, deleteFolderMutation]);
 
-  const handleMoveFolder = useCallback((id: string) => {
-    router.push(`/folders/${id}?move=true`);
-  }, [router]);
+  const handleMoveFolder = useCallback(
+    (id: string) => {
+      router.push(`/folders/${id}?move=true`);
+    },
+    [router],
+  );
 
   const folders = foldersData?.data || [];
   const rootDocuments = rootDocumentsData?.data || [];
-  const currentSort = sortOptions.find((s) => s.value === sortBy) ?? sortOptions[0]!
+  const currentSort = sortOptions.find((s) => s.value === sortBy) ?? sortOptions[0]!;
 
   return (
     <div className="flex h-full flex-col">
@@ -110,9 +122,7 @@ export default function FoldersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Folders</h1>
-            <p className="text-sm text-muted-foreground">
-              Organize your documents into folders
-            </p>
+            <p className="text-sm text-muted-foreground">Organize your documents into folders</p>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>

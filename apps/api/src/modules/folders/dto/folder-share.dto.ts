@@ -1,4 +1,12 @@
-import { IsString, IsUUID, IsEnum, IsOptional, IsArray, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsEnum,
+  IsOptional,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SharePermission } from '@prisma/client';
 
@@ -125,6 +133,9 @@ export class InheritedShareDto {
   @ApiProperty({ description: 'Parent folder name' })
   folderName: string;
 
-  @ApiProperty({ description: 'Users who have access through inheritance', type: [FolderShareUserDto] })
+  @ApiProperty({
+    description: 'Users who have access through inheritance',
+    type: [FolderShareUserDto],
+  })
   users: FolderShareUserDto[];
 }

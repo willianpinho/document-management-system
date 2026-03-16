@@ -34,8 +34,8 @@ The goal: build a cloud-based document system with AI-powered processing - PDF s
 -->
 
 ---
-transition: fade-out
----
+
+## transition: fade-out
 
 # High-Level Architecture
 
@@ -106,8 +106,8 @@ All infrastructure defined as code using AWS CDK v2 in TypeScript - making deplo
 -->
 
 ---
-layout: default
----
+
+## layout: default
 
 # Document Processing Pipeline
 
@@ -182,8 +182,8 @@ Users see real-time progress through WebSockets. Failed jobs go to a dead-letter
 -->
 
 ---
-layout: default
----
+
+## layout: default
 
 # AI Features: Search & Classification
 
@@ -240,10 +240,10 @@ layout: default
 
 "The AI features are the differentiator.
 
-Semantic search: 
+Semantic search:
 - Document text extracted using Textract
 - Text Embedding using OpenAI
-- Documents are embedded into 1536-dimensional vectors using OpenAI. 
+- Documents are embedded into 1536-dimensional vectors using OpenAI.
 - When you search 'employee guidelines', it finds 'Company Handbook' with 81% match - understanding meaning, not just keywords.
 
 AI Classification: GPT-4 analyzes each document and returns category, confidence score, relevant tags, and a summary. It correctly identifies invoices, contracts, reports with 95-99% accuracy.
@@ -252,21 +252,21 @@ All stored in PostgreSQL with pgvector - one database for everything."
 -->
 
 ---
-layout: default
----
+
+## layout: default
 
 # Technology Stack
 
-| Layer | Technology | Rationale |
-|-------|------------|-----------|
-| **Frontend** | Next.js 15 + React 19 | SSR, App Router, Performance |
-| **Backend** | NestJS 11 | TypeScript, Modular, Enterprise |
-| **Database** | PostgreSQL + pgvector | ACID + Vector Search in one DB |
-| **Queue** | BullMQ + Redis | Reliable, priorities, scheduling |
-| **Storage** | S3 + CloudFront | Scalable, CDN, cost-effective |
-| **AI** | OpenAI + AWS Textract | GPT-4 + Enterprise OCR |
-| **IaC** | AWS CDK v2 | Type-safe TypeScript |
-| **CI/CD** | GitHub Actions | PR checks, auto-deploy |
+| Layer        | Technology            | Rationale                        |
+| ------------ | --------------------- | -------------------------------- |
+| **Frontend** | Next.js 15 + React 19 | SSR, App Router, Performance     |
+| **Backend**  | NestJS 11             | TypeScript, Modular, Enterprise  |
+| **Database** | PostgreSQL + pgvector | ACID + Vector Search in one DB   |
+| **Queue**    | BullMQ + Redis        | Reliable, priorities, scheduling |
+| **Storage**  | S3 + CloudFront       | Scalable, CDN, cost-effective    |
+| **AI**       | OpenAI + AWS Textract | GPT-4 + Enterprise OCR           |
+| **IaC**      | AWS CDK v2            | Type-safe TypeScript             |
+| **CI/CD**    | GitHub Actions        | PR checks, auto-deploy           |
 
 <!--
 [2:30 - 3:15] TECH STACK & CI/CD
@@ -287,8 +287,8 @@ GitHub Actions for CI/CD - automated tests on PRs, auto-deploy to staging and pr
 -->
 
 ---
-layout: default
----
+
+## layout: default
 
 # Security & Observability
 
@@ -346,8 +346,8 @@ SLO-based alerting: P99 latency under 500ms, 99.9% availability target, error ra
 -->
 
 ---
-layout: two-cols
----
+
+## layout: two-cols
 
 # Scalability & Cost
 
@@ -381,13 +381,13 @@ layout: two-cols
 
 <div class="text-4xl font-bold text-blue-600 mb-4">$500-800</div>
 
-| Service | Cost |
-|---------|------|
-| ECS Fargate | ~$200 |
-| RDS PostgreSQL | ~$150 |
-| ElastiCache Redis | ~$50 |
-| S3 + CloudFront | ~$50 |
-| AI APIs | ~$100-200 |
+| Service           | Cost      |
+| ----------------- | --------- |
+| ECS Fargate       | ~$200     |
+| RDS PostgreSQL    | ~$150     |
+| ElastiCache Redis | ~$50      |
+| S3 + CloudFront   | ~$50      |
+| AI APIs           | ~$100-200 |
 
 <div class="mt-4 p-2 bg-green-100 rounded text-green-800 text-sm">
   70% savings with Spot instances
@@ -408,8 +408,9 @@ Cost estimate for 1000 users: $500-800 per month - most going to compute and AI 
 -->
 
 ---
-layout: center
-class: text-center
+
+layout: center class: text-center
+
 ---
 
 # Summary
@@ -469,8 +470,8 @@ I'm excited to dive deeper into any of these areas during our interview. Thanks 
 -->
 
 ---
-layout: end
----
+
+## layout: end
 
 # Thank You!
 

@@ -51,7 +51,9 @@ test.describe('Folders', () => {
       await page.goto('/folders');
       await waitForFoldersPage(page);
 
-      await expect(page.getByRole('main').getByRole('heading', { name: /^folders$/i })).toBeVisible();
+      await expect(
+        page.getByRole('main').getByRole('heading', { name: /^folders$/i }),
+      ).toBeVisible();
       await expect(page.getByText(/organize your documents/i)).toBeVisible();
     });
 
@@ -70,7 +72,7 @@ test.describe('Folders', () => {
       // Sort dropdown is only visible when there are folders
       if (await hasFolders(page)) {
         await expect(
-          page.getByRole('button', { name: /name|date created|date modified/i })
+          page.getByRole('button', { name: /name|date created|date modified/i }),
         ).toBeVisible();
       }
     });
@@ -135,7 +137,10 @@ test.describe('Folders', () => {
       await page.getByLabel(/folder name/i).fill(folderName);
 
       // Click create button
-      await page.getByRole('dialog').getByRole('button', { name: /^create$/i }).click();
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: /^create$/i })
+        .click();
 
       // Dialog should close
       await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 });
@@ -295,7 +300,10 @@ test.describe('Folder Details Page', () => {
       await expect(page).toHaveURL(/folders\/[a-f0-9-]+/);
 
       // Navigate back using sidebar link (in aside element)
-      await page.locator('aside').getByRole('link', { name: /folders/i }).click();
+      await page
+        .locator('aside')
+        .getByRole('link', { name: /folders/i })
+        .click();
       await expect(page).toHaveURL(/\/folders$/, { timeout: 10000 });
     }
   });

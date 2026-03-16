@@ -6,10 +6,10 @@
 
 ### Slide 1: Title
 
-**Document Management System**
-Cloud-based DMS with AI-powered Document Processing
+**Document Management System** Cloud-based DMS with AI-powered Document
+Processing
 
-*Willian Pinho - Technical Assessment*
+_Willian Pinho - Technical Assessment_
 
 ---
 
@@ -37,22 +37,23 @@ Cloud-based DMS with AI-powered Document Processing
 
 ### Slide 4: Technology Stack
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Frontend | Next.js 15 | SSR, App Router, performance |
-| Backend | NestJS 11 | TypeScript, modular, enterprise |
-| Database | PostgreSQL + pgvector | ACID, vector search, mature |
-| Queue | BullMQ + Redis | Reliable, Redis ecosystem |
-| Storage | S3 + CloudFront | Scalable, cost-effective |
-| IaC | AWS CDK | Type-safe, familiar TypeScript |
+| Layer    | Choice                | Why                             |
+| -------- | --------------------- | ------------------------------- |
+| Frontend | Next.js 15            | SSR, App Router, performance    |
+| Backend  | NestJS 11             | TypeScript, modular, enterprise |
+| Database | PostgreSQL + pgvector | ACID, vector search, mature     |
+| Queue    | BullMQ + Redis        | Reliable, Redis ecosystem       |
+| Storage  | S3 + CloudFront       | Scalable, cost-effective        |
+| IaC      | AWS CDK               | Type-safe, familiar TypeScript  |
 
 ---
 
 ### Slide 5: Architecture Diagram
 
-*[Show high-level architecture diagram]*
+_[Show high-level architecture diagram]_
 
 **Components:**
+
 - Client Layer (Web, Desktop Agent, API)
 - Load Balancer + CDN
 - Compute (ECS Fargate)
@@ -78,6 +79,7 @@ Upload → S3 → EventBridge → SQS → Worker
 ```
 
 **Benefits:**
+
 - Async processing (non-blocking uploads)
 - Scalable workers (auto-scaling)
 - Retry with dead-letter queue
@@ -93,6 +95,7 @@ Upload → S3 → EventBridge → SQS → Worker
 3. **Upload Agent** - API Keys with HMAC signature
 
 **Security:**
+
 - JWT in HTTP-only cookies
 - Token rotation
 - Rate limiting per key
@@ -103,14 +106,15 @@ Upload → S3 → EventBridge → SQS → Worker
 
 **Four roles:**
 
-| Role | Permissions |
-|------|-------------|
-| Viewer | Read documents |
-| Editor | Read + Write |
-| Admin | Full CRUD + User management |
-| Owner | Everything + Settings |
+| Role   | Permissions                 |
+| ------ | --------------------------- |
+| Viewer | Read documents              |
+| Editor | Read + Write                |
+| Admin  | Full CRUD + User management |
+| Owner  | Everything + Settings       |
 
 **Row-Level Security:**
+
 - PostgreSQL RLS policies
 - Tenant isolation at database level
 
@@ -126,6 +130,7 @@ Upload → S3 → EventBridge → SQS → Worker
 4. Search query → Query embedding → Cosine similarity
 
 **Benefits:**
+
 - Natural language queries
 - Context-aware results
 - No keyword matching required
@@ -135,16 +140,13 @@ Upload → S3 → EventBridge → SQS → Worker
 ### Slide 11: Scalability & Performance
 
 **Horizontal Scaling:**
+
 - ECS Fargate auto-scaling
 - Read replicas for PostgreSQL
 - Redis cluster mode
 
-**Performance Targets:**
-| Metric | Target |
-|--------|--------|
-| API Latency (P99) | < 500ms |
-| Availability | 99.9% |
-| Upload Success | > 99% |
+**Performance Targets:** | Metric | Target | |--------|--------| | API Latency
+(P99) | < 500ms | | Availability | 99.9% | | Upload Success | > 99% |
 
 ---
 
@@ -159,6 +161,7 @@ Push → GitHub Actions → Build → Test → Deploy
 ```
 
 **Infrastructure as Code:**
+
 - AWS CDK v2 (TypeScript)
 - Separate stacks per concern
 - Preview environments for PRs
@@ -174,6 +177,7 @@ Push → GitHub Actions → Build → Test → Deploy
 3. **Traces** - X-Ray distributed tracing
 
 **Alerts:**
+
 - Error rate > 1%
 - Latency P99 > 1s
 - Queue depth > 1000
@@ -189,8 +193,7 @@ Push → GitHub Actions → Build → Test → Deploy
 - Reserved capacity for predictable load
 - CloudFront caching (reduce S3 egress)
 
-**Estimated monthly cost (1000 users):**
-~$500-800/month
+**Estimated monthly cost (1000 users):** ~$500-800/month
 
 ---
 
@@ -204,6 +207,7 @@ Push → GitHub Actions → Build → Test → Deploy
 4. **Testing** - AI-generated test cases
 
 **Quality gates:**
+
 - TypeScript strict mode
 - 80%+ test coverage
 - Automated security scanning
@@ -213,6 +217,7 @@ Push → GitHub Actions → Build → Test → Deploy
 ### Slide 16: Demo / Q&A
 
 **Live demo highlights:**
+
 - Document upload with drag-and-drop
 - Real-time presence indicators
 - Semantic search in action
@@ -245,9 +250,9 @@ Push → GitHub Actions → Build → Test → Deploy
 
 ### Key Trade-offs
 
-| Decision | Pros | Cons | Mitigation |
-|----------|------|------|------------|
-| NestJS over Fastify | Type-safe, DI, mature | Heavier | Acceptable for complexity |
-| PostgreSQL over NoSQL | ACID, JOIN support | Scaling ceiling | Read replicas, sharding later |
-| ECS over Lambda | Long-running jobs | More config | CDK abstracts complexity |
-| Monorepo | Shared code, atomic changes | Build complexity | Turborepo caching |
+| Decision              | Pros                        | Cons             | Mitigation                    |
+| --------------------- | --------------------------- | ---------------- | ----------------------------- |
+| NestJS over Fastify   | Type-safe, DI, mature       | Heavier          | Acceptable for complexity     |
+| PostgreSQL over NoSQL | ACID, JOIN support          | Scaling ceiling  | Read replicas, sharding later |
+| ECS over Lambda       | Long-running jobs           | More config      | CDK abstracts complexity      |
+| Monorepo              | Shared code, atomic changes | Build complexity | Turborepo caching             |

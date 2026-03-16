@@ -52,10 +52,7 @@ export class FoldersController {
   })
   @ApiQuery({ name: 'parentId', required: false, description: 'Parent folder ID' })
   @ApiResponse({ status: 200, description: 'List of folders' })
-  async findAll(
-    @CurrentUser() user: CurrentUserPayload,
-    @Query('parentId') parentId?: string,
-  ) {
+  async findAll(@CurrentUser() user: CurrentUserPayload, @Query('parentId') parentId?: string) {
     return this.foldersService.findAll(user.organizationId!, parentId);
   }
 
@@ -68,10 +65,7 @@ export class FoldersController {
   @ApiResponse({ status: 201, description: 'Folder created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 404, description: 'Parent folder not found' })
-  async create(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() createFolderDto: CreateFolderDto,
-  ) {
+  async create(@CurrentUser() user: CurrentUserPayload, @Body() createFolderDto: CreateFolderDto) {
     return this.foldersService.create({
       ...createFolderDto,
       organizationId: user.organizationId!,
@@ -294,10 +288,7 @@ export class FoldersController {
   @ApiParam({ name: 'id', description: 'Folder ID' })
   @ApiResponse({ status: 200, description: 'Inherited shares' })
   @ApiResponse({ status: 404, description: 'Folder not found' })
-  async getInheritedShares(
-    @CurrentUser() user: CurrentUserPayload,
-    @Param('id') id: string,
-  ) {
+  async getInheritedShares(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.foldersService.getInheritedShares(id, user.organizationId!);
   }
 }

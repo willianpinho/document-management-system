@@ -66,7 +66,7 @@ export class TextractService {
     if (isMinIO || isMissingCredentials) {
       this.logger.warn(
         'AWS Textract is NOT available. Using local fallback for OCR. ' +
-        'To enable Textract, configure real AWS credentials in .env',
+          'To enable Textract, configure real AWS credentials in .env',
       );
       this.client = null;
       this.isAvailable = false;
@@ -82,10 +82,7 @@ export class TextractService {
     this.bucket = this.configService.get<string>('S3_BUCKET', 'dms-documents-dev');
     this.snsTopicArn = this.configService.get<string>('TEXTRACT_SNS_TOPIC_ARN');
     this.roleArn = this.configService.get<string>('TEXTRACT_ROLE_ARN');
-    this.outputBucket = this.configService.get<string>(
-      'TEXTRACT_OUTPUT_BUCKET',
-      this.bucket,
-    );
+    this.outputBucket = this.configService.get<string>('TEXTRACT_OUTPUT_BUCKET', this.bucket);
   }
 
   /**
@@ -143,17 +140,11 @@ export class TextractService {
       .join('\n');
 
     // Calculate average confidence
-    const confidences = blocks
-      .filter((b) => b.Confidence !== undefined)
-      .map((b) => b.Confidence!);
+    const confidences = blocks.filter((b) => b.Confidence !== undefined).map((b) => b.Confidence!);
     const confidence =
-      confidences.length > 0
-        ? confidences.reduce((a, b) => a + b, 0) / confidences.length
-        : 0;
+      confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
 
-    this.logger.log(
-      `Detected ${blocks.length} blocks with ${confidence.toFixed(1)}% confidence`,
-    );
+    this.logger.log(`Detected ${blocks.length} blocks with ${confidence.toFixed(1)}% confidence`);
 
     return { text, blocks, confidence };
   }
@@ -174,9 +165,7 @@ export class TextractService {
     const bucket = s3Bucket || this.bucket;
     const startTime = Date.now();
 
-    this.logger.log(
-      `Analyzing document: ${bucket}/${s3Key} with features: ${features.join(', ')}`,
-    );
+    this.logger.log(`Analyzing document: ${bucket}/${s3Key} with features: ${features.join(', ')}`);
 
     const command = new AnalyzeDocumentCommand({
       Document: {
@@ -323,9 +312,7 @@ export class TextractService {
       nextToken = response.NextToken;
     } while (nextToken);
 
-    this.logger.log(
-      `Retrieved ${allBlocks.length} blocks from job ${jobId}`,
-    );
+    this.logger.log(`Retrieved ${allBlocks.length} blocks from job ${jobId}`);
 
     const result = this.parseTextractResponse(allBlocks, {
       processingTimeMs: Date.now() - startTime,
@@ -371,9 +358,7 @@ export class TextractService {
     blocks: Block[],
     metadata: { processingTimeMs: number; featureTypes: string[] },
   ): OcrResult {
-    const blockMap = new Map<string, Block>(
-      blocks.filter((b) => b.Id).map((b) => [b.Id!, b]),
-    );
+    const blockMap = new Map<string, Block>(blocks.filter((b) => b.Id).map((b) => [b.Id!, b]));
 
     // Extract text
     const { text, textBlocks } = this.extractText(blocks);
@@ -395,13 +380,9 @@ export class TextractService {
     const characterCount = text.length;
 
     // Calculate overall confidence
-    const confidences = blocks
-      .filter((b) => b.Confidence !== undefined)
-      .map((b) => b.Confidence!);
+    const confidences = blocks.filter((b) => b.Confidence !== undefined).map((b) => b.Confidence!);
     const confidence =
-      confidences.length > 0
-        ? confidences.reduce((a, b) => a + b, 0) / confidences.length
-        : 0;
+      confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
 
     return {
       id: `ocr-${Date.now()}`,
@@ -496,8 +477,7 @@ export class TextractService {
       if (!tableBlock.Id) continue;
 
       // Get all cell IDs for this table
-      const cellIds =
-        tableBlock.Relationships?.find((r) => r.Type === 'CHILD')?.Ids || [];
+      const cellIds = tableBlock.Relationships?.find((r) => r.Type === 'CHILD')?.Ids || [];
 
       const cellBlocks = cellIds
         .map((id) => blockMap.get(id))
@@ -574,8 +554,7 @@ export class TextractService {
 
     // Find KEY_VALUE_SET blocks that are KEYs
     const keyBlocks = blocks.filter(
-      (b) =>
-        b.BlockType === 'KEY_VALUE_SET' && b.EntityTypes?.includes('KEY'),
+      (b) => b.BlockType === 'KEY_VALUE_SET' && b.EntityTypes?.includes('KEY'),
     );
 
     for (const keyBlock of keyBlocks) {
@@ -585,9 +564,7 @@ export class TextractService {
       const keyText = this.getKeyValueText(keyBlock, blockMap, 'CHILD');
 
       // Find the corresponding VALUE block
-      const valueBlockId = keyBlock.Relationships?.find(
-        (r) => r.Type === 'VALUE',
-      )?.Ids?.[0];
+      const valueBlockId = keyBlock.Relationships?.find((r) => r.Type === 'VALUE')?.Ids?.[0];
 
       let valueText = '';
       let valueConfidence = 0;
@@ -626,8 +603,7 @@ export class TextractService {
       .filter(
         (b) =>
           b.BlockType === 'SIGNATURE' ||
-          (b.BlockType === 'KEY_VALUE_SET' &&
-            b.EntityTypes?.includes('SIGNATURE' as EntityType)),
+          (b.BlockType === 'KEY_VALUE_SET' && b.EntityTypes?.includes('SIGNATURE' as EntityType)),
       )
       .map((b) => ({
         id: b.Id || `sig-${Date.now()}`,
@@ -672,9 +648,7 @@ export class TextractService {
   /**
    * Helper: Parse geometry from Textract block
    */
-  private parseGeometry(
-    geometry: Block['Geometry'] | undefined,
-  ): Geometry {
+  private parseGeometry(geometry: Block['Geometry'] | undefined): Geometry {
     const defaultGeometry: Geometry = {
       boundingBox: { width: 0, height: 0, left: 0, top: 0 },
       polygon: [],
@@ -702,8 +676,7 @@ export class TextractService {
    * Helper: Get text content from a table cell
    */
   private getCellText(cell: Block, blockMap: Map<string, Block>): string {
-    const wordIds =
-      cell.Relationships?.find((r) => r.Type === 'CHILD')?.Ids || [];
+    const wordIds = cell.Relationships?.find((r) => r.Type === 'CHILD')?.Ids || [];
 
     return wordIds
       .map((id) => blockMap.get(id))
@@ -720,8 +693,7 @@ export class TextractService {
     blockMap: Map<string, Block>,
     relationshipType: string,
   ): string {
-    const childIds =
-      block.Relationships?.find((r) => r.Type === relationshipType)?.Ids || [];
+    const childIds = block.Relationships?.find((r) => r.Type === relationshipType)?.Ids || [];
 
     return childIds
       .map((id) => blockMap.get(id))

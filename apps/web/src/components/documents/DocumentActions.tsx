@@ -91,29 +91,17 @@ export function DocumentActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => onProcess(['ocr'])}
-              disabled={isProcessing}
-            >
+            <DropdownMenuItem onClick={() => onProcess(['ocr'])} disabled={isProcessing}>
               Extract Text (OCR)
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onProcess(['ai_classify'])}
-              disabled={isProcessing}
-            >
+            <DropdownMenuItem onClick={() => onProcess(['ai_classify'])} disabled={isProcessing}>
               AI Classification
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onProcess(['thumbnail'])}
-              disabled={isProcessing}
-            >
+            <DropdownMenuItem onClick={() => onProcess(['thumbnail'])} disabled={isProcessing}>
               Generate Thumbnail
             </DropdownMenuItem>
             {document.mimeType === 'application/pdf' && (
-              <DropdownMenuItem
-                onClick={() => onProcess(['pdf_split'])}
-                disabled={isProcessing}
-              >
+              <DropdownMenuItem onClick={() => onProcess(['pdf_split'])} disabled={isProcessing}>
                 Split PDF
               </DropdownMenuItem>
             )}
@@ -131,12 +119,7 @@ export function DocumentActions({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <span className="sr-only">More actions</span>
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -181,9 +164,7 @@ export function DocumentActions({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename document</DialogTitle>
-            <DialogDescription>
-              Enter a new name for this document.
-            </DialogDescription>
+            <DialogDescription>Enter a new name for this document.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input
@@ -212,8 +193,8 @@ export function DocumentActions({
           <DialogHeader>
             <DialogTitle>Delete document</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{document.name}&quot;? This action
-              cannot be undone.
+              Are you sure you want to delete &quot;{document.name}&quot;? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

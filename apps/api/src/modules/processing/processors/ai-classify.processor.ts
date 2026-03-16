@@ -15,11 +15,7 @@ import { Job } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
-import {
-  QUEUE_NAMES,
-  AI_CLASSIFY_PROCESSOR_OPTIONS,
-  AI_CLASSIFY_CONFIG,
-} from '../queues';
+import { QUEUE_NAMES, AI_CLASSIFY_PROCESSOR_OPTIONS, AI_CLASSIFY_CONFIG } from '../queues';
 import type { AiClassifyJobData, AiClassifyJobResult } from '../queues/queue.types';
 
 @Processor(QUEUE_NAMES.AI_CLASSIFY, AI_CLASSIFY_PROCESSOR_OPTIONS)
@@ -196,7 +192,9 @@ export class AiClassifyProcessor extends WorkerHost {
         summary: parsed.summary,
       };
     } catch (e) {
-      this.logger.warn(`Failed to parse classification response: ${e instanceof Error ? e.message : 'Unknown'}`);
+      this.logger.warn(
+        `Failed to parse classification response: ${e instanceof Error ? e.message : 'Unknown'}`,
+      );
       this.logger.debug(`Raw response: ${response.substring(0, 200)}...`);
       return {
         category: 'Other',
@@ -210,9 +208,7 @@ export class AiClassifyProcessor extends WorkerHost {
   /**
    * Extract named entities from document
    */
-  private async extractEntities(
-    text: string,
-  ): Promise<Record<string, string[]>> {
+  private async extractEntities(text: string): Promise<Record<string, string[]>> {
     const truncatedText = text.substring(0, AI_CLASSIFY_CONFIG.maxTextLength);
 
     const prompt = `Extract named entities from the following document text.
@@ -278,7 +274,7 @@ Return only the JSON object, no additional text. Example:
       throw new Error(`OpenAI API error: ${response.status} - ${error}`);
     }
 
-    const data = await response.json() as { choices: Array<{ message: { content: string } }> };
+    const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
     return data.choices[0].message.content;
   }
 

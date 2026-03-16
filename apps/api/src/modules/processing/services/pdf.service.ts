@@ -12,10 +12,7 @@ import {
   type CompressionOptionsDto,
   type PageRenderOptionsDto,
 } from '../dto/pdf-options.dto';
-import {
-  type PdfMetadataDto,
-  type PdfOutlineItemDto,
-} from '../dto/pdf-result.dto';
+import { type PdfMetadataDto, type PdfOutlineItemDto } from '../dto/pdf-result.dto';
 
 /**
  * Result of a split operation (in-memory)
@@ -123,10 +120,7 @@ export class PdfService {
    * @param pageRanges - Array of page range strings (e.g., ["1-3", "5", "7-10"])
    * @returns Array of split PDF buffers
    */
-  async splitByPages(
-    buffer: Buffer,
-    pageRanges: string[],
-  ): Promise<SplitOutputBuffer[]> {
+  async splitByPages(buffer: Buffer, pageRanges: string[]): Promise<SplitOutputBuffer[]> {
     this.logger.log(`Splitting PDF by page ranges: ${pageRanges.join(', ')}`);
 
     const sourcePdf = await PDFDocument.load(buffer);
@@ -374,10 +368,7 @@ export class PdfService {
    * @param options - Watermark options
    * @returns Watermarked PDF buffer
    */
-  async addWatermark(
-    buffer: Buffer,
-    options: WatermarkOptionsDto,
-  ): Promise<WatermarkOutputBuffer> {
+  async addWatermark(buffer: Buffer, options: WatermarkOptionsDto): Promise<WatermarkOutputBuffer> {
     this.logger.log(`Adding watermark: "${options.text}"`);
 
     const pdf = await PDFDocument.load(buffer);
@@ -403,9 +394,7 @@ export class PdfService {
     if (allPages) {
       pagesToWatermark = Array.from({ length: totalPages }, (_, i) => i);
     } else if (specificPages && specificPages.length > 0) {
-      pagesToWatermark = specificPages
-        .filter((p) => p >= 1 && p <= totalPages)
-        .map((p) => p - 1);
+      pagesToWatermark = specificPages.filter((p) => p >= 1 && p <= totalPages).map((p) => p - 1);
     } else {
       pagesToWatermark = Array.from({ length: totalPages }, (_, i) => i);
     }
@@ -475,10 +464,7 @@ export class PdfService {
    * @param options - Compression options
    * @returns Compressed PDF buffer
    */
-  async compress(
-    buffer: Buffer,
-    options: CompressionOptionsDto,
-  ): Promise<CompressionOutputBuffer> {
+  async compress(buffer: Buffer, options: CompressionOptionsDto): Promise<CompressionOutputBuffer> {
     this.logger.log(`Compressing PDF with quality: ${options.quality}`);
 
     const originalSize = buffer.length;
@@ -546,12 +532,7 @@ export class PdfService {
   ): Promise<PageRenderOutput> {
     this.logger.log(`Rendering page ${pageNumber} to image`);
 
-    const {
-      width = 800,
-      height,
-      format = ImageFormat.PNG,
-      quality = 80,
-    } = options;
+    const { width = 800, height, format = ImageFormat.PNG, quality = 80 } = options;
 
     // Load PDF to get page dimensions
     const pdf = await PDFDocument.load(buffer);
@@ -654,11 +635,7 @@ export class PdfService {
   /**
    * Recursively extract outline items
    */
-  private extractOutlineItems(
-    pdf: PDFDocument,
-    ref: PDFRef,
-    items: PdfOutlineItemDto[],
-  ): void {
+  private extractOutlineItems(pdf: PDFDocument, ref: PDFRef, items: PdfOutlineItemDto[]): void {
     const context = pdf.context;
     let currentRef: PDFRef | undefined = ref;
 
@@ -708,10 +685,7 @@ export class PdfService {
    * @param everyNPages - Split every N pages
    * @returns Array of split PDF buffers
    */
-  async splitEveryNPages(
-    buffer: Buffer,
-    everyNPages: number,
-  ): Promise<SplitOutputBuffer[]> {
+  async splitEveryNPages(buffer: Buffer, everyNPages: number): Promise<SplitOutputBuffer[]> {
     this.logger.log(`Splitting PDF every ${everyNPages} pages`);
 
     if (everyNPages < 1) {

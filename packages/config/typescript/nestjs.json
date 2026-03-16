@@ -13,9 +13,7 @@
     "incremental": false,
     "composite": false,
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     }
   }
 }

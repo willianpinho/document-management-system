@@ -60,10 +60,7 @@ export class EmbeddingService {
       'text-embedding-3-small',
     );
     // text-embedding-3-small outputs 1536 dimensions by default
-    this.embeddingDimensions = this.configService.get<number>(
-      'OPENAI_EMBEDDING_DIMENSIONS',
-      1536,
-    );
+    this.embeddingDimensions = this.configService.get<number>('OPENAI_EMBEDDING_DIMENSIONS', 1536);
     // Maximum tokens per embedding request
     this.maxTokensPerRequest = 8191;
     // Maximum batch size for OpenAI embeddings API

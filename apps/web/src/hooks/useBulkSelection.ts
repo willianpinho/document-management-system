@@ -23,24 +23,26 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const selectedDocumentIds = useMemo(
-    () => Array.from(selectedItems.values())
-      .filter(item => item.type === 'document')
-      .map(item => item.id),
-    [selectedItems]
+    () =>
+      Array.from(selectedItems.values())
+        .filter((item) => item.type === 'document')
+        .map((item) => item.id),
+    [selectedItems],
   );
 
   const selectedFolderIds = useMemo(
-    () => Array.from(selectedItems.values())
-      .filter(item => item.type === 'folder')
-      .map(item => item.id),
-    [selectedItems]
+    () =>
+      Array.from(selectedItems.values())
+        .filter((item) => item.type === 'folder')
+        .map((item) => item.id),
+    [selectedItems],
   );
 
   const selectedCount = selectedItems.size;
   const hasSelection = selectedCount > 0;
 
   const toggleItem = useCallback((item: SelectableItem) => {
-    setSelectedItems(prev => {
+    setSelectedItems((prev) => {
       const next = new Map(prev);
       if (next.has(item.id)) {
         next.delete(item.id);
@@ -52,7 +54,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   }, []);
 
   const selectItem = useCallback((item: SelectableItem) => {
-    setSelectedItems(prev => {
+    setSelectedItems((prev) => {
       const next = new Map(prev);
       next.set(item.id, item);
       return next;
@@ -60,7 +62,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   }, []);
 
   const deselectItem = useCallback((id: string) => {
-    setSelectedItems(prev => {
+    setSelectedItems((prev) => {
       const next = new Map(prev);
       next.delete(id);
       return next;
@@ -68,7 +70,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   }, []);
 
   const selectAll = useCallback((items: SelectableItem[]) => {
-    setSelectedItems(new Map(items.map(item => [item.id, item])));
+    setSelectedItems(new Map(items.map((item) => [item.id, item])));
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -90,7 +92,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       const response = await bulkApi.delete(
         selectedDocumentIds,
         selectedFolderIds.length > 0 ? selectedFolderIds : undefined,
-        permanent
+        permanent,
       );
       return response.data!;
     },
@@ -111,7 +113,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       const response = await bulkApi.move(
         selectedDocumentIds,
         targetFolderId,
-        selectedFolderIds.length > 0 ? selectedFolderIds : undefined
+        selectedFolderIds.length > 0 ? selectedFolderIds : undefined,
       );
       return response.data!;
     },
@@ -147,7 +149,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
     mutationFn: async () => {
       const response = await bulkApi.download(
         selectedDocumentIds,
-        selectedFolderIds.length > 0 ? selectedFolderIds : undefined
+        selectedFolderIds.length > 0 ? selectedFolderIds : undefined,
       );
       return response.data!;
     },

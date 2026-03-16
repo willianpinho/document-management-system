@@ -44,14 +44,13 @@ function getDocumentIcon(mimeType: string) {
   if (mimeType.startsWith('video/')) return Video;
   if (mimeType.startsWith('audio/')) return Music;
   if (mimeType === 'application/pdf') return FileText;
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))
-    return FileSpreadsheet;
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return FileSpreadsheet;
   if (mimeType.includes('text') || mimeType.includes('code')) return FileCode;
   return File;
 }
 
 function getStatusBadgeVariant(
-  status: string
+  status: string,
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'ready':
@@ -79,10 +78,7 @@ export function DocumentListRow({
 
   return (
     <div className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50">
-      <Link
-        href={`/documents/${document.id}`}
-        className="flex flex-1 items-center gap-4"
-      >
+      <Link href={`/documents/${document.id}`} className="flex flex-1 items-center gap-4">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted ${iconColor}`}
         >
@@ -93,9 +89,7 @@ export function DocumentListRow({
           <h3 className="truncate text-sm font-medium" title={document.name}>
             {document.name}
           </h3>
-          <p className="text-xs text-muted-foreground">
-            {formatRelativeTime(document.createdAt)}
-          </p>
+          <p className="text-xs text-muted-foreground">{formatRelativeTime(document.createdAt)}</p>
         </div>
 
         <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
@@ -108,11 +102,7 @@ export function DocumentListRow({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100"
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
             <MoreVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>

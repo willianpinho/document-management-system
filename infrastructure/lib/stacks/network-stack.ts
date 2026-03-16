@@ -112,18 +112,10 @@ export class NetworkStack extends cdk.Stack {
     });
 
     // Allow inbound HTTP from anywhere
-    sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      'Allow HTTP traffic'
-    );
+    sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP traffic');
 
     // Allow inbound HTTPS from anywhere
-    sg.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(443),
-      'Allow HTTPS traffic'
-    );
+    sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Allow HTTPS traffic');
 
     return sg;
   }
@@ -180,7 +172,7 @@ export class NetworkStack extends cdk.Stack {
     this.apiSecurityGroup.addIngressRule(
       this.albSecurityGroup,
       ec2.Port.tcp(4000),
-      'Allow API traffic from ALB'
+      'Allow API traffic from ALB',
     );
   }
 
@@ -191,7 +183,7 @@ export class NetworkStack extends cdk.Stack {
     this.databaseSecurityGroup.addIngressRule(
       this.apiSecurityGroup,
       ec2.Port.tcp(5432),
-      'Allow PostgreSQL from API'
+      'Allow PostgreSQL from API',
     );
   }
 
@@ -202,7 +194,7 @@ export class NetworkStack extends cdk.Stack {
     this.cacheSecurityGroup.addIngressRule(
       this.apiSecurityGroup,
       ec2.Port.tcp(6379),
-      'Allow Redis from API'
+      'Allow Redis from API',
     );
   }
 }

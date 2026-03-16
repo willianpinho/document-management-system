@@ -53,11 +53,12 @@ export class CommentsService {
       positionY: comment.positionY,
       selectionStart: comment.selectionStart,
       selectionEnd: comment.selectionEnd,
-      mentions: comment.mentions?.map((m: any) => ({
-        id: m.mentionedId,
-        name: m.mentioned?.name || null,
-        email: m.mentioned?.email || '',
-      })) || [],
+      mentions:
+        comment.mentions?.map((m: any) => ({
+          id: m.mentionedId,
+          name: m.mentioned?.name || null,
+          email: m.mentioned?.email || '',
+        })) || [],
       replyCount: comment._count?.replies || 0,
       replies: comment.replies?.map((r: any) => this.toResponse(r)),
     };
@@ -142,7 +143,14 @@ export class CommentsService {
    * Get all comments for a document
    */
   async findAll(filter: CommentFilter) {
-    const { documentId, organizationId, page = 1, limit = 50, includeReplies = true, parentId = null } = filter;
+    const {
+      documentId,
+      organizationId,
+      page = 1,
+      limit = 50,
+      includeReplies = true,
+      parentId = null,
+    } = filter;
 
     // Verify document belongs to organization
     const document = await this.prisma.document.findFirst({
@@ -409,7 +417,10 @@ export class CommentsService {
   /**
    * Get comment count for a document
    */
-  async getCount(documentId: string, organizationId: string): Promise<{ total: number; resolved: number }> {
+  async getCount(
+    documentId: string,
+    organizationId: string,
+  ): Promise<{ total: number; resolved: number }> {
     const document = await this.prisma.document.findFirst({
       where: {
         id: documentId,

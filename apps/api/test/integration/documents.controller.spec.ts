@@ -81,27 +81,36 @@ const createMockPrismaService = () => ({
       return Promise.resolve(doc);
     }),
     findMany: vi.fn().mockImplementation(() => {
-      return Promise.resolve(Array.from(mockDocuments.values()).filter((d) => d.status !== 'DELETED'));
+      return Promise.resolve(
+        Array.from(mockDocuments.values()).filter((d) => d.status !== 'DELETED'),
+      );
     }),
-    findFirst: vi.fn().mockImplementation((args: { where: { id?: string; organizationId?: string } }) => {
-      const doc = mockDocuments.get(args.where.id!);
-      if (doc && doc.organizationId === args.where.organizationId && doc.status !== 'DELETED') {
-        return Promise.resolve({ ...doc, createdBy: { id: testUser.id, name: testUser.name, email: testUser.email } });
-      }
-      return Promise.resolve(null);
-    }),
+    findFirst: vi
+      .fn()
+      .mockImplementation((args: { where: { id?: string; organizationId?: string } }) => {
+        const doc = mockDocuments.get(args.where.id!);
+        if (doc && doc.organizationId === args.where.organizationId && doc.status !== 'DELETED') {
+          return Promise.resolve({
+            ...doc,
+            createdBy: { id: testUser.id, name: testUser.name, email: testUser.email },
+          });
+        }
+        return Promise.resolve(null);
+      }),
     findUnique: vi.fn().mockImplementation((args: { where: { id: string } }) => {
       return Promise.resolve(mockDocuments.get(args.where.id) || null);
     }),
-    update: vi.fn().mockImplementation((args: { where: { id: string }; data: Record<string, unknown> }) => {
-      const doc = mockDocuments.get(args.where.id);
-      if (doc) {
-        const updated = { ...doc, ...args.data, updatedAt: new Date() };
-        mockDocuments.set(args.where.id, updated);
-        return Promise.resolve(updated);
-      }
-      return Promise.resolve(null);
-    }),
+    update: vi
+      .fn()
+      .mockImplementation((args: { where: { id: string }; data: Record<string, unknown> }) => {
+        const doc = mockDocuments.get(args.where.id);
+        if (doc) {
+          const updated = { ...doc, ...args.data, updatedAt: new Date() };
+          mockDocuments.set(args.where.id, updated);
+          return Promise.resolve(updated);
+        }
+        return Promise.resolve(null);
+      }),
     count: vi.fn().mockImplementation(() => {
       return Promise.resolve(mockDocuments.size);
     }),

@@ -10,11 +10,7 @@ import { LocalOcrService } from '../services/local-ocr.service';
 import { EmbeddingService } from '../services/embedding.service';
 import { DOCUMENT_PROCESSING_QUEUE } from '../queues/queue.constants';
 import type { ProcessingJobData } from '../processing.service';
-import {
-  OcrResult,
-  OcrProcessingOptions,
-  isSupportedOcrMimeType,
-} from '../dto/ocr-result.dto';
+import { OcrResult, OcrProcessingOptions, isSupportedOcrMimeType } from '../dto/ocr-result.dto';
 
 /**
  * OCR processing result
@@ -114,10 +110,7 @@ export class OcrProcessor extends WorkerHost {
       }
 
       // Validate file size
-      this.textractService.validateDocument(
-        document.mimeType,
-        Number(document.sizeBytes),
-      );
+      this.textractService.validateDocument(document.mimeType, Number(document.sizeBytes));
 
       await job.updateProgress(10);
 
@@ -138,7 +131,7 @@ export class OcrProcessor extends WorkerHost {
         if (!this.localOcrService.isSupported(document.mimeType)) {
           throw new Error(
             `Local OCR only supports PDF files. Document type: ${document.mimeType}. ` +
-            `To process images, configure AWS Textract credentials.`,
+              `To process images, configure AWS Textract credentials.`,
           );
         }
 
@@ -174,10 +167,7 @@ export class OcrProcessor extends WorkerHost {
         this.embeddingService.isAvailable()
       ) {
         try {
-          await this.embeddingService.generateAndStoreEmbedding(
-            documentId,
-            ocrResult.text,
-          );
+          await this.embeddingService.generateAndStoreEmbedding(documentId, ocrResult.text);
           embeddingGenerated = true;
           this.logger.log(`Generated embedding for document ${documentId}`);
         } catch (embeddingError) {
@@ -219,10 +209,7 @@ export class OcrProcessor extends WorkerHost {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
 
-      this.logger.error(
-        `OCR failed for document ${documentId}: ${errorMessage}`,
-        errorStack,
-      );
+      this.logger.error(`OCR failed for document ${documentId}: ${errorMessage}`, errorStack);
 
       await this.failJob(job, documentId, errorMessage, errorStack);
 
@@ -242,10 +229,7 @@ export class OcrProcessor extends WorkerHost {
 
     await job.updateProgress(20);
 
-    const result = await this.textractService.analyzeDocument(
-      s3Key,
-      options.features,
-    );
+    const result = await this.textractService.analyzeDocument(s3Key, options.features);
 
     await job.updateProgress(70);
 
@@ -265,10 +249,7 @@ export class OcrProcessor extends WorkerHost {
     await job.updateProgress(15);
 
     // Start async job
-    const textractJobId = await this.textractService.startDocumentAnalysis(
-      s3Key,
-      options,
-    );
+    const textractJobId = await this.textractService.startDocumentAnalysis(s3Key, options);
 
     this.logger.log(`Started Textract job ${textractJobId} for ${s3Key}`);
 
@@ -345,9 +326,7 @@ export class OcrProcessor extends WorkerHost {
       const result = await this.textractService.getDocumentAnalysis(textractJobId);
 
       if (result !== null) {
-        this.logger.log(
-          `Textract job ${textractJobId} completed after ${pollCount} polls`,
-        );
+        this.logger.log(`Textract job ${textractJobId} completed after ${pollCount} polls`);
         return result;
       }
 
@@ -355,23 +334,16 @@ export class OcrProcessor extends WorkerHost {
       await this.sleep(waitTime);
       waitTime = Math.min(waitTime * 1.5, 30000);
 
-      this.logger.debug(
-        `Poll ${pollCount}: Textract job ${textractJobId} still in progress`,
-      );
+      this.logger.debug(`Poll ${pollCount}: Textract job ${textractJobId} still in progress`);
     }
 
-    throw new Error(
-      `Textract job ${textractJobId} did not complete within ${this.maxWaitMs}ms`,
-    );
+    throw new Error(`Textract job ${textractJobId} did not complete within ${this.maxWaitMs}ms`);
   }
 
   /**
    * Save OCR results to document
    */
-  private async saveOcrResults(
-    documentId: string,
-    ocrResult: OcrResult,
-  ): Promise<void> {
+  private async saveOcrResults(documentId: string, ocrResult: OcrResult): Promise<void> {
     const document = await this.prisma.document.findUnique({
       where: { id: documentId },
       select: { metadata: true },
@@ -474,13 +446,18 @@ export class OcrProcessor extends WorkerHost {
   /**
    * Update document processing status
    */
-  private async updateDocumentStatus(
-    documentId: string,
-    status: string,
-  ): Promise<void> {
+  private async updateDocumentStatus(documentId: string, status: string): Promise<void> {
     await this.prisma.document.update({
       where: { id: documentId },
-      data: { processingStatus: status as 'PENDING' | 'OCR_IN_PROGRESS' | 'OCR_COMPLETE' | 'EMBEDDING_IN_PROGRESS' | 'COMPLETE' | 'FAILED' },
+      data: {
+        processingStatus: status as
+          | 'PENDING'
+          | 'OCR_IN_PROGRESS'
+          | 'OCR_COMPLETE'
+          | 'EMBEDDING_IN_PROGRESS'
+          | 'COMPLETE'
+          | 'FAILED',
+      },
     });
   }
 
@@ -563,10 +540,7 @@ export class OcrProcessor extends WorkerHost {
    */
   @OnWorkerEvent('failed')
   onFailed(job: Job<ProcessingJobData>, error: Error): void {
-    this.logger.error(
-      `OCR job ${job.id} failed: ${error.message}`,
-      error.stack,
-    );
+    this.logger.error(`OCR job ${job.id} failed: ${error.message}`, error.stack);
   }
 
   /**

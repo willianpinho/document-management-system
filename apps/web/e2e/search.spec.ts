@@ -24,9 +24,9 @@ async function login(page: Page) {
 
 // Helper to wait for search page to load
 async function waitForSearchPage(page: Page) {
-  await expect(
-    page.getByRole('main').getByRole('heading', { name: /search/i })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('main').getByRole('heading', { name: /search/i })).toBeVisible({
+    timeout: 10000,
+  });
 }
 
 test.describe('Search', () => {
@@ -107,8 +107,7 @@ test.describe('Search', () => {
 
       // Either results or "no results" should be visible
       await expect(
-        page.getByText(/found \d+ result/i)
-          .or(page.getByText(/no results found/i))
+        page.getByText(/found \d+ result/i).or(page.getByText(/no results found/i)),
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -179,8 +178,7 @@ test.describe('Search', () => {
 
       // Wait for results or empty state
       await expect(
-        page.getByText(/found \d+ result/i)
-          .or(page.getByText(/no results found/i))
+        page.getByText(/found \d+ result/i).or(page.getByText(/no results found/i)),
       ).toBeVisible({ timeout: 10000 });
 
       // Click first result card (if exists)
@@ -225,9 +223,10 @@ test.describe('Search', () => {
 
       // Wait for search results or empty state
       await expect(
-        page.getByText(/found \d+ result/i)
+        page
+          .getByText(/found \d+ result/i)
           .or(page.getByText(/no results found/i))
-          .or(page.getByText(/searching/i))
+          .or(page.getByText(/searching/i)),
       ).toBeVisible({ timeout: 15000 });
     });
 
@@ -260,9 +259,10 @@ test.describe('Search', () => {
 
         // Search should be triggered (wait for results or empty state)
         await expect(
-          page.getByText(/found \d+ result/i)
+          page
+            .getByText(/found \d+ result/i)
             .or(page.getByText(/no results found/i))
-            .or(page.getByText(/searching/i))
+            .or(page.getByText(/searching/i)),
         ).toBeVisible({ timeout: 15000 });
       }
     });
@@ -273,9 +273,9 @@ test.describe('Search', () => {
       await page.goto('/documents');
 
       // Wait for documents page to load
-      await expect(
-        page.getByRole('main').getByRole('heading', { name: /documents/i })
-      ).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /documents/i })).toBeVisible(
+        { timeout: 10000 },
+      );
 
       // Find header search input (may be hidden on smaller screens)
       const headerSearch = page.locator('header').getByPlaceholder(/search/i);

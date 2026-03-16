@@ -3,14 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Palette, Sun, Moon, Monitor, Check, Loader2, CheckCircle2 } from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@dms/ui';
 import { useUserPreferences, useUpdatePreferences } from '@/hooks/usePreferences';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -106,7 +99,11 @@ export default function AppearanceSettingsPage() {
     await savePreferences({ theme, accentColor, compactMode: newValue });
   };
 
-  const savePreferences = async (appearance: { theme: Theme; accentColor: AccentColor; compactMode: boolean }) => {
+  const savePreferences = async (appearance: {
+    theme: Theme;
+    accentColor: AccentColor;
+    compactMode: boolean;
+  }) => {
     setSaveSuccess(false);
     try {
       await updatePreferences.mutateAsync({ appearance });
@@ -136,9 +133,7 @@ export default function AppearanceSettingsPage() {
           Back to settings
         </Link>
         <h1 className="text-2xl font-bold">Appearance</h1>
-        <p className="text-muted-foreground">
-          Customize how DMS looks and feels
-        </p>
+        <p className="text-muted-foreground">Customize how DMS looks and feels</p>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -155,9 +150,7 @@ export default function AppearanceSettingsPage() {
               <Palette className="h-5 w-5" />
               Theme
             </CardTitle>
-            <CardDescription>
-              Select your preferred color theme
-            </CardDescription>
+            <CardDescription>Select your preferred color theme</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
@@ -194,9 +187,7 @@ export default function AppearanceSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Accent Color</CardTitle>
-            <CardDescription>
-              Choose an accent color for buttons and highlights
-            </CardDescription>
+            <CardDescription>Choose an accent color for buttons and highlights</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
@@ -207,9 +198,7 @@ export default function AppearanceSettingsPage() {
                   className={`relative flex h-10 w-10 items-center justify-center rounded-full ${color.class} transition-transform hover:scale-110`}
                   title={color.name}
                 >
-                  {accentColor === color.value && (
-                    <Check className="h-5 w-5 text-white" />
-                  )}
+                  {accentColor === color.value && <Check className="h-5 w-5 text-white" />}
                 </button>
               ))}
             </div>
@@ -220,9 +209,7 @@ export default function AppearanceSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Display Options</CardTitle>
-            <CardDescription>
-              Adjust how content is displayed
-            </CardDescription>
+            <CardDescription>Adjust how content is displayed</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -249,19 +236,15 @@ export default function AppearanceSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Preview</CardTitle>
-            <CardDescription>
-              See how your changes will look
-            </CardDescription>
+            <CardDescription>See how your changes will look</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg border p-4">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="mb-4 flex items-center gap-4">
                 <div className="h-10 w-10 rounded-lg bg-primary" />
                 <div>
                   <p className="font-medium">Sample Document</p>
-                  <p className="text-sm text-muted-foreground">
-                    Last modified 2 hours ago
-                  </p>
+                  <p className="text-sm text-muted-foreground">Last modified 2 hours ago</p>
                 </div>
               </div>
               <div className="flex gap-2">

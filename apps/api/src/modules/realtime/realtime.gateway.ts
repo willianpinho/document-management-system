@@ -70,9 +70,7 @@ interface JwtPayload {
     credentials: true,
   },
 })
-export class RealtimeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(RealtimeGateway.name);
 
   @WebSocketServer()
@@ -294,13 +292,7 @@ export class RealtimeGateway
 
       // Join new organization
       socket.data.organizationId = organizationId;
-      this.realtimeService.registerConnection(
-        socket,
-        userId,
-        email,
-        name,
-        organizationId,
-      );
+      this.realtimeService.registerConnection(socket, userId, email, name, organizationId);
 
       // Emit join event
       const connectedUser = {
@@ -517,7 +509,7 @@ export class RealtimeGateway
   @SubscribeMessage('users:list')
   async handleListUsers(
     @ConnectedSocket() socket: AuthenticatedSocket,
-  ): Promise<SuccessResponse & { users?: unknown[] } | ErrorResponse> {
+  ): Promise<(SuccessResponse & { users?: unknown[] }) | ErrorResponse> {
     try {
       const organizationId = socket.data.organizationId;
 
@@ -571,7 +563,7 @@ export class RealtimeGateway
   async handlePresenceJoin(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: SubscribeDocumentDto,
-  ): Promise<SuccessResponse & { viewers?: DocumentPresenceUser[] } | ErrorResponse> {
+  ): Promise<(SuccessResponse & { viewers?: DocumentPresenceUser[] }) | ErrorResponse> {
     try {
       const { userId } = socket.data;
       const organizationId = socket.data.organizationId;
@@ -613,11 +605,7 @@ export class RealtimeGateway
       this.realtimeService.subscribeToDocument(socket, documentId);
 
       // Join presence
-      const viewers = this.realtimeService.joinDocumentPresence(
-        socket,
-        documentId,
-        organizationId,
-      );
+      const viewers = this.realtimeService.joinDocumentPresence(socket, documentId, organizationId);
 
       return {
         success: true,
@@ -698,7 +686,7 @@ export class RealtimeGateway
   async handlePresenceSync(
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() data: SubscribeDocumentDto,
-  ): Promise<SuccessResponse & { viewers?: DocumentPresenceUser[] } | ErrorResponse> {
+  ): Promise<(SuccessResponse & { viewers?: DocumentPresenceUser[] }) | ErrorResponse> {
     try {
       const { documentId } = data;
 

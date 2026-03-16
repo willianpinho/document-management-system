@@ -1,10 +1,6 @@
 import { FileText } from 'lucide-react';
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
@@ -15,8 +11,8 @@ export default function AuthLayout({
         </div>
         <div className="space-y-4 text-primary-foreground">
           <blockquote className="text-2xl font-medium leading-relaxed">
-            &ldquo;The Document Management System has transformed how we organize and
-            process our documents. The AI-powered features save us hours every week.&rdquo;
+            &ldquo;The Document Management System has transformed how we organize and process our
+            documents. The AI-powered features save us hours every week.&rdquo;
           </blockquote>
           <div>
             <p className="font-semibold">Sarah Johnson</p>
@@ -29,9 +25,7 @@ export default function AuthLayout({
       </div>
 
       {/* Right side - Auth form */}
-      <div className="flex w-full flex-col justify-center lg:w-1/2">
-        {children}
-      </div>
+      <div className="flex w-full flex-col justify-center lg:w-1/2">{children}</div>
     </div>
   );
 }

@@ -14,7 +14,11 @@ const TEST_USER = {
 };
 
 // Helper function to login
-async function login(page: Page, email: string = TEST_USER.email, password: string = TEST_USER.password) {
+async function login(
+  page: Page,
+  email: string = TEST_USER.email,
+  password: string = TEST_USER.password,
+) {
   await page.goto('/login');
   await page.getByTestId('email-input').fill(email);
   await page.getByTestId('password-input').fill(password);
@@ -63,8 +67,9 @@ test.describe('Authentication', () => {
 
       // Wait for error message - check for error text or error styling
       await expect(
-        page.getByText(/invalid email or password|invalid credentials/i)
-          .or(page.locator('.bg-destructive\\/10'))
+        page
+          .getByText(/invalid email or password|invalid credentials/i)
+          .or(page.locator('.bg-destructive\\/10')),
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -119,8 +124,9 @@ test.describe('Authentication', () => {
 
       // Check for validation error message
       await expect(
-        page.getByText(/at least 8 characters|passwords do not match|valid email/i)
-          .or(page.locator('.bg-destructive\\/10'))
+        page
+          .getByText(/at least 8 characters|passwords do not match|valid email/i)
+          .or(page.locator('.bg-destructive\\/10')),
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -195,9 +201,9 @@ test.describe('Authentication', () => {
       await expect(page).toHaveURL('/documents');
 
       // Should see documents page content - wait for main heading
-      await expect(
-        page.getByRole('main').getByRole('heading', { name: /documents/i })
-      ).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByRole('heading', { name: /documents/i })).toBeVisible(
+        { timeout: 10000 },
+      );
     });
   });
 });

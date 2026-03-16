@@ -102,10 +102,7 @@ describe('FoldersService', () => {
     };
 
     // Create service instance with mocks (direct instantiation like DocumentsService test)
-    service = new FoldersService(
-      mockPrisma as any,
-      mockRealtime as any,
-    );
+    service = new FoldersService(mockPrisma as any, mockRealtime as any);
   });
 
   describe('create', () => {
@@ -179,9 +176,7 @@ describe('FoldersService', () => {
 
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(inputWithInvalidParent)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.create(inputWithInvalidParent)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when parent is in different organization', async () => {
@@ -192,9 +187,7 @@ describe('FoldersService', () => {
 
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(inputWithParent)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.create(inputWithParent)).rejects.toThrow(NotFoundException);
 
       expect(mockPrisma.folder.findFirst).toHaveBeenCalledWith({
         where: {
@@ -314,18 +307,18 @@ describe('FoldersService', () => {
     it('should throw NotFoundException when folder not found', async () => {
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should enforce organization isolation', async () => {
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
       const differentOrgId = 'different-org-id';
-      await expect(
-        service.findOne(mockFolderId, differentOrgId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockFolderId, differentOrgId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should exclude deleted documents from folder contents', async () => {
@@ -485,9 +478,9 @@ describe('FoldersService', () => {
       mockPrisma.folder.count.mockResolvedValue(2);
       mockPrisma.document.count.mockResolvedValue(0);
 
-      await expect(
-        service.remove(mockFolderId, mockOrganizationId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.remove(mockFolderId, mockOrganizationId)).rejects.toThrow(
+        BadRequestException,
+      );
 
       expect(mockPrisma.folder.count).toHaveBeenCalledWith({
         where: { parentId: mockFolderId },
@@ -498,9 +491,9 @@ describe('FoldersService', () => {
       mockPrisma.folder.count.mockResolvedValue(0);
       mockPrisma.document.count.mockResolvedValue(3);
 
-      await expect(
-        service.remove(mockFolderId, mockOrganizationId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.remove(mockFolderId, mockOrganizationId)).rejects.toThrow(
+        BadRequestException,
+      );
 
       expect(mockPrisma.document.count).toHaveBeenCalledWith({
         where: {
@@ -513,9 +506,9 @@ describe('FoldersService', () => {
     it('should throw NotFoundException when folder not found', async () => {
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.remove('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should not count deleted documents when checking folder contents', async () => {
@@ -567,9 +560,9 @@ describe('FoldersService', () => {
     it('should throw NotFoundException when folder not found', async () => {
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getTree('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getTree('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return tree with all nested children', async () => {
@@ -664,9 +657,9 @@ describe('FoldersService', () => {
     it('should throw NotFoundException when folder not found', async () => {
       mockPrisma.folder.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getBreadcrumbs('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getBreadcrumbs('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return breadcrumbs in correct order (root to current)', async () => {

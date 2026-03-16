@@ -7,10 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import {
-  DOCUMENT_PROCESSING_QUEUE,
-  QUEUE_NAMES,
-} from '../queues/queue.constants';
+import { DOCUMENT_PROCESSING_QUEUE, QUEUE_NAMES } from '../queues/queue.constants';
 
 // Mock factory for Queue
 const createMockQueue = () => ({
@@ -142,7 +139,10 @@ describe('ProcessingService', () => {
     // Manually inject dependencies
     Object.defineProperty(service, 'prisma', { value: prismaService, writable: true });
     Object.defineProperty(service, 'realtimeService', { value: realtimeService, writable: true });
-    Object.defineProperty(service, 'documentProcessingQueue', { value: legacyQueue, writable: true });
+    Object.defineProperty(service, 'documentProcessingQueue', {
+      value: legacyQueue,
+      writable: true,
+    });
     Object.defineProperty(service, 'ocrQueue', { value: ocrQueue, writable: true });
     Object.defineProperty(service, 'pdfQueue', { value: pdfQueue, writable: true });
     Object.defineProperty(service, 'thumbnailQueue', { value: thumbnailQueue, writable: true });
@@ -150,7 +150,7 @@ describe('ProcessingService', () => {
     Object.defineProperty(service, 'aiClassifyQueue', { value: aiClassifyQueue, writable: true });
     Object.defineProperty(service, 'logger', {
       value: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-      writable: true
+      writable: true,
     });
 
     // Setup queues map for queue lookup
@@ -244,9 +244,7 @@ describe('ProcessingService', () => {
     it('should throw NotFoundException when document not found', async () => {
       prismaService.document.findUnique.mockResolvedValue(null);
 
-      await expect(service.addJob('non-existent', 'OCR')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.addJob('non-existent', 'OCR')).rejects.toThrow(NotFoundException);
     });
 
     it('should update document processing status to PENDING', async () => {
@@ -344,9 +342,7 @@ describe('ProcessingService', () => {
     it('should throw NotFoundException when job not found', async () => {
       prismaService.processingJob.findUnique.mockResolvedValue(null);
 
-      await expect(service.getJobStatus('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getJobStatus('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should return null queue state when job not in queue', async () => {
@@ -395,9 +391,7 @@ describe('ProcessingService', () => {
     it('should throw NotFoundException when job not found', async () => {
       prismaService.processingJob.findUnique.mockResolvedValue(null);
 
-      await expect(service.retryJob('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.retryJob('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when job is not failed', async () => {
@@ -406,9 +400,7 @@ describe('ProcessingService', () => {
         status: 'COMPLETED',
       });
 
-      await expect(service.retryJob(mockJobId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.retryJob(mockJobId)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when max retries exceeded', async () => {
@@ -419,9 +411,7 @@ describe('ProcessingService', () => {
         maxAttempts: 3,
       });
 
-      await expect(service.retryJob(mockJobId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.retryJob(mockJobId)).rejects.toThrow(BadRequestException);
     });
 
     it('should increment attempt count on retry', async () => {
@@ -474,9 +464,7 @@ describe('ProcessingService', () => {
     it('should throw NotFoundException when job not found', async () => {
       prismaService.processingJob.findUnique.mockResolvedValue(null);
 
-      await expect(service.cancelJob('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.cancelJob('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when job is not pending', async () => {
@@ -485,9 +473,7 @@ describe('ProcessingService', () => {
         status: 'RUNNING',
       });
 
-      await expect(service.cancelJob(mockJobId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.cancelJob(mockJobId)).rejects.toThrow(BadRequestException);
     });
 
     it('should remove job from queue', async () => {
@@ -596,9 +582,7 @@ describe('ProcessingService', () => {
     });
 
     it('should throw NotFoundException for unknown queue', async () => {
-      await expect(service.getQueueStatsByName('unknown-queue')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getQueueStatsByName('unknown-queue')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -606,7 +590,14 @@ describe('ProcessingService', () => {
     it('should clean old jobs from database and queues', async () => {
       prismaService.processingJob.deleteMany.mockResolvedValue({ count: 50 });
 
-      const allQueues = [legacyQueue, ocrQueue, pdfQueue, thumbnailQueue, embeddingQueue, aiClassifyQueue];
+      const allQueues = [
+        legacyQueue,
+        ocrQueue,
+        pdfQueue,
+        thumbnailQueue,
+        embeddingQueue,
+        aiClassifyQueue,
+      ];
       allQueues.forEach((queue) => {
         queue.clean.mockResolvedValue(['job1', 'job2']);
       });
@@ -663,9 +654,7 @@ describe('ProcessingService', () => {
     });
 
     it('should throw NotFoundException for unknown queue', async () => {
-      await expect(service.pauseQueue('unknown-queue')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.pauseQueue('unknown-queue')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -683,9 +672,7 @@ describe('ProcessingService', () => {
     });
 
     it('should throw NotFoundException for unknown queue', async () => {
-      await expect(service.resumeQueue('unknown-queue')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.resumeQueue('unknown-queue')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -711,7 +698,11 @@ describe('ProcessingService', () => {
   describe('getFailedJobs', () => {
     it('should return paginated failed jobs', async () => {
       const failedJobs = [
-        { ...mockProcessingJob, status: 'FAILED', document: { id: mockDocumentId, name: 'test.pdf' } },
+        {
+          ...mockProcessingJob,
+          status: 'FAILED',
+          document: { id: mockDocumentId, name: 'test.pdf' },
+        },
       ];
 
       prismaService.processingJob.findMany.mockResolvedValue(failedJobs);
@@ -760,9 +751,7 @@ describe('ProcessingService', () => {
     });
 
     it('should throw NotFoundException for unknown queue', async () => {
-      await expect(service.drainQueue('unknown-queue')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.drainQueue('unknown-queue')).rejects.toThrow(NotFoundException);
     });
 
     it('should handle job removal errors gracefully', async () => {

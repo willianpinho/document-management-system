@@ -1,22 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  FileText,
-  Folder,
-  Upload,
-  HardDrive,
-  ArrowRight,
-  Wand2,
-} from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Progress,
-} from '@dms/ui';
+import { FileText, Folder, Upload, HardDrive, ArrowRight, Wand2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Progress } from '@dms/ui';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useFolders } from '@/hooks/useFolders';
 import { useStorageStats } from '@/hooks/useStorage';
@@ -47,7 +33,7 @@ export default function DashboardPage() {
   const storagePercentage = getStoragePercentage(usedBytes, quotaBytes);
 
   // Count documents processed (with status COMPLETED)
-  const processedCount = documents.filter(doc => doc.status === 'COMPLETED').length;
+  const processedCount = documents.filter((doc) => doc.status === 'COMPLETED').length;
 
   return (
     <div className="p-6">
@@ -67,12 +53,8 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {documentsData?.meta?.pagination?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Across all folders
-            </p>
+            <div className="text-2xl font-bold">{documentsData?.meta?.pagination?.total || 0}</div>
+            <p className="text-xs text-muted-foreground">Across all folders</p>
           </CardContent>
         </Card>
 
@@ -85,9 +67,7 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">
               {foldersData?.data?.length || folders.length || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Organized structure
-            </p>
+            <p className="text-xs text-muted-foreground">Organized structure</p>
           </CardContent>
         </Card>
 
@@ -97,12 +77,8 @@ export default function DashboardPage() {
             <Wand2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {processedCount}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Documents analyzed
-            </p>
+            <div className="text-2xl font-bold">{processedCount}</div>
+            <p className="text-xs text-muted-foreground">Documents analyzed</p>
           </CardContent>
         </Card>
 
@@ -113,7 +89,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {isLoadingStorage ? (
-              <div className="h-16 animate-pulse bg-muted rounded" />
+              <div className="h-16 animate-pulse rounded bg-muted" />
             ) : (
               <>
                 <div className="text-2xl font-bold">{storagePercentage}%</div>
@@ -187,9 +163,7 @@ export default function DashboardPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">No documents yet</h3>
-              <p className="text-muted-foreground">
-                Upload your first document to get started
-              </p>
+              <p className="text-muted-foreground">Upload your first document to get started</p>
               <Button className="mt-4" asChild>
                 <Link href="/documents">
                   <Upload className="mr-2 h-4 w-4" />
@@ -233,9 +207,7 @@ export default function DashboardPage() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-blue-500">
                       <Folder className="h-6 w-6" />
                     </div>
-                    <h3 className="mt-4 truncate text-sm font-medium">
-                      {folder.name}
-                    </h3>
+                    <h3 className="mt-4 truncate text-sm font-medium">{folder.name}</h3>
                     <p className="text-xs text-muted-foreground">
                       {folder.documentCount} items - {formatRelativeTime(folder.updatedAt)}
                     </p>
@@ -249,9 +221,7 @@ export default function DashboardPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Folder className="h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">No folders yet</h3>
-              <p className="text-muted-foreground">
-                Create folders to organize your documents
-              </p>
+              <p className="text-muted-foreground">Create folders to organize your documents</p>
             </CardContent>
           </Card>
         )}

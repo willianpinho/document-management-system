@@ -2,11 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { DocumentSearchParams } from '@dms/shared';
-import {
-  documentsApi,
-  type DocumentListItem,
-  type DocumentDetail,
-} from '@/lib/api';
+import { documentsApi, type DocumentListItem, type DocumentDetail } from '@/lib/api';
 
 export function useDocuments(params?: DocumentSearchParams) {
   return useQuery({
@@ -99,13 +95,7 @@ export function useProcessDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      operations,
-    }: {
-      id: string;
-      operations: string[];
-    }) => {
+    mutationFn: async ({ id, operations }: { id: string; operations: string[] }) => {
       const response = await documentsApi.process(id, operations);
       return response.data;
     },
@@ -212,13 +202,7 @@ export function useRemoveShare() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      documentId,
-      userId,
-    }: {
-      documentId: string;
-      userId: string;
-    }) => {
+    mutationFn: async ({ documentId, userId }: { documentId: string; userId: string }) => {
       await documentsApi.removeShare(documentId, userId);
     },
     onSuccess: (_, variables) => {
@@ -242,11 +226,7 @@ export function useUpdateSharePermission() {
       userId: string;
       permission: 'VIEW' | 'COMMENT' | 'EDIT';
     }) => {
-      const response = await documentsApi.updateSharePermission(
-        documentId,
-        userId,
-        permission
-      );
+      const response = await documentsApi.updateSharePermission(documentId, userId, permission);
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -326,13 +306,7 @@ export function useDocumentVersions(documentId: string) {
 
 export function useDownloadVersion() {
   return useMutation({
-    mutationFn: async ({
-      documentId,
-      versionId,
-    }: {
-      documentId: string;
-      versionId: string;
-    }) => {
+    mutationFn: async ({ documentId, versionId }: { documentId: string; versionId: string }) => {
       const response = await documentsApi.getVersionDownloadUrl(documentId, versionId);
       return response.data as { url: string };
     },
@@ -343,13 +317,7 @@ export function useRestoreVersion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      documentId,
-      versionId,
-    }: {
-      documentId: string;
-      versionId: string;
-    }) => {
+    mutationFn: async ({ documentId, versionId }: { documentId: string; versionId: string }) => {
       const response = await documentsApi.restoreVersion(documentId, versionId);
       return response.data;
     },

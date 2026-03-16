@@ -1,10 +1,9 @@
 # Product Requirements Document (PRD)
+
 ## Cloud-Based Document Management System (DMS)
 
-**Version:** 1.2
-**Author:** Willian Pinho
-**Date:** January 2026
-**Status:** Technical Assessment - CultureEngine
+**Version:** 1.2 **Author:** Willian Pinho **Date:** January 2026 **Status:**
+Technical Assessment - CultureEngine
 
 ---
 
@@ -33,12 +32,18 @@
 
 ## 1. Executive Summary
 
-This document outlines the architecture and implementation strategy for a cloud-based Document Management System (DMS) similar to OneDrive/Google Drive, with enhanced document processing capabilities including PDF splitting and AI-based OCR.
+This document outlines the architecture and implementation strategy for a
+cloud-based Document Management System (DMS) similar to OneDrive/Google Drive,
+with enhanced document processing capabilities including PDF splitting and
+AI-based OCR.
 
 ### Key Differentiators
-- **AI-Powered Processing**: Intelligent OCR, document classification, and content extraction
+
+- **AI-Powered Processing**: Intelligent OCR, document classification, and
+  content extraction
 - **Rule-Based Transformations**: Project-specific file processing pipelines
-- **Enterprise-Grade Security**: End-to-end encryption with SOC 2 compliance readiness
+- **Enterprise-Grade Security**: End-to-end encryption with SOC 2 compliance
+  readiness
 - **Scalable Architecture**: Designed to handle millions of documents and users
 
 ---
@@ -46,6 +51,7 @@ This document outlines the architecture and implementation strategy for a cloud-
 ## 2. Problem Statement
 
 Organizations need a secure, scalable solution to:
+
 - Store and organize large volumes of documents in the cloud
 - Process documents automatically (PDF manipulation, OCR, data extraction)
 - Provide intuitive web-based access with modern UX
@@ -57,16 +63,16 @@ Organizations need a secure, scalable solution to:
 
 ### Core Features
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| **Document Storage** | Secure cloud storage with versioning | P0 |
-| **File Upload/Download** | Drag-and-drop, bulk operations, resumable uploads | P0 |
-| **Folder Management** | Hierarchical organization, sharing, permissions | P0 |
-| **Document Processing** | PDF split/merge, OCR, format conversion | P0 |
-| **Search** | Full-text search with filters | P1 |
-| **Collaboration** | Sharing, comments, real-time presence | P1 |
-| **Audit Trail** | Complete activity logging | P1 |
-| **API Access** | RESTful API for integrations | P1 |
+| Feature                  | Description                                       | Priority |
+| ------------------------ | ------------------------------------------------- | -------- |
+| **Document Storage**     | Secure cloud storage with versioning              | P0       |
+| **File Upload/Download** | Drag-and-drop, bulk operations, resumable uploads | P0       |
+| **Folder Management**    | Hierarchical organization, sharing, permissions   | P0       |
+| **Document Processing**  | PDF split/merge, OCR, format conversion           | P0       |
+| **Search**               | Full-text search with filters                     | P1       |
+| **Collaboration**        | Sharing, comments, real-time presence             | P1       |
+| **Audit Trail**          | Complete activity logging                         | P1       |
+| **API Access**           | RESTful API for integrations                      | P1       |
 
 ### User Personas
 
@@ -80,7 +86,8 @@ Organizations need a secure, scalable solution to:
 
 ### Stack Selection Rationale
 
-The technology choices align with modern SaaS best practices and the team's expertise:
+The technology choices align with modern SaaS best practices and the team's
+expertise:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -137,15 +144,15 @@ The technology choices align with modern SaaS best practices and the team's expe
 
 ### Technology Justification
 
-| Technology | Version | Why Chosen | Alternatives Considered |
-|------------|---------|-----------|------------------------|
-| **Next.js** | 16.1 | RSC, Server Actions, Turbopack (10-14x faster), MCP integration | Remix, Nuxt |
-| **NestJS** | 11+ | Enterprise patterns, JSON logging, improved microservice transporters | Express, Fastify |
-| **PostgreSQL** | 18 | ACID, pgvector for AI search, Async I/O for concurrent tasks | MySQL, MongoDB |
-| **TypeScript** | 5.9 | Type safety, 7.0 preview with 10x faster compile times | JavaScript |
-| **Prisma** | 7.x | TypeScript-native client, 70% faster type checking, no Rust dependency | TypeORM, Drizzle |
-| **Tailwind CSS** | 4.1 | 5x faster builds, 100x faster incremental, zero config | CSS Modules, Styled |
-| **AWS CDK** | v2 | TypeScript IaC, high-level constructs, split CLI/lib releases | Terraform, Pulumi |
+| Technology       | Version | Why Chosen                                                             | Alternatives Considered |
+| ---------------- | ------- | ---------------------------------------------------------------------- | ----------------------- |
+| **Next.js**      | 16.1    | RSC, Server Actions, Turbopack (10-14x faster), MCP integration        | Remix, Nuxt             |
+| **NestJS**       | 11+     | Enterprise patterns, JSON logging, improved microservice transporters  | Express, Fastify        |
+| **PostgreSQL**   | 18      | ACID, pgvector for AI search, Async I/O for concurrent tasks           | MySQL, MongoDB          |
+| **TypeScript**   | 5.9     | Type safety, 7.0 preview with 10x faster compile times                 | JavaScript              |
+| **Prisma**       | 7.x     | TypeScript-native client, 70% faster type checking, no Rust dependency | TypeORM, Drizzle        |
+| **Tailwind CSS** | 4.1     | 5x faster builds, 100x faster incremental, zero config                 | CSS Modules, Styled     |
+| **AWS CDK**      | v2      | TypeScript IaC, high-level constructs, split CLI/lib releases          | Terraform, Pulumi       |
 
 ---
 
@@ -195,6 +202,7 @@ The technology choices align with modern SaaS best practices and the team's expe
 ### Component Breakdown
 
 #### Frontend (Next.js 16.1)
+
 ```typescript
 // App structure following Next.js 16.1 App Router with Turbopack
 app/
@@ -213,6 +221,7 @@ app/
 ```
 
 #### Backend (NestJS)
+
 ```typescript
 // Module structure
 src/
@@ -290,14 +299,14 @@ Leveraging AI tools to accelerate development while maintaining code quality:
 
 ### Tooling
 
-| Category | Tool | Purpose |
-|----------|------|---------|
-| IDE | Cursor | AI-assisted coding |
-| Version Control | GitHub | Source control + Actions |
-| Project Management | Linear/Notion | Sprint planning |
-| Communication | Slack | Daily standups |
-| Design | Figma | UI/UX collaboration |
-| API Testing | Postman/Insomnia | API development |
+| Category           | Tool             | Purpose                  |
+| ------------------ | ---------------- | ------------------------ |
+| IDE                | Cursor           | AI-assisted coding       |
+| Version Control    | GitHub           | Source control + Actions |
+| Project Management | Linear/Notion    | Sprint planning          |
+| Communication      | Slack            | Daily standups           |
+| Design             | Figma            | UI/UX collaboration      |
+| API Testing        | Postman/Insomnia | API development          |
 
 ---
 
@@ -405,8 +414,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: test
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd pg_isready --health-interval 10s
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -497,7 +505,9 @@ export class DMSStack extends cdk.Stack {
 
     // Fargate Service for API
     const apiService = new ecs_patterns.ApplicationLoadBalancedFargateService(
-      this, 'DMS-API', {
+      this,
+      'DMS-API',
+      {
         cluster,
         cpu: 512,
         memoryLimitMiB: 1024,
@@ -583,14 +593,14 @@ infrastructure/
 
 ### Key Metrics & SLIs
 
-| Metric | Target | Alert Threshold |
-|--------|--------|-----------------|
-| **Availability** | 99.9% | < 99.5% |
-| **API Latency (P99)** | < 500ms | > 1000ms |
-| **Upload Success Rate** | > 99% | < 98% |
-| **Processing Queue Depth** | < 1000 | > 5000 |
-| **Error Rate** | < 0.1% | > 1% |
-| **Database Connections** | < 80% pool | > 90% pool |
+| Metric                     | Target     | Alert Threshold |
+| -------------------------- | ---------- | --------------- |
+| **Availability**           | 99.9%      | < 99.5%         |
+| **API Latency (P99)**      | < 500ms    | > 1000ms        |
+| **Upload Success Rate**    | > 99%      | < 98%           |
+| **Processing Queue Depth** | < 1000     | > 5000          |
+| **Error Rate**             | < 0.1%     | > 1%            |
+| **Database Connections**   | < 80% pool | > 90% pool      |
 
 ### Structured Logging
 
@@ -706,12 +716,7 @@ export class LoggerService {
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    ApiKeyStrategy,
-    LocalStrategy,
-  ],
+  providers: [AuthService, JwtStrategy, ApiKeyStrategy, LocalStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
@@ -1124,12 +1129,14 @@ export class AIDocumentProcessor {
       z.object({
         category: z.enum(['invoice', 'contract', 'report', 'letter', 'other']),
         confidence: z.number(),
-        entities: z.array(z.object({
-          type: z.string(),
-          value: z.string(),
-        })),
+        entities: z.array(
+          z.object({
+            type: z.string(),
+            value: z.string(),
+          }),
+        ),
         summary: z.string(),
-      })
+      }),
     );
 
     const result = await this.llm.invoke([
@@ -1329,20 +1336,20 @@ components:
 
 ### Security Measures
 
-| Layer | Measure | Implementation |
-|-------|---------|----------------|
-| **Network** | WAF | AWS WAF with managed rules |
-| **Network** | DDoS Protection | AWS Shield Standard |
-| **Transport** | TLS 1.3 | CloudFront + ALB |
-| **Authentication** | JWT + Refresh | Short-lived access tokens |
-| **Authorization** | RBAC | Role-based permissions |
-| **Data at Rest** | AES-256 | S3 + RDS encryption |
-| **Data in Transit** | TLS | All internal communication |
-| **Secrets** | Secrets Manager | No hardcoded credentials |
-| **Input Validation** | Zod/class-validator | Strict schema validation |
-| **File Validation** | Content-Type check | Magic bytes verification |
-| **Rate Limiting** | Redis-based | Per-user and per-IP |
-| **Audit** | Complete logging | All actions logged |
+| Layer                | Measure             | Implementation             |
+| -------------------- | ------------------- | -------------------------- |
+| **Network**          | WAF                 | AWS WAF with managed rules |
+| **Network**          | DDoS Protection     | AWS Shield Standard        |
+| **Transport**        | TLS 1.3             | CloudFront + ALB           |
+| **Authentication**   | JWT + Refresh       | Short-lived access tokens  |
+| **Authorization**    | RBAC                | Role-based permissions     |
+| **Data at Rest**     | AES-256             | S3 + RDS encryption        |
+| **Data in Transit**  | TLS                 | All internal communication |
+| **Secrets**          | Secrets Manager     | No hardcoded credentials   |
+| **Input Validation** | Zod/class-validator | Strict schema validation   |
+| **File Validation**  | Content-Type check  | Magic bytes verification   |
+| **Rate Limiting**    | Redis-based         | Per-user and per-IP        |
+| **Audit**            | Complete logging    | All actions logged         |
 
 ### Content Security
 
@@ -1456,23 +1463,23 @@ export class FileValidationService {
 
 ### Testing Framework Selection
 
-| Layer | Tool | Purpose |
-|-------|------|---------|
-| **Unit Tests** | Vitest | Fast, TypeScript-native, ESM support |
-| **Integration** | Jest + Supertest | API endpoint testing |
-| **E2E** | Playwright | Cross-browser UI testing |
-| **Component** | Testing Library | React component testing |
-| **API Contract** | Pact | Consumer-driven contracts |
-| **Load Testing** | k6 | Performance and stress testing |
+| Layer            | Tool             | Purpose                              |
+| ---------------- | ---------------- | ------------------------------------ |
+| **Unit Tests**   | Vitest           | Fast, TypeScript-native, ESM support |
+| **Integration**  | Jest + Supertest | API endpoint testing                 |
+| **E2E**          | Playwright       | Cross-browser UI testing             |
+| **Component**    | Testing Library  | React component testing              |
+| **API Contract** | Pact             | Consumer-driven contracts            |
+| **Load Testing** | k6               | Performance and stress testing       |
 
 ### Test Coverage Requirements
 
-| Area | Minimum Coverage | Target |
-|------|------------------|--------|
-| Business Logic | 90% | 95% |
-| API Endpoints | 85% | 90% |
-| UI Components | 80% | 85% |
-| Utils/Helpers | 95% | 100% |
+| Area           | Minimum Coverage | Target |
+| -------------- | ---------------- | ------ |
+| Business Logic | 90%              | 95%    |
+| API Endpoints  | 85%              | 90%    |
+| UI Components  | 80%              | 85%    |
+| Utils/Helpers  | 95%              | 100%   |
 
 ### Testing Patterns
 
@@ -1544,8 +1551,9 @@ test.describe('Document Management', () => {
     await fileChooser.setFiles('./fixtures/test-document.pdf');
 
     await expect(page.locator('[data-testid="upload-progress"]')).toBeVisible();
-    await expect(page.locator('[data-testid="document-list"]'))
-      .toContainText('test-document.pdf');
+    await expect(page.locator('[data-testid="document-list"]')).toContainText(
+      'test-document.pdf',
+    );
   });
 });
 ```
@@ -1576,8 +1584,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: test
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd pg_isready --health-interval 10s
       redis:
         image: redis:7
     steps:
@@ -1887,24 +1894,28 @@ UPLOAD_AGENT_API_SECRET=
 ## 18. Project Timeline
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 - [ ] Project setup (monorepo, CI/CD)
 - [ ] Infrastructure provisioning (CDK)
 - [ ] Authentication system
 - [ ] Basic document CRUD
 
 ### Phase 2: Core Features (Weeks 3-4)
+
 - [ ] File upload/download
 - [ ] Folder management
 - [ ] Basic search
 - [ ] User permissions
 
 ### Phase 3: Processing (Weeks 5-6)
+
 - [ ] OCR integration
 - [ ] PDF processing
 - [ ] Thumbnail generation
 - [ ] Processing queue
 
 ### Phase 4: Polish (Weeks 7-8)
+
 - [ ] Semantic search
 - [ ] Real-time updates
 - [ ] Audit logging
@@ -1914,45 +1925,46 @@ UPLOAD_AGENT_API_SECRET=
 
 ## Appendix A: Technology Decisions Summary
 
-| Decision | Choice | Version | Rationale |
-|----------|--------|---------|-----------|
-| Frontend Framework | Next.js | 16.1 | RSC, Server Actions, Turbopack (10-14x faster), MCP integration |
-| Backend Framework | NestJS | 11+ | Enterprise patterns, JSON logging, improved transporters |
-| Database | PostgreSQL | 18 | ACID, pgvector, Async I/O for concurrent operations |
-| ORM | Prisma | 7.x | TypeScript-native, 70% faster type checking |
-| Styling | Tailwind CSS | 4.1 | 5x faster builds, 100x faster incremental |
-| Language | TypeScript | 5.9 | Strict types, 7.0 preview available (10x compile speed) |
-| Cloud Provider | AWS | - | Comprehensive services, CDK for IaC |
-| IaC Tool | AWS CDK | v2 | TypeScript, split CLI/lib releases (Feb 2025) |
-| CI/CD | GitHub Actions | - | Native integration, marketplace |
-| Container Orchestration | ECS Fargate | - | Serverless containers, simple |
-| File Storage | S3 | - | Infinite scale, cost-effective |
-| Search | PostgreSQL + pgvector | - | Unified stack, semantic search |
-| Queue | SQS + Lambda | - | Serverless, auto-scaling |
-| Monitoring | CloudWatch + X-Ray | - | Native AWS integration |
+| Decision                | Choice                | Version | Rationale                                                       |
+| ----------------------- | --------------------- | ------- | --------------------------------------------------------------- |
+| Frontend Framework      | Next.js               | 16.1    | RSC, Server Actions, Turbopack (10-14x faster), MCP integration |
+| Backend Framework       | NestJS                | 11+     | Enterprise patterns, JSON logging, improved transporters        |
+| Database                | PostgreSQL            | 18      | ACID, pgvector, Async I/O for concurrent operations             |
+| ORM                     | Prisma                | 7.x     | TypeScript-native, 70% faster type checking                     |
+| Styling                 | Tailwind CSS          | 4.1     | 5x faster builds, 100x faster incremental                       |
+| Language                | TypeScript            | 5.9     | Strict types, 7.0 preview available (10x compile speed)         |
+| Cloud Provider          | AWS                   | -       | Comprehensive services, CDK for IaC                             |
+| IaC Tool                | AWS CDK               | v2      | TypeScript, split CLI/lib releases (Feb 2025)                   |
+| CI/CD                   | GitHub Actions        | -       | Native integration, marketplace                                 |
+| Container Orchestration | ECS Fargate           | -       | Serverless containers, simple                                   |
+| File Storage            | S3                    | -       | Infinite scale, cost-effective                                  |
+| Search                  | PostgreSQL + pgvector | -       | Unified stack, semantic search                                  |
+| Queue                   | SQS + Lambda          | -       | Serverless, auto-scaling                                        |
+| Monitoring              | CloudWatch + X-Ray    | -       | Native AWS integration                                          |
 
 ---
 
 ## Appendix B: Cost Estimation (Monthly)
 
-| Service | Configuration | Estimated Cost |
-|---------|--------------|----------------|
-| ECS Fargate | 2 tasks, 0.5 vCPU, 1GB | $30 |
-| RDS PostgreSQL | db.t3.medium, Multi-AZ | $100 |
-| S3 | 100GB storage | $2.30 |
-| CloudFront | 100GB transfer | $8.50 |
-| Lambda | 1M invocations | $0.20 |
-| ElastiCache | cache.t3.micro | $12 |
-| **Total** | | **~$150/month** |
+| Service        | Configuration          | Estimated Cost  |
+| -------------- | ---------------------- | --------------- |
+| ECS Fargate    | 2 tasks, 0.5 vCPU, 1GB | $30             |
+| RDS PostgreSQL | db.t3.medium, Multi-AZ | $100            |
+| S3             | 100GB storage          | $2.30           |
+| CloudFront     | 100GB transfer         | $8.50           |
+| Lambda         | 1M invocations         | $0.20           |
+| ElastiCache    | cache.t3.micro         | $12             |
+| **Total**      |                        | **~$150/month** |
 
-*Note: Costs scale with usage. Production with higher traffic would be $500-2000/month.*
+_Note: Costs scale with usage. Production with higher traffic would be
+$500-2000/month._
 
 ---
 
 **Document Version History**
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | Jan 2026 | Willian Pinho | Initial PRD |
-| 1.1 | Jan 2026 | Willian Pinho | Updated to latest versions: Next.js 16.1, NestJS 11, PostgreSQL 18, Prisma 7.x, Tailwind CSS 4.1, TypeScript 5.9, AWS CDK v2 |
-| 1.2 | Jan 2026 | Willian Pinho | Added Testing Strategy (Section 16), Project Structure with monorepo architecture (Section 17), environment configuration, and workspace setup |
+| Version | Date     | Author        | Changes                                                                                                                                        |
+| ------- | -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | Jan 2026 | Willian Pinho | Initial PRD                                                                                                                                    |
+| 1.1     | Jan 2026 | Willian Pinho | Updated to latest versions: Next.js 16.1, NestJS 11, PostgreSQL 18, Prisma 7.x, Tailwind CSS 4.1, TypeScript 5.9, AWS CDK v2                   |
+| 1.2     | Jan 2026 | Willian Pinho | Added Testing Strategy (Section 16), Project Structure with monorepo architecture (Section 17), environment configuration, and workspace setup |

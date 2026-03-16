@@ -41,20 +41,14 @@ export class SqsQueuesConstruct extends Construct {
       queueName: `${prefix}-processing-dlq`,
       retentionPeriod: Duration.days(14),
       encryption: sqs.QueueEncryption.SQS_MANAGED,
-      removalPolicy:
-        environment === 'production'
-          ? RemovalPolicy.RETAIN
-          : RemovalPolicy.DESTROY,
+      removalPolicy: environment === 'production' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 
     // Common queue settings
     const commonQueueProps = {
       encryption: sqs.QueueEncryption.SQS_MANAGED,
       retentionPeriod: Duration.days(7),
-      removalPolicy:
-        environment === 'production'
-          ? RemovalPolicy.RETAIN
-          : RemovalPolicy.DESTROY,
+      removalPolicy: environment === 'production' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     };
 
     // OCR Processing Queue

@@ -56,7 +56,7 @@ export class MonitoringStack extends cdk.Stack {
     // Add email subscription if configured
     if (config.monitoring.alertEmail) {
       this.alertTopic.addSubscription(
-        new snsSubscriptions.EmailSubscription(config.monitoring.alertEmail)
+        new snsSubscriptions.EmailSubscription(config.monitoring.alertEmail),
       );
     }
 
@@ -340,8 +340,8 @@ export class MonitoringStack extends cdk.Stack {
         cloudwatch.AlarmRule.fromAlarm(unhealthyHostsAlarm, cloudwatch.AlarmState.ALARM),
         cloudwatch.AlarmRule.allOf(
           cloudwatch.AlarmRule.fromAlarm(cpuAlarm, cloudwatch.AlarmState.ALARM),
-          cloudwatch.AlarmRule.fromAlarm(memoryAlarm, cloudwatch.AlarmState.ALARM)
-        )
+          cloudwatch.AlarmRule.fromAlarm(memoryAlarm, cloudwatch.AlarmState.ALARM),
+        ),
       ),
     });
     criticalHealthAlarm.addAlarmAction(alarmAction);
@@ -362,7 +362,7 @@ export class MonitoringStack extends cdk.Stack {
         markdown: `# DMS Dashboard (${config.environment})\n\nDocument Management System monitoring dashboard`,
         width: 24,
         height: 1,
-      })
+      }),
     );
 
     // ECS Metrics Row
@@ -403,7 +403,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 12,
         height: 6,
-      })
+      }),
     );
 
     // ALB Metrics Row
@@ -468,7 +468,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 12,
         height: 6,
-      })
+      }),
     );
 
     // Database Metrics Row
@@ -536,7 +536,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 12,
         height: 6,
-      })
+      }),
     );
 
     // Cache Metrics Row
@@ -591,7 +591,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 12,
         height: 6,
-      })
+      }),
     );
 
     // S3 Metrics Row
@@ -624,7 +624,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 24,
         height: 6,
-      })
+      }),
     );
 
     // Alarm Status Widget
@@ -643,7 +643,7 @@ export class MonitoringStack extends cdk.Stack {
         ],
         width: 24,
         height: 3,
-      })
+      }),
     );
 
     // Outputs

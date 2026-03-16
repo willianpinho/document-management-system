@@ -69,9 +69,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <AuthSyncProvider>
-          <TooltipProvider delayDuration={300}>
-            {children}
-          </TooltipProvider>
+          <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
         </AuthSyncProvider>
       </QueryClientProvider>
     </SessionProvider>

@@ -55,11 +55,7 @@ export class UploadsController {
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateUploadSessionDto,
   ): Promise<UploadSessionResponseDto> {
-    return this.uploadsService.createSession(
-      user.id,
-      user.organizationId,
-      dto,
-    );
+    return this.uploadsService.createSession(user.id, user.organizationId, dto);
   }
 
   @Get('sessions')
@@ -70,10 +66,7 @@ export class UploadsController {
     @CurrentUser() user: AuthUser,
     @Query('userId') userId?: string,
   ): Promise<UploadSessionResponseDto[]> {
-    return this.uploadsService.listSessions(
-      user.organizationId,
-      userId,
-    );
+    return this.uploadsService.listSessions(user.organizationId, userId);
   }
 
   @Get('sessions/:sessionId')
@@ -97,11 +90,7 @@ export class UploadsController {
     @Param('sessionId') sessionId: string,
     @Param('chunkNumber', ParseIntPipe) chunkNumber: number,
   ): Promise<ChunkPresignedUrlDto> {
-    return this.uploadsService.getChunkUploadUrl(
-      sessionId,
-      user.organizationId,
-      chunkNumber,
-    );
+    return this.uploadsService.getChunkUploadUrl(sessionId, user.organizationId, chunkNumber);
   }
 
   @Patch('sessions/:sessionId/chunks/:chunkNumber')
@@ -132,11 +121,7 @@ export class UploadsController {
     @CurrentUser() user: AuthUser,
     @Param('sessionId') sessionId: string,
   ): Promise<CompleteUploadResponseDto> {
-    return this.uploadsService.completeUpload(
-      sessionId,
-      user.id,
-      user.organizationId,
-    );
+    return this.uploadsService.completeUpload(sessionId, user.id, user.organizationId);
   }
 
   @Delete('sessions/:sessionId')

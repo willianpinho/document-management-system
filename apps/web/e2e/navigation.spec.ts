@@ -60,14 +60,20 @@ test.describe('Navigation', () => {
     test('should navigate to dashboard', async ({ page }) => {
       await page.goto('/documents');
 
-      await page.locator('aside').getByRole('link', { name: /dashboard/i }).click();
+      await page
+        .locator('aside')
+        .getByRole('link', { name: /dashboard/i })
+        .click();
       await expect(page).toHaveURL(/dashboard/);
     });
 
     test('should navigate to documents', async ({ page }) => {
       await page.goto('/dashboard');
 
-      await page.locator('aside').getByRole('link', { name: /documents/i }).click();
+      await page
+        .locator('aside')
+        .getByRole('link', { name: /documents/i })
+        .click();
       await expect(page).toHaveURL(/documents/);
     });
 
@@ -86,7 +92,10 @@ test.describe('Navigation', () => {
     test('should navigate to settings from sidebar', async ({ page }) => {
       await page.goto('/dashboard');
 
-      await page.locator('aside').getByRole('link', { name: /settings/i }).click();
+      await page
+        .locator('aside')
+        .getByRole('link', { name: /settings/i })
+        .click();
       await expect(page).toHaveURL(/settings/);
     });
 
@@ -94,7 +103,12 @@ test.describe('Navigation', () => {
       await page.goto('/dashboard');
 
       // Folders section in sidebar
-      await expect(page.locator('aside').getByText(/folders/i).first()).toBeVisible();
+      await expect(
+        page
+          .locator('aside')
+          .getByText(/folders/i)
+          .first(),
+      ).toBeVisible();
     });
 
     test('should display storage usage', async ({ page }) => {
@@ -245,7 +259,10 @@ test.describe('Navigation', () => {
       await page.goto('/dashboard');
 
       // Look for notification button or icon
-      const notifButton = page.locator('header').getByRole('button').filter({ hasText: /notification/i });
+      const notifButton = page
+        .locator('header')
+        .getByRole('button')
+        .filter({ hasText: /notification/i });
       const hasButton = await notifButton.isVisible({ timeout: 3000 }).catch(() => false);
 
       // Alternative: look for bell icon button
@@ -343,7 +360,12 @@ test.describe('Deep Linking', () => {
   test('should navigate directly to folders', async ({ page }) => {
     await page.goto('/folders');
 
-    await expect(page.getByRole('main').getByText(/folders/i).first()).toBeVisible({
+    await expect(
+      page
+        .getByRole('main')
+        .getByText(/folders/i)
+        .first(),
+    ).toBeVisible({
       timeout: 15000,
     });
   });

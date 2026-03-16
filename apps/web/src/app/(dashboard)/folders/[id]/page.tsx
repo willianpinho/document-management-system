@@ -3,15 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  FolderPlus,
-  Upload,
-  Folder,
-  Pencil,
-  Trash2,
-  MoreVertical,
-} from 'lucide-react';
+import { ArrowLeft, FolderPlus, Upload, Folder, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import {
   Button,
   Card,
@@ -68,18 +60,24 @@ export default function FolderDetailPage() {
   const deleteDocument = useDeleteDocument();
 
   // Handlers
-  const handleCreateSubfolder = useCallback(async (name: string) => {
-    await createFolder.mutateAsync({ name, parentId: folderId });
-    setIsCreateSubfolderOpen(false);
-  }, [createFolder, folderId]);
+  const handleCreateSubfolder = useCallback(
+    async (name: string) => {
+      await createFolder.mutateAsync({ name, parentId: folderId });
+      setIsCreateSubfolderOpen(false);
+    },
+    [createFolder, folderId],
+  );
 
-  const handleRename = useCallback(async (newName: string) => {
-    await updateFolder.mutateAsync({
-      id: folderId,
-      data: { name: newName },
-    });
-    setIsRenameOpen(false);
-  }, [updateFolder, folderId]);
+  const handleRename = useCallback(
+    async (newName: string) => {
+      await updateFolder.mutateAsync({
+        id: folderId,
+        data: { name: newName },
+      });
+      setIsRenameOpen(false);
+    },
+    [updateFolder, folderId],
+  );
 
   const handleDelete = useCallback(async () => {
     await deleteFolder.mutateAsync(folderId);
@@ -96,28 +94,34 @@ export default function FolderDetailPage() {
     setSortOrder(newSortOrder);
   }, []);
 
-  const handleDownloadDocument = useCallback(async (id: string) => {
-    try {
-      const response = await fetch(`/api/v1/documents/${id}/download`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
-      const data = await response.json();
-      if (data.data?.url) {
-        const doc = folder?.documents.find((d) => d.id === id);
-        downloadFile(data.data.url, doc?.name || 'download');
+  const handleDownloadDocument = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/v1/documents/${id}/download`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        });
+        const data = await response.json();
+        if (data.data?.url) {
+          const doc = folder?.documents.find((d) => d.id === id);
+          downloadFile(data.data.url, doc?.name || 'download');
+        }
+      } catch (error) {
+        console.error('Download failed:', error);
       }
-    } catch (error) {
-      console.error('Download failed:', error);
-    }
-  }, [folder]);
+    },
+    [folder],
+  );
 
-  const handleDeleteDocument = useCallback(async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this document?')) {
-      await deleteDocument.mutateAsync(id);
-    }
-  }, [deleteDocument]);
+  const handleDeleteDocument = useCallback(
+    async (id: string) => {
+      if (window.confirm('Are you sure you want to delete this document?')) {
+        await deleteDocument.mutateAsync(id);
+      }
+    },
+    [deleteDocument],
+  );
 
   if (isLoading) {
     return (

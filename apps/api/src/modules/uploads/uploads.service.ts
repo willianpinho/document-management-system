@@ -44,10 +44,7 @@ export class UploadsService {
     const s3Key = `uploads/${organizationId}/${uuidv4()}/${dto.fileName}`;
 
     // Create multipart upload in S3
-    const s3UploadId = await this.storageService.createMultipartUpload(
-      s3Key,
-      dto.mimeType,
-    );
+    const s3UploadId = await this.storageService.createMultipartUpload(s3Key, dto.mimeType);
 
     // Calculate expiration
     const expiresAt = new Date();
@@ -78,10 +75,7 @@ export class UploadsService {
   /**
    * Get an existing upload session
    */
-  async getSession(
-    sessionId: string,
-    organizationId: string,
-  ): Promise<UploadSessionResponseDto> {
+  async getSession(sessionId: string, organizationId: string): Promise<UploadSessionResponseDto> {
     const session = await this.prisma.uploadSession.findFirst({
       where: {
         id: sessionId,
@@ -283,11 +277,7 @@ export class UploadsService {
       partNumber: chunk.chunkNumber + 1, // S3 is 1-indexed
     }));
 
-    await this.storageService.completeMultipartUpload(
-      session.s3Key,
-      session.s3UploadId!,
-      parts,
-    );
+    await this.storageService.completeMultipartUpload(session.s3Key, session.s3UploadId!, parts);
 
     // Create the document
     const document = await this.prisma.document.create({
@@ -369,10 +359,7 @@ export class UploadsService {
   /**
    * Cancel an upload session
    */
-  async cancelUpload(
-    sessionId: string,
-    organizationId: string,
-  ): Promise<void> {
+  async cancelUpload(sessionId: string, organizationId: string): Promise<void> {
     const session = await this.prisma.uploadSession.findFirst({
       where: {
         id: sessionId,
@@ -391,10 +378,7 @@ export class UploadsService {
     // Abort multipart upload in S3
     if (session.s3UploadId) {
       try {
-        await this.storageService.abortMultipartUpload(
-          session.s3Key,
-          session.s3UploadId,
-        );
+        await this.storageService.abortMultipartUpload(session.s3Key, session.s3UploadId);
       } catch (error) {
         // Ignore errors if upload doesn't exist in S3
       }
@@ -412,10 +396,7 @@ export class UploadsService {
   /**
    * List active upload sessions for an organization
    */
-  async listSessions(
-    organizationId: string,
-    userId?: string,
-  ): Promise<UploadSessionResponseDto[]> {
+  async listSessions(organizationId: string, userId?: string): Promise<UploadSessionResponseDto[]> {
     const sessions = await this.prisma.uploadSession.findMany({
       where: {
         organizationId,
@@ -459,10 +440,7 @@ export class UploadsService {
     for (const session of expiredSessions) {
       if (session.s3UploadId) {
         try {
-          await this.storageService.abortMultipartUpload(
-            session.s3Key,
-            session.s3UploadId,
-          );
+          await this.storageService.abortMultipartUpload(session.s3Key, session.s3UploadId);
         } catch (error) {
           // Ignore errors
         }
@@ -487,9 +465,7 @@ export class UploadsService {
   /**
    * Convert database session to response DTO
    */
-  private toSessionResponse(
-    session: any,
-  ): UploadSessionResponseDto {
+  private toSessionResponse(session: any): UploadSessionResponseDto {
     const completedChunks = session.chunks
       ? session.chunks.map((c: { chunkNumber: number }) => c.chunkNumber)
       : [];

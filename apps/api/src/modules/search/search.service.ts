@@ -4,12 +4,7 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EmbeddingService } from './embedding.service';
-import {
-  SearchFiltersDto,
-  SearchResultItemDto,
-  SortField,
-  SortOrder,
-} from './dto/search.dto';
+import { SearchFiltersDto, SearchResultItemDto, SortField, SortOrder } from './dto/search.dto';
 
 // =============================================================================
 // INTERFACES
@@ -183,7 +178,12 @@ export class SearchService {
       });
     }
 
-    const total = type === 'documents' ? totalDocuments : type === 'folders' ? totalFolders : totalDocuments + totalFolders;
+    const total =
+      type === 'documents'
+        ? totalDocuments
+        : type === 'folders'
+          ? totalFolders
+          : totalDocuments + totalFolders;
 
     return {
       results: searchResults,
@@ -286,9 +286,7 @@ export class SearchService {
     } = params;
     const startTime = Date.now();
 
-    this.logger.log(
-      `Hybrid search: "${query}" (text: ${textWeight}, semantic: ${semanticWeight})`,
-    );
+    this.logger.log(`Hybrid search: "${query}" (text: ${textWeight}, semantic: ${semanticWeight})`);
 
     // Perform both searches in parallel
     const [textResults, semanticResults] = await Promise.all([
@@ -650,10 +648,7 @@ export class SearchService {
 
       // Build context for reranking
       const documentsContext = candidatesToRerank
-        .map(
-          (r, i) =>
-            `[${i}] "${r.name}": ${r.snippet || 'No content preview'}`,
-        )
+        .map((r, i) => `[${i}] "${r.name}": ${r.snippet || 'No content preview'}`)
         .join('\n');
 
       const prompt = `Given the search query: "${query}"
@@ -683,7 +678,7 @@ Response format: comma-separated indices (e.g., "3,1,0,2,4")`;
         throw new Error('Reranking API call failed');
       }
 
-      const data = await response.json() as { choices: Array<{ message: { content: string } }> };
+      const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
       const content = data.choices[0].message.content.trim();
 
       // Parse the response and reorder

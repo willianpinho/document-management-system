@@ -19,15 +19,11 @@ interface PresenceAvatarsProps {
   maxVisible?: number;
 }
 
-export function PresenceAvatars({
-  viewers,
-  currentUserId,
-  maxVisible = 4,
-}: PresenceAvatarsProps) {
+export function PresenceAvatars({ viewers, currentUserId, maxVisible = 4 }: PresenceAvatarsProps) {
   // Filter out current user and limit visible
   const otherViewers = useMemo(
     () => viewers.filter((v) => v.id !== currentUserId),
-    [viewers, currentUserId]
+    [viewers, currentUserId],
   );
 
   const visibleViewers = otherViewers.slice(0, maxVisible);
@@ -75,7 +71,7 @@ export function PresenceAvatars({
                 </Avatar>
                 {/* Online indicator */}
                 <span
-                  className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background"
+                  className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-green-500"
                   title="Online"
                 />
               </div>
@@ -90,20 +86,15 @@ export function PresenceAvatars({
         {hiddenCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div
-                className="relative"
-                style={{ zIndex: maxVisible + 1 }}
-              >
+              <div className="relative" style={{ zIndex: maxVisible + 1 }}>
                 <Avatar className="h-8 w-8 border-2 border-background bg-muted">
-                  <AvatarFallback className="text-xs">
-                    +{hiddenCount}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">+{hiddenCount}</AvatarFallback>
                 </Avatar>
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="font-medium">{hiddenCount} more viewing</p>
-              <ul className="text-xs text-muted-foreground mt-1">
+              <ul className="mt-1 text-xs text-muted-foreground">
                 {otherViewers.slice(maxVisible).map((v) => (
                   <li key={v.id}>{v.name || v.email}</li>
                 ))}

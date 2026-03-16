@@ -2,9 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2023",
-    "lib": [
-      "ES2023"
-    ],
+    "lib": ["ES2023"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
@@ -23,11 +21,5 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".next",
-    "build",
-    "coverage"
-  ]
+  "exclude": ["node_modules", "dist", ".next", "build", "coverage"]
 }

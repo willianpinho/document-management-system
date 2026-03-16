@@ -44,9 +44,7 @@ export function FolderTree({
   onMoveFolder,
   isLoading,
 }: FolderTreeProps) {
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const toggleFolder = useCallback((folderId: string) => {
     setExpandedFolders((prev) => {
@@ -64,10 +62,7 @@ export function FolderTree({
     return (
       <div className="space-y-2 p-2">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-8 animate-pulse rounded-md bg-muted"
-          />
+          <div key={i} className="h-8 animate-pulse rounded-md bg-muted" />
         ))}
       </div>
     );
@@ -82,7 +77,7 @@ export function FolderTree({
           'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
           !selectedFolderId
             ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         )}
       >
         <Folder className="h-4 w-4" />
@@ -155,7 +150,7 @@ function FolderTreeNode({
           'group flex items-center gap-1 rounded-md text-sm transition-colors',
           isSelected
             ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         )}
         style={{ paddingLeft: `${level * 12 + 4}px` }}
       >
@@ -164,7 +159,7 @@ function FolderTreeNode({
           onClick={() => onToggle(folder.id)}
           className={cn(
             'flex h-6 w-6 items-center justify-center rounded transition-colors',
-            hasChildren ? 'hover:bg-black/10' : 'invisible'
+            hasChildren ? 'hover:bg-black/10' : 'invisible',
           )}
         >
           {hasChildren &&
@@ -176,15 +171,8 @@ function FolderTreeNode({
         </button>
 
         {/* Folder link */}
-        <Link
-          href={`/folders/${folder.id}`}
-          className="flex flex-1 items-center gap-2 py-1.5 pr-2"
-        >
-          {isExpanded ? (
-            <FolderOpen className="h-4 w-4" />
-          ) : (
-            <Folder className="h-4 w-4" />
-          )}
+        <Link href={`/folders/${folder.id}`} className="flex flex-1 items-center gap-2 py-1.5 pr-2">
+          {isExpanded ? <FolderOpen className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
           <span className="truncate">{folder.name}</span>
         </Link>
 

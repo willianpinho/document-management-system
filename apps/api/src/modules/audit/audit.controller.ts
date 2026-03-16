@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-  Res,
-  StreamableFile,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Res, StreamableFile } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -88,11 +80,7 @@ export class AuditController {
     @Param('resourceType') resourceType: AuditResourceType,
     @Param('resourceId') resourceId: string,
   ): Promise<ResourceHistoryDto> {
-    return this.auditService.getResourceHistory(
-      user.organizationId!,
-      resourceType,
-      resourceId,
-    );
+    return this.auditService.getResourceHistory(user.organizationId!, resourceType, resourceId);
   }
 
   @Get('users/:userId/activity')

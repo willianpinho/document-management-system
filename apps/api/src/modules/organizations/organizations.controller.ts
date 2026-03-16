@@ -10,13 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 
 import { OrganizationsService } from './organizations.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -29,12 +23,7 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
-import {
-  AuditOrganization,
-  AuditLog,
-  AuditAction,
-  AuditResourceType,
-} from '../audit';
+import { AuditOrganization, AuditLog, AuditAction, AuditResourceType } from '../audit';
 
 @ApiTags('organizations')
 @Controller('organizations')
@@ -48,10 +37,7 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Create a new organization' })
   @ApiResponse({ status: 201, description: 'Organization created successfully' })
   @ApiResponse({ status: 409, description: 'Organization slug already exists' })
-  async create(
-    @CurrentUser() user: CurrentUserPayload,
-    @Body() createDto: CreateOrganizationDto,
-  ) {
+  async create(@CurrentUser() user: CurrentUserPayload, @Body() createDto: CreateOrganizationDto) {
     return this.organizationsService.create(createDto, user.id);
   }
 
@@ -224,10 +210,7 @@ export class OrganizationsController {
     status: 201,
     description: 'API key created. The full key is only returned once.',
   })
-  async createApiKey(
-    @Param('id') id: string,
-    @Body() createDto: CreateApiKeyDto,
-  ) {
+  async createApiKey(@Param('id') id: string, @Body() createDto: CreateApiKeyDto) {
     return this.organizationsService.createApiKey(
       id,
       createDto.name,
@@ -250,10 +233,7 @@ export class OrganizationsController {
   @ApiParam({ name: 'keyId', description: 'API Key ID' })
   @ApiResponse({ status: 200, description: 'API key revoked' })
   @ApiResponse({ status: 404, description: 'API key not found' })
-  async revokeApiKey(
-    @Param('id') id: string,
-    @Param('keyId') keyId: string,
-  ) {
+  async revokeApiKey(@Param('id') id: string, @Param('keyId') keyId: string) {
     return this.organizationsService.revokeApiKey(id, keyId);
   }
 }

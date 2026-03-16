@@ -26,8 +26,7 @@ export class OrganizationGuard implements CanActivate {
 
     // Get organization ID from header or query param
     const organizationId =
-      (request.headers['x-organization-id'] as string) ||
-      (request.query.organizationId as string);
+      (request.headers['x-organization-id'] as string) || (request.query.organizationId as string);
 
     if (!organizationId) {
       throw new ForbiddenException('Organization ID is required');

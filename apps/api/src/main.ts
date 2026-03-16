@@ -40,14 +40,17 @@ async function bootstrap() {
   // Security headers - disable strict CSP in development to allow Swagger UI
   app.use(
     helmet({
-      contentSecurityPolicy: nodeEnv === 'production' ? {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          scriptSrc: ["'self'"],
-        },
-      } : false,
+      contentSecurityPolicy:
+        nodeEnv === 'production'
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", 'data:', 'https:'],
+                scriptSrc: ["'self'"],
+              },
+            }
+          : false,
       crossOriginEmbedderPolicy: false,
     }),
   );

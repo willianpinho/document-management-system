@@ -34,7 +34,14 @@ type PdfJobName =
  * Extended job data for PDF operations
  */
 interface PdfJobData extends Omit<ProcessingJobData, 'options'> {
-  options?: SplitOptionsDto | MergeOptionsDto | WatermarkOptionsDto | CompressionOptionsDto | ExtractPagesOptionsDto | PageRenderOptionsDto | { page?: number };
+  options?:
+    | SplitOptionsDto
+    | MergeOptionsDto
+    | WatermarkOptionsDto
+    | CompressionOptionsDto
+    | ExtractPagesOptionsDto
+    | PageRenderOptionsDto
+    | { page?: number };
 }
 
 /**
@@ -433,9 +440,8 @@ export class PdfProcessor extends WorkerHost {
       } as any,
     });
 
-    const compressionRatio = result.originalSize > 0
-      ? 1 - result.compressedSize / result.originalSize
-      : 0;
+    const compressionRatio =
+      result.originalSize > 0 ? 1 - result.compressedSize / result.originalSize : 0;
 
     this.logger.log(
       `Compression completed: ${result.originalSize} -> ${result.compressedSize} (${Math.round(compressionRatio * 100)}% saved)`,
@@ -482,7 +488,8 @@ export class PdfProcessor extends WorkerHost {
     const pageCount = await this.pdfService.getPageCount(extractedBuffer);
 
     // Upload extracted document
-    const filename = extractOptions.outputName || `extracted_pages_${extractOptions.pages.join('_')}.pdf`;
+    const filename =
+      extractOptions.outputName || `extracted_pages_${extractOptions.pages.join('_')}.pdf`;
     const newS3Key = `${organizationId}/${uuidv4()}/${filename}`;
     await this.storageService.uploadBuffer(newS3Key, extractedBuffer, 'application/pdf');
 
@@ -547,7 +554,12 @@ export class PdfProcessor extends WorkerHost {
     const filename = `${baseName}_page_${pageNumber}.${result.format}`;
     const newS3Key = `${organizationId}/thumbnails/${uuidv4()}/${filename}`;
 
-    const mimeType = result.format === 'jpeg' ? 'image/jpeg' : result.format === 'webp' ? 'image/webp' : 'image/png';
+    const mimeType =
+      result.format === 'jpeg'
+        ? 'image/jpeg'
+        : result.format === 'webp'
+          ? 'image/webp'
+          : 'image/png';
     await this.storageService.uploadBuffer(newS3Key, result.buffer, mimeType);
 
     await job.updateProgress(90);

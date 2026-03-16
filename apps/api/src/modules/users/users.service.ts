@@ -2,10 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { AuthProvider, Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
-import {
-  UserPreferencesDto,
-  defaultUserPreferences,
-} from './dto/user-preferences.dto';
+import { UserPreferencesDto, defaultUserPreferences } from './dto/user-preferences.dto';
 
 interface CreateUserInput {
   email: string;

@@ -6,10 +6,7 @@ import { StorageModule } from '../storage/storage.module';
 import { ProcessingModule } from '../processing/processing.module';
 
 @Module({
-  imports: [
-    StorageModule,
-    forwardRef(() => ProcessingModule),
-  ],
+  imports: [StorageModule, forwardRef(() => ProcessingModule)],
   controllers: [DocumentsController],
   providers: [DocumentsService],
   exports: [DocumentsService],

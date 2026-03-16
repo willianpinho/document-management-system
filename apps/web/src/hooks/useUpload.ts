@@ -18,14 +18,9 @@ export function useUpload(folderId?: string) {
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const updateUpload = useCallback(
-    (id: string, update: Partial<UploadProgress>) => {
-      setUploads((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, ...update } : u))
-      );
-    },
-    []
-  );
+  const updateUpload = useCallback((id: string, update: Partial<UploadProgress>) => {
+    setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, ...update } : u)));
+  }, []);
 
   const removeUpload = useCallback((id: string) => {
     setUploads((prev) => prev.filter((u) => u.id !== id));
@@ -111,13 +106,12 @@ export function useUpload(folderId?: string) {
 
         return document.id;
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Upload failed';
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
         updateUpload(uploadId, { status: 'error', error: errorMessage });
         return null;
       }
     },
-    [folderId, updateUpload, queryClient]
+    [folderId, updateUpload, queryClient],
   );
 
   const uploadFiles = useCallback(
@@ -136,7 +130,7 @@ export function useUpload(folderId?: string) {
         setIsUploading(false);
       }
     },
-    [uploadFile]
+    [uploadFile],
   );
 
   const cancelUpload = useCallback((id: string) => {
@@ -144,10 +138,8 @@ export function useUpload(folderId?: string) {
     // For now, just mark as error
     setUploads((prev) =>
       prev.map((u) =>
-        u.id === id && u.status === 'uploading'
-          ? { ...u, status: 'error', error: 'Cancelled' }
-          : u
-      )
+        u.id === id && u.status === 'uploading' ? { ...u, status: 'error', error: 'Cancelled' } : u,
+      ),
     );
   }, []);
 
@@ -159,7 +151,7 @@ export function useUpload(folderId?: string) {
         await uploadFile(upload.file);
       }
     },
-    [uploads, removeUpload, uploadFile]
+    [uploads, removeUpload, uploadFile],
   );
 
   return {

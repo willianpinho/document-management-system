@@ -16,12 +16,7 @@ import {
   Music,
   File,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Button,
-} from '@dms/ui';
+import { Dialog, DialogContent, DialogTitle, Button } from '@dms/ui';
 import type { DocumentDetail } from '@/hooks/useDocuments';
 import { formatBytes, formatDateTime } from '@/lib/utils';
 
@@ -152,7 +147,7 @@ export function DocumentPreview({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="flex h-[90vh] max-w-6xl flex-col p-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-3">
@@ -168,9 +163,7 @@ export function DocumentPreview({
               <File className="h-5 w-5 text-muted-foreground" />
             )}
             <div>
-              <DialogTitle className="text-sm font-medium">
-                {document.name}
-              </DialogTitle>
+              <DialogTitle className="text-sm font-medium">{document.name}</DialogTitle>
               <p className="text-xs text-muted-foreground">
                 {formatBytes(document.sizeBytes)} - {formatDateTime(document.createdAt)}
               </p>
@@ -201,20 +194,10 @@ export function DocumentPreview({
                 >
                   <ZoomIn className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleRotate}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRotate}>
                   <RotateCw className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleReset}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleReset}>
                   <Maximize className="h-4 w-4" />
                 </Button>
                 <div className="mx-2 h-5 w-px bg-border" />
@@ -222,29 +205,19 @@ export function DocumentPreview({
             )}
 
             {onDownload && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={onDownload}
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDownload}>
                 <Download className="h-4 w-4" />
               </Button>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={onClose}
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Preview content */}
-        <div className="relative flex-1 bg-muted/50 overflow-hidden">
+        <div className="relative flex-1 overflow-hidden bg-muted/50">
           {renderPreviewContent()}
 
           {/* Navigation */}
@@ -278,14 +251,11 @@ export function DocumentPreview({
         {document.metadata && (
           <div className="border-t px-4 py-3">
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-              {document.metadata.pageCount && (
-                <span>Pages: {document.metadata.pageCount}</span>
-              )}
+              {document.metadata.pageCount && <span>Pages: {document.metadata.pageCount}</span>}
               {document.metadata.classification && (
                 <span>
                   Type: {document.metadata.classification.category} (
-                  {Math.round(document.metadata.classification.confidence * 100)}%
-                  confidence)
+                  {Math.round(document.metadata.classification.confidence * 100)}% confidence)
                 </span>
               )}
               {document.metadata.tags && document.metadata.tags.length > 0 && (

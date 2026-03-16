@@ -161,10 +161,7 @@ export class AuditService {
   /**
    * Get audit logs with filtering and pagination
    */
-  async getAuditLogs(
-    organizationId: string,
-    filters: AuditLogQueryDto,
-  ): Promise<AuditLogListDto> {
+  async getAuditLogs(organizationId: string, filters: AuditLogQueryDto): Promise<AuditLogListDto> {
     const {
       page = 1,
       limit = 20,

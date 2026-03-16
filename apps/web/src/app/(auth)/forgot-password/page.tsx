@@ -2,15 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@dms/ui';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -88,9 +80,7 @@ export default function ForgotPasswordPage() {
             <Mail className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Forgot password?</CardTitle>
-          <CardDescription>
-            No worries, we&apos;ll send you reset instructions.
-          </CardDescription>
+          <CardDescription>No worries, we&apos;ll send you reset instructions.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} method="post" className="space-y-4">

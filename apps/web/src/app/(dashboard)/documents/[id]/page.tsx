@@ -20,15 +20,7 @@ import {
   CheckCircle2,
   Code2,
 } from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-  Progress,
-} from '@dms/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Progress } from '@dms/ui';
 import { DocumentActions } from '@/components/documents/DocumentActions';
 import { ShareDialog, type SharePermission } from '@/components/documents/ShareDialog';
 import { VersionHistoryModal } from '@/components/documents/VersionHistoryModal';
@@ -167,7 +159,9 @@ export default function DocumentDetailPage() {
         // Limit preview to first 100KB for performance
         const maxLength = 100 * 1024;
         if (text.length > maxLength) {
-          setTextContent(text.substring(0, maxLength) + '\n\n... (truncated, download to view full file)');
+          setTextContent(
+            text.substring(0, maxLength) + '\n\n... (truncated, download to view full file)',
+          );
         } else {
           setTextContent(text);
         }
@@ -211,14 +205,14 @@ export default function DocumentDetailPage() {
     async (folderId: string | null) => {
       await moveDocument.mutateAsync({ id: documentId, folderId });
     },
-    [documentId, moveDocument]
+    [documentId, moveDocument],
   );
 
   const handleCopyToFolder = useCallback(
     async (folderId: string | null) => {
       await copyDocument.mutateAsync({ id: documentId, folderId });
     },
-    [documentId, copyDocument]
+    [documentId, copyDocument],
   );
 
   const handleProcess = async (operations: string[]) => {
@@ -242,28 +236,28 @@ export default function DocumentDetailPage() {
     async (email: string, permission: SharePermission) => {
       await shareDocument.mutateAsync({ documentId, email, permission });
     },
-    [documentId, shareDocument]
+    [documentId, shareDocument],
   );
 
   const handleRemoveUser = useCallback(
     async (userId: string) => {
       await removeShare.mutateAsync({ documentId, userId });
     },
-    [documentId, removeShare]
+    [documentId, removeShare],
   );
 
   const handleUpdatePermission = useCallback(
     async (userId: string, permission: SharePermission) => {
       await updateSharePermission.mutateAsync({ documentId, userId, permission });
     },
-    [documentId, updateSharePermission]
+    [documentId, updateSharePermission],
   );
 
   const handleCreateLink = useCallback(
     async (permission: SharePermission) => {
       await createShareLink.mutateAsync({ documentId, permission });
     },
-    [documentId, createShareLink]
+    [documentId, createShareLink],
   );
 
   const handleDeleteLink = useCallback(async () => {
@@ -276,17 +270,20 @@ export default function DocumentDetailPage() {
       const result = await downloadVersion.mutateAsync({ documentId, versionId });
       if (result.url) {
         const version = versions.find((v) => v.id === versionId);
-        downloadFile(result.url, `${document?.name || 'document'}_v${version?.versionNumber || ''}`);
+        downloadFile(
+          result.url,
+          `${document?.name || 'document'}_v${version?.versionNumber || ''}`,
+        );
       }
     },
-    [documentId, downloadVersion, versions, document?.name]
+    [documentId, downloadVersion, versions, document?.name],
   );
 
   const handleRestoreVersion = useCallback(
     async (versionId: string) => {
       await restoreVersion.mutateAsync({ documentId, versionId });
     },
-    [documentId, restoreVersion]
+    [documentId, restoreVersion],
   );
 
   if (isLoading) {
@@ -367,11 +364,7 @@ export default function DocumentDetailPage() {
             {/* Real-time presence indicators */}
             {viewers.length > 0 && (
               <div className="flex items-center gap-2 border-r pr-3">
-                <PresenceAvatars
-                  viewers={viewers}
-                  currentUserId={user?.id}
-                  maxVisible={4}
-                />
+                <PresenceAvatars viewers={viewers} currentUserId={user?.id} maxVisible={4} />
                 {isConnected && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Users className="h-3 w-3" />
@@ -381,11 +374,7 @@ export default function DocumentDetailPage() {
               </div>
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleOpenComments}
-            >
+            <Button variant="outline" size="sm" onClick={handleOpenComments}>
               <MessageCircle className="mr-2 h-4 w-4" />
               Comments
             </Button>
@@ -441,7 +430,7 @@ export default function DocumentDetailPage() {
                   />
                 ) : document.mimeType.startsWith('audio/') && downloadUrlData?.url ? (
                   <div className="flex flex-col items-center justify-center rounded-lg bg-muted p-8">
-                    <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                    <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
                     <audio
                       src={downloadUrlData.url}
                       controls
@@ -457,7 +446,7 @@ export default function DocumentDetailPage() {
                         <span>{document.mimeType}</span>
                       </div>
                       <Button variant="ghost" size="sm" onClick={handleDownload}>
-                        <Download className="h-4 w-4 mr-1" />
+                        <Download className="mr-1 h-4 w-4" />
                         Download
                       </Button>
                     </div>
@@ -468,16 +457,23 @@ export default function DocumentDetailPage() {
                         </div>
                       ) : textLoadError ? (
                         <div className="flex flex-col items-center justify-center py-8 text-destructive">
-                          <AlertCircle className="h-8 w-8 mb-2" />
+                          <AlertCircle className="mb-2 h-8 w-8" />
                           <p>{textLoadError}</p>
-                          <Button variant="outline" size="sm" className="mt-2" onClick={handleDownload}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={handleDownload}
+                          >
                             Download instead
                           </Button>
                         </div>
                       ) : textContent ? (
-                        <pre className="whitespace-pre-wrap text-sm font-mono">{textContent}</pre>
+                        <pre className="whitespace-pre-wrap font-mono text-sm">{textContent}</pre>
                       ) : (
-                        <p className="text-muted-foreground text-center py-8">No content to display</p>
+                        <p className="py-8 text-center text-muted-foreground">
+                          No content to display
+                        </p>
                       )}
                     </div>
                   </div>
@@ -507,9 +503,7 @@ export default function DocumentDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="max-h-96 overflow-auto rounded-lg bg-muted p-4">
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {document.metadata.ocrText}
-                    </pre>
+                    <pre className="whitespace-pre-wrap text-sm">{document.metadata.ocrText}</pre>
                   </div>
                 </CardContent>
               </Card>
@@ -582,7 +576,9 @@ export default function DocumentDetailPage() {
 
                   {jobStatuses && jobStatuses.length > 0 && (
                     <div className="space-y-2 border-t pt-4">
-                      <p className="text-xs font-medium text-muted-foreground uppercase">Active Jobs</p>
+                      <p className="text-xs font-medium uppercase text-muted-foreground">
+                        Active Jobs
+                      </p>
                       {jobStatuses.slice(0, 3).map((job) => (
                         <div key={job.id} className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2">
@@ -683,10 +679,7 @@ export default function DocumentDetailPage() {
                 <CardContent>
                   <div className="space-y-3">
                     {document.versions.slice(0, 5).map((version) => (
-                      <div
-                        key={version.id}
-                        className="flex items-center justify-between text-sm"
-                      >
+                      <div key={version.id} className="flex items-center justify-between text-sm">
                         <span>v{version.versionNumber}</span>
                         <span className="text-muted-foreground">
                           {formatRelativeTime(version.createdAt)}

@@ -23,7 +23,7 @@ export function useSearch(initialFilters?: SearchFilters) {
     debounce((query: string) => {
       setDebouncedQuery(query);
     }, 300),
-    []
+    [],
   );
 
   const setQuery = useCallback(
@@ -31,14 +31,14 @@ export function useSearch(initialFilters?: SearchFilters) {
       setFilters((prev) => ({ ...prev, q: query }));
       updateDebouncedQuery(query);
     },
-    [updateDebouncedQuery]
+    [updateDebouncedQuery],
   );
 
   const setFilter = useCallback(
     <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
     },
-    []
+    [],
   );
 
   const clearFilters = useCallback(() => {
@@ -50,7 +50,14 @@ export function useSearch(initialFilters?: SearchFilters) {
     queryKey: ['search', { ...filters, q: debouncedQuery }],
     queryFn: async () => {
       if (!debouncedQuery && !filters.mimeType && !filters.folderId) {
-        return { results: [], total: 0, page: 1, limit: 20, hasMore: false, searchType: 'text' as const };
+        return {
+          results: [],
+          total: 0,
+          page: 1,
+          limit: 20,
+          hasMore: false,
+          searchType: 'text' as const,
+        };
       }
 
       const response = await searchApi.search({
@@ -135,7 +142,7 @@ export function useSearchSuggestions() {
     debounce((q: string) => {
       setDebouncedQuery(q);
     }, 200),
-    []
+    [],
   );
 
   const handleQueryChange = useCallback(
@@ -143,7 +150,7 @@ export function useSearchSuggestions() {
       setQuery(q);
       updateDebouncedQuery(q);
     },
-    [updateDebouncedQuery]
+    [updateDebouncedQuery],
   );
 
   const suggestionsQuery = useQuery({

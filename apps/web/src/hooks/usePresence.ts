@@ -142,10 +142,8 @@ export function usePresence({
       if (data.documentId === documentId) {
         setViewers((prev) =>
           prev.map((v) =>
-            v.id === data.userId
-              ? { ...v, cursorPosition: data.cursorPosition }
-              : v
-          )
+            v.id === data.userId ? { ...v, cursorPosition: data.cursorPosition } : v,
+          ),
         );
         onCursorChangeRef.current?.(data.userId, data.cursorPosition);
       }
@@ -179,7 +177,7 @@ export function usePresence({
         });
       }
     },
-    [documentId]
+    [documentId],
   );
 
   // Leave presence

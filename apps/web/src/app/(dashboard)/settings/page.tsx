@@ -178,23 +178,19 @@ export default function SettingsPage() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account and preferences
-        </p>
+        <p className="text-muted-foreground">Manage your account and preferences</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Profile section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 Profile
               </CardTitle>
-              <CardDescription>
-                Update your personal information
-              </CardDescription>
+              <CardDescription>Update your personal information</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleUpdateProfile} className="space-y-6">
@@ -216,7 +212,9 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
-                      {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user?.name || 'User'} />}
+                      {user?.avatarUrl && (
+                        <AvatarImage src={user.avatarUrl} alt={user?.name || 'User'} />
+                      )}
                       <AvatarFallback className="text-lg">
                         {user?.name ? getInitials(user.name) : 'U'}
                       </AvatarFallback>
@@ -260,13 +258,7 @@ export default function SettingsPage() {
                   <label htmlFor="email" className="text-sm font-medium">
                     Email address
                   </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    disabled
-                    className="bg-muted"
-                  />
+                  <Input id="email" type="email" value={email} disabled className="bg-muted" />
                   <p className="text-xs text-muted-foreground">
                     Contact support to change your email address
                   </p>
@@ -323,9 +315,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{section.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {section.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{section.description}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
@@ -338,9 +328,7 @@ export default function SettingsPage() {
           <Card className="border-destructive/50">
             <CardHeader>
               <CardTitle className="text-destructive">Danger zone</CardTitle>
-              <CardDescription>
-                Irreversible actions for your account
-              </CardDescription>
+              <CardDescription>Irreversible actions for your account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
@@ -365,23 +353,29 @@ export default function SettingsPage() {
       </div>
 
       {/* Change Avatar Dialog */}
-      <Dialog open={showAvatarDialog} onOpenChange={(open) => {
-        if (!open) {
-          setAvatarUrl('');
-        }
-        setShowAvatarDialog(open);
-      }}>
+      <Dialog
+        open={showAvatarDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAvatarUrl('');
+          }
+          setShowAvatarDialog(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change Avatar</DialogTitle>
             <DialogDescription>
-              Enter a URL to your profile picture. Use services like Gravatar, GitHub, or any public image URL.
+              Enter a URL to your profile picture. Use services like Gravatar, GitHub, or any public
+              image URL.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex justify-center">
               <Avatar className="h-24 w-24">
-                {(avatarUrl || user?.avatarUrl) && <AvatarImage src={avatarUrl || user?.avatarUrl || ''} alt="Preview" />}
+                {(avatarUrl || user?.avatarUrl) && (
+                  <AvatarImage src={avatarUrl || user?.avatarUrl || ''} alt="Preview" />
+                )}
                 <AvatarFallback className="text-xl">
                   {user?.name ? getInitials(user.name) : 'U'}
                 </AvatarFallback>
@@ -407,7 +401,10 @@ export default function SettingsPage() {
             <Button variant="outline" onClick={() => setShowAvatarDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleChangeAvatar} disabled={!avatarUrl.trim() || updateProfileMutation.isPending}>
+            <Button
+              onClick={handleChangeAvatar}
+              disabled={!avatarUrl.trim() || updateProfileMutation.isPending}
+            >
               {updateProfileMutation.isPending ? 'Saving...' : 'Save Avatar'}
             </Button>
           </DialogFooter>
@@ -415,17 +412,21 @@ export default function SettingsPage() {
       </Dialog>
 
       {/* Export Data Dialog */}
-      <Dialog open={showExportDialog} onOpenChange={(open) => {
-        if (!open) {
-          setExportError(null);
-        }
-        setShowExportDialog(open);
-      }}>
+      <Dialog
+        open={showExportDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setExportError(null);
+          }
+          setShowExportDialog(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Export Your Data</DialogTitle>
             <DialogDescription>
-              Download a copy of all your data, including documents, folders, and account information.
+              Download a copy of all your data, including documents, folders, and account
+              information.
             </DialogDescription>
           </DialogHeader>
           {exportError && (
@@ -435,9 +436,7 @@ export default function SettingsPage() {
             </div>
           )}
           <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Your data export will include:
-            </p>
+            <p className="text-sm text-muted-foreground">Your data export will include:</p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
               <li>Profile information</li>
               <li>Document metadata</li>
@@ -467,13 +466,16 @@ export default function SettingsPage() {
       </Dialog>
 
       {/* Delete Account Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={(open) => {
-        if (!open) {
-          setDeleteConfirmText('');
-          setDeleteError(null);
-        }
-        setShowDeleteDialog(open);
-      }}>
+      <Dialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmText('');
+            setDeleteError(null);
+          }
+          setShowDeleteDialog(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
@@ -481,7 +483,8 @@ export default function SettingsPage() {
               Delete Account
             </DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+              This action cannot be undone. This will permanently delete your account and remove all
+              your data from our servers.
             </DialogDescription>
           </DialogHeader>
           {deleteError && (

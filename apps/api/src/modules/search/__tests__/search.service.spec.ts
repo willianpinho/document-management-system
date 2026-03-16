@@ -106,7 +106,7 @@ describe('SearchService', () => {
     Object.defineProperty(service, 'configService', { value: configService, writable: true });
     Object.defineProperty(service, 'logger', {
       value: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-      writable: true
+      writable: true,
     });
   });
 
@@ -334,9 +334,7 @@ describe('SearchService', () => {
 
       await service.semanticSearch(semanticParams);
 
-      expect(embeddingService.generateEmbedding).toHaveBeenCalledWith(
-        semanticParams.query,
-      );
+      expect(embeddingService.generateEmbedding).toHaveBeenCalledWith(semanticParams.query);
     });
 
     it('should fallback to text search when embedding service is unavailable', async () => {
@@ -354,9 +352,7 @@ describe('SearchService', () => {
       await service.semanticSearch({ ...semanticParams, threshold: 0.8 });
 
       // Verify the raw query includes threshold in WHERE clause
-      expect(prismaService.$queryRawUnsafe).toHaveBeenCalledWith(
-        expect.stringContaining('>= 0.8'),
-      );
+      expect(prismaService.$queryRawUnsafe).toHaveBeenCalledWith(expect.stringContaining('>= 0.8'));
     });
 
     it('should include semantic score in results', async () => {
@@ -385,9 +381,7 @@ describe('SearchService', () => {
     });
 
     it('should fallback to text search on embedding error', async () => {
-      embeddingService.generateEmbedding.mockRejectedValue(
-        new Error('OpenAI API error'),
-      );
+      embeddingService.generateEmbedding.mockRejectedValue(new Error('OpenAI API error'));
       prismaService.document.findMany.mockResolvedValue([]);
 
       const result = await service.semanticSearch(semanticParams);
@@ -557,9 +551,7 @@ describe('SearchService', () => {
         { id: 'doc-1', name: 'Report 2024' },
         { id: 'doc-2', name: 'Report 2023' },
       ]);
-      prismaService.folder.findMany.mockResolvedValue([
-        { id: 'folder-1', name: 'Reports' },
-      ]);
+      prismaService.folder.findMany.mockResolvedValue([{ id: 'folder-1', name: 'Reports' }]);
 
       const result = await service.getSuggestions(mockOrganizationId, 'rep', 5);
 
@@ -588,12 +580,8 @@ describe('SearchService', () => {
     });
 
     it('should include both documents and folders', async () => {
-      prismaService.document.findMany.mockResolvedValue([
-        { id: 'doc-1', name: 'Finance Report' },
-      ]);
-      prismaService.folder.findMany.mockResolvedValue([
-        { id: 'folder-1', name: 'Finance' },
-      ]);
+      prismaService.document.findMany.mockResolvedValue([{ id: 'doc-1', name: 'Finance Report' }]);
+      prismaService.folder.findMany.mockResolvedValue([{ id: 'folder-1', name: 'Finance' }]);
 
       const result = await service.getSuggestions(mockOrganizationId, 'finance', 5);
 
@@ -608,9 +596,7 @@ describe('SearchService', () => {
         { id: 'doc-2', name: 'Test 2' },
         { id: 'doc-3', name: 'Test 3' },
       ]);
-      prismaService.folder.findMany.mockResolvedValue([
-        { id: 'folder-1', name: 'Test Folder' },
-      ]);
+      prismaService.folder.findMany.mockResolvedValue([{ id: 'folder-1', name: 'Test Folder' }]);
 
       const result = await service.getSuggestions(mockOrganizationId, 'test', 2);
 

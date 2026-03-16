@@ -6,11 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import {
-  UnauthorizedException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 
 // Mock bcrypt module
 vi.mock('bcryptjs', () => ({
@@ -154,7 +150,7 @@ describe('AuthService', () => {
     Object.defineProperty(service, 'emailService', { value: emailService, writable: true });
     Object.defineProperty(service, 'logger', {
       value: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-      writable: true
+      writable: true,
     });
   });
 
@@ -173,9 +169,7 @@ describe('AuthService', () => {
       (bcrypt.hash as Mock).mockResolvedValue(hashedPassword);
       usersService.create.mockResolvedValue(newUser);
       prismaService.organization.create.mockResolvedValue({});
-      jwtService.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+      jwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
       const result = await service.register(registerDto);
@@ -208,9 +202,7 @@ describe('AuthService', () => {
     it('should throw ConflictException when email already exists', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
 
       expect(usersService.create).not.toHaveBeenCalled();
     });
@@ -220,9 +212,7 @@ describe('AuthService', () => {
       (bcrypt.hash as Mock).mockResolvedValue('hashed');
       usersService.create.mockResolvedValue(mockUser);
       prismaService.organization.create.mockResolvedValue({});
-      jwtService.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+      jwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
       await service.register(registerDto);
@@ -297,9 +287,7 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should return tokens for valid user', async () => {
       usersService.findById.mockResolvedValue(mockUser);
-      jwtService.sign
-        .mockReturnValueOnce('access-token')
-        .mockReturnValueOnce('refresh-token');
+      jwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       prismaService.refreshToken.create.mockResolvedValue({});
 
       const result = await service.login({ id: mockUserId });
@@ -313,9 +301,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when user not found', async () => {
       usersService.findById.mockResolvedValue(null);
 
-      await expect(service.login({ id: 'non-existent' })).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.login({ id: 'non-existent' })).rejects.toThrow(UnauthorizedException);
     });
 
     it('should generate JWT with correct payload', async () => {
@@ -346,9 +332,7 @@ describe('AuthService', () => {
       const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
       // Allow 1 minute tolerance
-      expect(Math.abs(expiresAt.getTime() - sevenDaysFromNow.getTime())).toBeLessThan(
-        60 * 1000,
-      );
+      expect(Math.abs(expiresAt.getTime() - sevenDaysFromNow.getTime())).toBeLessThan(60 * 1000);
     });
   });
 
@@ -412,25 +396,19 @@ describe('AuthService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(service.refreshToken('invalid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken('invalid-token')).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for revoked token', async () => {
       prismaService.refreshToken.findFirst.mockResolvedValue(null);
 
-      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for expired token', async () => {
       prismaService.refreshToken.findFirst.mockResolvedValue(null);
 
-      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when user not found', async () => {
@@ -443,9 +421,7 @@ describe('AuthService', () => {
       prismaService.refreshToken.update.mockResolvedValue({});
       usersService.findById.mockResolvedValue(null);
 
-      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken(validRefreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should verify token with correct secret', async () => {
@@ -522,9 +498,7 @@ describe('AuthService', () => {
     it('should throw NotFoundException when user not found', async () => {
       usersService.findById.mockResolvedValue(null);
 
-      await expect(service.getProfile('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getProfile('non-existent-id')).rejects.toThrow(NotFoundException);
     });
   });
 

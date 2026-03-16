@@ -68,8 +68,8 @@ export const useAuthStore = create<AuthState>()(
         organizations: state.organizations,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export function useAuth() {

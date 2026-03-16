@@ -20,14 +20,11 @@ import { getConfig, getTags, type Environment } from '../lib/config';
 const app = new cdk.App();
 
 // Get environment from context
-const environment =
-  (app.node.tryGetContext("environment") as Environment) ?? "staging";
+const environment = (app.node.tryGetContext('environment') as Environment) ?? 'staging';
 
 // Validate environment
-if (!["staging", "production"].includes(environment)) {
-  throw new Error(
-    `Invalid environment: ${environment}. Must be 'staging' or 'production'.`,
-  );
+if (!['staging', 'production'].includes(environment)) {
+  throw new Error(`Invalid environment: ${environment}. Must be 'staging' or 'production'.`);
 }
 
 // Get configuration for the environment

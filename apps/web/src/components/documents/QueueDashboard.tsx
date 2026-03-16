@@ -61,9 +61,7 @@ function QueueCard({
     ? stats.waiting + stats.active + stats.completed + stats.failed + stats.delayed
     : 0;
 
-  const successRate = stats && total > 0
-    ? ((stats.completed / total) * 100).toFixed(1)
-    : '0';
+  const successRate = stats && total > 0 ? ((stats.completed / total) * 100).toFixed(1) : '0';
 
   return (
     <Card className={cn(stats?.paused && 'opacity-60')}>
@@ -72,7 +70,7 @@ function QueueCard({
           <CardTitle className="text-lg">{queue.name}</CardTitle>
           {stats?.paused && (
             <Badge variant="secondary">
-              <Pause className="h-3 w-3 mr-1" />
+              <Pause className="mr-1 h-3 w-3" />
               Paused
             </Badge>
           )}
@@ -84,21 +82,21 @@ function QueueCard({
           <>
             {/* Stats grid */}
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-2 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-2">
                 <div className="flex items-center justify-center gap-1 text-yellow-600">
                   <Clock className="h-3 w-3" />
                   <span className="text-lg font-bold">{stats.waiting}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Waiting</p>
               </div>
-              <div className="p-2 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-2">
                 <div className="flex items-center justify-center gap-1 text-blue-600">
                   <Loader2 className="h-3 w-3" />
                   <span className="text-lg font-bold">{stats.active}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Active</p>
               </div>
-              <div className="p-2 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-2">
                 <div className="flex items-center justify-center gap-1 text-orange-600">
                   <Timer className="h-3 w-3" />
                   <span className="text-lg font-bold">{stats.delayed}</span>
@@ -108,14 +106,14 @@ function QueueCard({
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="p-2 bg-green-50 dark:bg-green-950 rounded-md">
+              <div className="rounded-md bg-green-50 p-2 dark:bg-green-950">
                 <div className="flex items-center justify-center gap-1 text-green-600">
                   <CheckCircle2 className="h-3 w-3" />
                   <span className="text-lg font-bold">{stats.completed}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Completed</p>
               </div>
-              <div className="p-2 bg-red-50 dark:bg-red-950 rounded-md">
+              <div className="rounded-md bg-red-50 p-2 dark:bg-red-950">
                 <div className="flex items-center justify-center gap-1 text-red-600">
                   <AlertCircle className="h-3 w-3" />
                   <span className="text-lg font-bold">{stats.failed}</span>
@@ -147,7 +145,7 @@ function QueueCard({
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <Play className="h-4 w-4 mr-1" />
+                      <Play className="mr-1 h-4 w-4" />
                       Resume
                     </>
                   )}
@@ -164,7 +162,7 @@ function QueueCard({
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <Pause className="h-4 w-4 mr-1" />
+                      <Pause className="mr-1 h-4 w-4" />
                       Pause
                     </>
                   )}
@@ -209,7 +207,7 @@ function QueueCard({
           </>
         ) : (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading stats...
           </div>
         )}
@@ -228,15 +226,15 @@ function FailedJobRow({
   isRetrying: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between p-3 border rounded-md">
-      <div className="flex-1 min-w-0">
+    <div className="flex items-center justify-between rounded-md border p-3">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm capitalize">{job.type}</span>
+          <span className="text-sm font-medium capitalize">{job.type}</span>
           <Badge variant="outline" className="text-[10px]">
             Attempt {job.attempts ?? 0}/{job.maxAttempts ?? 3}
           </Badge>
         </div>
-        <p className="text-xs text-destructive truncate">{job.error}</p>
+        <p className="truncate text-xs text-destructive">{job.error}</p>
         <p className="text-[10px] text-muted-foreground">
           {new Date(job.createdAt).toLocaleString()}
         </p>
@@ -251,7 +249,7 @@ function FailedJobRow({
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <>
-            <RefreshCw className="h-4 w-4 mr-1" />
+            <RefreshCw className="mr-1 h-4 w-4" />
             Retry
           </>
         )}
@@ -331,16 +329,16 @@ export function QueueDashboard() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => refetchStats()}>
-                <RefreshCw className="h-4 w-4 mr-1" />
+                <RefreshCw className="mr-1 h-4 w-4" />
                 Refresh
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" disabled={isCleaning}>
                     {isCleaning ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="mr-1 h-4 w-4" />
                     )}
                     Cleanup
                   </Button>
@@ -349,15 +347,13 @@ export function QueueDashboard() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Clean Up Old Jobs?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will remove all completed and failed jobs older than 7 days.
-                      This helps keep the system performant.
+                      This will remove all completed and failed jobs older than 7 days. This helps
+                      keep the system performant.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleCleanup}>
-                      Clean Up
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleCleanup}>Clean Up</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -368,23 +364,23 @@ export function QueueDashboard() {
         {totalStats && (
           <CardContent>
             <div className="grid grid-cols-5 gap-4 text-center">
-              <div className="p-3 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-3">
                 <p className="text-2xl font-bold text-yellow-600">{totalStats.waiting}</p>
                 <p className="text-xs text-muted-foreground">Waiting</p>
               </div>
-              <div className="p-3 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-3">
                 <p className="text-2xl font-bold text-blue-600">{totalStats.active}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
-              <div className="p-3 bg-muted rounded-md">
+              <div className="rounded-md bg-muted p-3">
                 <p className="text-2xl font-bold text-orange-600">{totalStats.delayed}</p>
                 <p className="text-xs text-muted-foreground">Delayed</p>
               </div>
-              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-md">
+              <div className="rounded-md bg-green-50 p-3 dark:bg-green-950">
                 <p className="text-2xl font-bold text-green-600">{totalStats.completed}</p>
                 <p className="text-xs text-muted-foreground">Completed</p>
               </div>
-              <div className="p-3 bg-red-50 dark:bg-red-950 rounded-md">
+              <div className="rounded-md bg-red-50 p-3 dark:bg-red-950">
                 <p className="text-2xl font-bold text-red-600">{totalStats.failed}</p>
                 <p className="text-xs text-muted-foreground">Failed</p>
               </div>
@@ -432,7 +428,7 @@ export function QueueDashboard() {
             <CardDescription>Jobs that failed processing and may need attention</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            <div className="max-h-[300px] space-y-2 overflow-y-auto">
               {failedJobs.map((job) => (
                 <FailedJobRow
                   key={job.id}

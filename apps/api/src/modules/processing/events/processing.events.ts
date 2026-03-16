@@ -15,11 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
-import {
-  QUEUE_NAMES,
-  QueueName,
-  ProcessingJobType,
-} from '../queues/queue.constants';
+import { QUEUE_NAMES, QueueName, ProcessingJobType } from '../queues/queue.constants';
 
 /**
  * Event payload for job completion
@@ -151,10 +147,7 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Handle job completed event
    */
-  private async handleJobCompleted(
-    queueName: QueueName,
-    event: JobCompletedEvent,
-  ): Promise<void> {
+  private async handleJobCompleted(queueName: QueueName, event: JobCompletedEvent): Promise<void> {
     const { jobId, returnvalue } = event;
 
     this.logger.log(`Job completed: ${jobId} in queue ${queueName}`);
@@ -199,10 +192,7 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Handle job failed event
    */
-  private async handleJobFailed(
-    queueName: QueueName,
-    event: JobFailedEvent,
-  ): Promise<void> {
+  private async handleJobFailed(queueName: QueueName, event: JobFailedEvent): Promise<void> {
     const { jobId, failedReason } = event;
 
     this.logger.error(`Job failed: ${jobId} in queue ${queueName} - ${failedReason}`);
@@ -246,10 +236,7 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Handle job stalled event
    */
-  private async handleJobStalled(
-    queueName: QueueName,
-    event: JobStalledEvent,
-  ): Promise<void> {
+  private async handleJobStalled(queueName: QueueName, event: JobStalledEvent): Promise<void> {
     const { jobId } = event;
 
     this.logger.warn(`Job stalled: ${jobId} in queue ${queueName}`);
@@ -295,10 +282,7 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Handle job progress event
    */
-  private async handleJobProgress(
-    queueName: QueueName,
-    event: JobProgressEvent,
-  ): Promise<void> {
+  private async handleJobProgress(queueName: QueueName, event: JobProgressEvent): Promise<void> {
     const { jobId, data } = event;
     const progress = typeof data === 'number' ? data : (data.percentage as number) || 0;
 
@@ -403,14 +387,18 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
           });
 
           // Add to queue
-          await this.embeddingQueue.add('generate-embedding', {
-            documentId,
-            s3Key: document.s3Key,
-            organizationId: document.organizationId,
-          }, {
-            jobId: embeddingJob.id,
-            priority: 4,
-          });
+          await this.embeddingQueue.add(
+            'generate-embedding',
+            {
+              documentId,
+              s3Key: document.s3Key,
+              organizationId: document.organizationId,
+            },
+            {
+              jobId: embeddingJob.id,
+              priority: 4,
+            },
+          );
         }
       }
     }
@@ -448,14 +436,18 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
             },
           });
 
-          await this.aiClassifyQueue.add('classify-document', {
-            documentId,
-            s3Key: document.s3Key,
-            organizationId: document.organizationId,
-          }, {
-            jobId: classifyJob.id,
-            priority: 3,
-          });
+          await this.aiClassifyQueue.add(
+            'classify-document',
+            {
+              documentId,
+              s3Key: document.s3Key,
+              organizationId: document.organizationId,
+            },
+            {
+              jobId: classifyJob.id,
+              priority: 3,
+            },
+          );
         }
       }
     }
@@ -464,10 +456,7 @@ export class ProcessingEventsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Create an audit log entry
    */
-  private async createAuditLog(
-    action: string,
-    details: Record<string, unknown>,
-  ): Promise<void> {
+  private async createAuditLog(action: string, details: Record<string, unknown>): Promise<void> {
     try {
       await this.prisma.auditLog.create({
         data: {

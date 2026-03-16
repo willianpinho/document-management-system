@@ -72,9 +72,7 @@ export class LambdaProcessorsConstruct extends Construct {
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
       tracing: lambda.Tracing.ACTIVE,
-      logRetention: isProduction
-        ? logs.RetentionDays.THREE_MONTHS
-        : logs.RetentionDays.ONE_WEEK,
+      logRetention: isProduction ? logs.RetentionDays.THREE_MONTHS : logs.RetentionDays.ONE_WEEK,
     };
 
     // OCR Processor - High memory for Textract processing
@@ -105,7 +103,7 @@ export class LambdaProcessorsConstruct extends Construct {
           'textract:GetDocumentAnalysis',
         ],
         resources: ['*'],
-      })
+      }),
     );
 
     // PDF Processor - Medium memory for PDF operations
@@ -172,7 +170,13 @@ export class LambdaProcessorsConstruct extends Construct {
     });
 
     // Grant S3 permissions to all processors
-    [ocrProcessor, pdfProcessor, thumbnailProcessor, embeddingProcessor, aiClassifyProcessor].forEach((fn) => {
+    [
+      ocrProcessor,
+      pdfProcessor,
+      thumbnailProcessor,
+      embeddingProcessor,
+      aiClassifyProcessor,
+    ].forEach((fn) => {
       documentsBucket.grantRead(fn);
       thumbnailsBucket.grantReadWrite(fn);
     });
@@ -183,7 +187,7 @@ export class LambdaProcessorsConstruct extends Construct {
         new iam.PolicyStatement({
           actions: ['secretsmanager:GetSecretValue'],
           resources: [`arn:aws:secretsmanager:*:*:secret:dms/*`],
-        })
+        }),
       );
     });
 
@@ -192,35 +196,35 @@ export class LambdaProcessorsConstruct extends Construct {
       new lambdaEventSources.SqsEventSource(ocrQueue, {
         batchSize: 1,
         maxConcurrency: isProduction ? 10 : 2,
-      })
+      }),
     );
 
     pdfProcessor.addEventSource(
       new lambdaEventSources.SqsEventSource(pdfQueue, {
         batchSize: 5,
         maxConcurrency: isProduction ? 20 : 5,
-      })
+      }),
     );
 
     thumbnailProcessor.addEventSource(
       new lambdaEventSources.SqsEventSource(thumbnailQueue, {
         batchSize: 10,
         maxConcurrency: isProduction ? 50 : 10,
-      })
+      }),
     );
 
     embeddingProcessor.addEventSource(
       new lambdaEventSources.SqsEventSource(embeddingQueue, {
         batchSize: 5,
         maxConcurrency: isProduction ? 10 : 3,
-      })
+      }),
     );
 
     aiClassifyProcessor.addEventSource(
       new lambdaEventSources.SqsEventSource(aiClassifyQueue, {
         batchSize: 1,
         maxConcurrency: isProduction ? 5 : 2,
-      })
+      }),
     );
 
     this.processors = {

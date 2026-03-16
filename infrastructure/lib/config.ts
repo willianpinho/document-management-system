@@ -4,7 +4,7 @@
  * Environment-specific configuration for staging and production deployments.
  */
 
-export type Environment = "staging" | "production";
+export type Environment = 'staging' | 'production';
 
 export interface EnvironmentConfig {
   readonly environment: Environment;
@@ -71,10 +71,8 @@ export interface EnvironmentConfig {
  * Get configuration for the specified environment
  */
 export function getConfig(environment: Environment): EnvironmentConfig {
-  const account =
-    process.env.CDK_DEFAULT_ACCOUNT ?? process.env.AWS_ACCOUNT_ID ?? "";
-  const region =
-    process.env.CDK_DEFAULT_REGION ?? process.env.AWS_REGION ?? "us-east-1";
+  const account = process.env.CDK_DEFAULT_ACCOUNT ?? process.env.AWS_ACCOUNT_ID ?? '';
+  const region = process.env.CDK_DEFAULT_REGION ?? process.env.AWS_REGION ?? 'us-east-1';
 
   const baseConfig = {
     account,
@@ -82,10 +80,10 @@ export function getConfig(environment: Environment): EnvironmentConfig {
   };
 
   switch (environment) {
-    case "staging":
+    case 'staging':
       return {
         ...baseConfig,
-        environment: "staging",
+        environment: 'staging',
 
         vpc: {
           maxAzs: 2,
@@ -93,7 +91,7 @@ export function getConfig(environment: Environment): EnvironmentConfig {
         },
 
         database: {
-          instanceClass: "db.t3.medium",
+          instanceClass: 'db.t3.medium',
           allocatedStorage: 50,
           maxAllocatedStorage: 100,
           multiAz: false, // Single AZ for staging
@@ -102,7 +100,7 @@ export function getConfig(environment: Environment): EnvironmentConfig {
         },
 
         cache: {
-          nodeType: "cache.t3.micro",
+          nodeType: 'cache.t3.micro',
           numCacheNodes: 1,
         },
 
@@ -127,10 +125,10 @@ export function getConfig(environment: Environment): EnvironmentConfig {
         },
       };
 
-    case "production":
+    case 'production':
       return {
         ...baseConfig,
-        environment: "production",
+        environment: 'production',
 
         vpc: {
           maxAzs: 2,
@@ -138,7 +136,7 @@ export function getConfig(environment: Environment): EnvironmentConfig {
         },
 
         database: {
-          instanceClass: "db.t3.medium",
+          instanceClass: 'db.t3.medium',
           allocatedStorage: 100,
           maxAllocatedStorage: 500,
           multiAz: true,
@@ -147,7 +145,7 @@ export function getConfig(environment: Environment): EnvironmentConfig {
         },
 
         cache: {
-          nodeType: "cache.t3.small",
+          nodeType: 'cache.t3.small',
           numCacheNodes: 2,
         },
 
@@ -190,8 +188,8 @@ export function resourceName(config: EnvironmentConfig, name: string): string {
  */
 export function getTags(config: EnvironmentConfig): Record<string, string> {
   return {
-    Project: "document-management-system",
+    Project: 'document-management-system',
     Environment: config.environment,
-    ManagedBy: "cdk",
+    ManagedBy: 'cdk',
   };
 }

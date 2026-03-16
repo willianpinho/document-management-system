@@ -42,7 +42,12 @@ interface SemanticSearchBarProps {
   className?: string;
 }
 
-const modeOptions: { value: SearchMode; label: string; icon: React.ReactNode; description: string }[] = [
+const modeOptions: {
+  value: SearchMode;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}[] = [
   {
     value: 'hybrid',
     label: 'Hybrid',
@@ -86,7 +91,7 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
       showFilters = true,
       className,
     },
-    ref
+    ref,
   ) {
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -98,7 +103,7 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
         search.setQuery(suggestion);
         setShowSuggestions(false);
       },
-      [search]
+      [search],
     );
 
     const handleKeyDown = useCallback(
@@ -111,7 +116,7 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
           search.performSearch();
         }
       },
-      [search]
+      [search],
     );
 
     return (
@@ -150,7 +155,7 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
 
             {/* Suggestions dropdown */}
             {showSuggestions && search.suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover p-1 shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border bg-popover p-1 shadow-lg">
                 {search.suggestions.map((suggestion, i) => (
                   <button
                     key={i}
@@ -185,16 +190,14 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
                     onClick={() => search.setMode(option.value)}
                     className={cn(
                       'flex flex-col items-start gap-1',
-                      search.mode === option.value && 'bg-muted'
+                      search.mode === option.value && 'bg-muted',
                     )}
                   >
                     <div className="flex items-center gap-2">
                       {option.icon}
                       <span className="font-medium">{option.label}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {option.description}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{option.description}</span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -377,5 +380,5 @@ export const SemanticSearchBar = forwardRef<HTMLInputElement, SemanticSearchBarP
         )}
       </div>
     );
-  }
+  },
 );

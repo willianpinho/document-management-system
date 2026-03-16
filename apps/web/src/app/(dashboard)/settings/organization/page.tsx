@@ -188,9 +188,7 @@ export default function OrganizationSettingsPage() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Organization Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your organization, team members, and billing
-        </p>
+        <p className="text-muted-foreground">Manage your organization, team members, and billing</p>
       </div>
 
       <div className="space-y-6">
@@ -231,9 +229,7 @@ export default function OrganizationSettingsPage() {
                     className="flex-1 bg-muted"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Organization URL cannot be changed
-                </p>
+                <p className="text-xs text-muted-foreground">Organization URL cannot be changed</p>
               </div>
             </div>
 
@@ -257,9 +253,7 @@ export default function OrganizationSettingsPage() {
                   <CreditCard className="h-5 w-5" />
                   Plan & Usage
                 </CardTitle>
-                <CardDescription>
-                  Your current plan and resource usage
-                </CardDescription>
+                <CardDescription>Your current plan and resource usage</CardDescription>
               </div>
               <Badge>Business</Badge>
             </div>
@@ -294,10 +288,7 @@ export default function OrganizationSettingsPage() {
                     </span>
                   )}
                 </div>
-                <Progress
-                  value={(memberCount / memberLimit) * 100}
-                  className="h-2"
-                />
+                <Progress value={(memberCount / memberLimit) * 100} className="h-2" />
               </div>
             </div>
 
@@ -323,9 +314,7 @@ export default function OrganizationSettingsPage() {
                   <Users className="h-5 w-5" />
                   Team Members
                 </CardTitle>
-                <CardDescription>
-                  Manage who has access to this organization
-                </CardDescription>
+                <CardDescription>Manage who has access to this organization</CardDescription>
               </div>
               <Button onClick={() => setIsInviteOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -347,9 +336,14 @@ export default function OrganizationSettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={member.user.avatarUrl || ''} alt={member.user.name || ''} />
+                        <AvatarImage
+                          src={member.user.avatarUrl || ''}
+                          alt={member.user.name || ''}
+                        />
                         <AvatarFallback>
-                          {member.user.name ? getInitials(member.user.name) : (member.user.email?.[0] || 'U').toUpperCase()}
+                          {member.user.name
+                            ? getInitials(member.user.name)
+                            : (member.user.email?.[0] || 'U').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -384,15 +378,21 @@ export default function OrganizationSettingsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.userId, 'ADMIN')}>
+                            <DropdownMenuItem
+                              onClick={() => handleUpdateRole(member.userId, 'ADMIN')}
+                            >
                               <Shield className="mr-2 h-4 w-4" />
                               Make Admin
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.userId, 'EDITOR')}>
+                            <DropdownMenuItem
+                              onClick={() => handleUpdateRole(member.userId, 'EDITOR')}
+                            >
                               <Shield className="mr-2 h-4 w-4" />
                               Make Editor
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.userId, 'VIEWER')}>
+                            <DropdownMenuItem
+                              onClick={() => handleUpdateRole(member.userId, 'VIEWER')}
+                            >
                               <Shield className="mr-2 h-4 w-4" />
                               Make Viewer
                             </DropdownMenuItem>
@@ -431,9 +431,7 @@ export default function OrganizationSettingsPage() {
                   <Key className="h-5 w-5" />
                   API Keys
                 </CardTitle>
-                <CardDescription>
-                  Manage API keys for programmatic access
-                </CardDescription>
+                <CardDescription>Manage API keys for programmatic access</CardDescription>
               </div>
               <Button onClick={() => setIsCreateKeyOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -512,21 +510,22 @@ export default function OrganizationSettingsPage() {
       </div>
 
       {/* Invite member dialog */}
-      <Dialog open={isInviteOpen} onOpenChange={(open) => {
-        if (!open) {
-          setInviteError(null);
-          setInviteSuccess(false);
-          setInviteEmail('');
-          setInviteRole('VIEWER');
-        }
-        setIsInviteOpen(open);
-      }}>
+      <Dialog
+        open={isInviteOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setInviteError(null);
+            setInviteSuccess(false);
+            setInviteEmail('');
+            setInviteRole('VIEWER');
+          }
+          setIsInviteOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Invite team member</DialogTitle>
-            <DialogDescription>
-              Send an invitation to join your organization
-            </DialogDescription>
+            <DialogDescription>Send an invitation to join your organization</DialogDescription>
           </DialogHeader>
 
           {inviteError && (
@@ -562,7 +561,11 @@ export default function OrganizationSettingsPage() {
               <label htmlFor="inviteRole" className="text-sm font-medium">
                 Role
               </label>
-              <Select value={inviteRole} onValueChange={setInviteRole} disabled={inviteMember.isPending}>
+              <Select
+                value={inviteRole}
+                onValueChange={setInviteRole}
+                disabled={inviteMember.isPending}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -576,7 +579,11 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsInviteOpen(false)} disabled={inviteMember.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => setIsInviteOpen(false)}
+              disabled={inviteMember.isPending}
+            >
               Cancel
             </Button>
             <Button onClick={handleInvite} disabled={!inviteEmail.trim() || inviteMember.isPending}>
@@ -597,22 +604,23 @@ export default function OrganizationSettingsPage() {
       </Dialog>
 
       {/* Create API key dialog */}
-      <Dialog open={isCreateKeyOpen} onOpenChange={(open) => {
-        if (!open) {
-          setCreatedApiKey(null);
-          setApiKeyError(null);
-          setNewKeyName('');
-        }
-        setIsCreateKeyOpen(open);
-      }}>
+      <Dialog
+        open={isCreateKeyOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreatedApiKey(null);
+            setApiKeyError(null);
+            setNewKeyName('');
+          }
+          setIsCreateKeyOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {createdApiKey ? 'API Key Created' : 'Create API key'}
-            </DialogTitle>
+            <DialogTitle>{createdApiKey ? 'API Key Created' : 'Create API key'}</DialogTitle>
             <DialogDescription>
               {createdApiKey
-                ? 'Make sure to copy your API key now. You won\'t be able to see it again!'
+                ? "Make sure to copy your API key now. You won't be able to see it again!"
                 : 'Create a new API key for programmatic access'}
             </DialogDescription>
           </DialogHeader>
@@ -628,7 +636,7 @@ export default function OrganizationSettingsPage() {
             <div className="space-y-4 py-4">
               <div className="rounded-lg bg-amber-50 p-4 dark:bg-amber-950/20">
                 <div className="flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+                  <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
                   <div>
                     <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                       Copy your API key
@@ -643,7 +651,7 @@ export default function OrganizationSettingsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Your API Key</label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded-lg bg-muted p-3 text-sm font-mono break-all">
+                  <code className="flex-1 break-all rounded-lg bg-muted p-3 font-mono text-sm">
                     {createdApiKey.key}
                   </code>
                   <Button
@@ -657,8 +665,12 @@ export default function OrganizationSettingsPage() {
               </div>
 
               <div className="text-sm text-muted-foreground">
-                <p><strong>Name:</strong> {createdApiKey.name}</p>
-                <p><strong>Prefix:</strong> {createdApiKey.keyPrefix}...</p>
+                <p>
+                  <strong>Name:</strong> {createdApiKey.name}
+                </p>
+                <p>
+                  <strong>Prefix:</strong> {createdApiKey.keyPrefix}...
+                </p>
               </div>
             </div>
           ) : (
@@ -681,9 +693,7 @@ export default function OrganizationSettingsPage() {
 
           <DialogFooter>
             {createdApiKey ? (
-              <Button onClick={() => setIsCreateKeyOpen(false)}>
-                Done
-              </Button>
+              <Button onClick={() => setIsCreateKeyOpen(false)}>Done</Button>
             ) : (
               <>
                 <Button
@@ -720,9 +730,7 @@ export default function OrganizationSettingsPage() {
               <Receipt className="h-5 w-5" />
               Invoices
             </DialogTitle>
-            <DialogDescription>
-              View and download your billing invoices
-            </DialogDescription>
+            <DialogDescription>View and download your billing invoices</DialogDescription>
           </DialogHeader>
           <div className="py-8 text-center">
             <Receipt className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -734,9 +742,7 @@ export default function OrganizationSettingsPage() {
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowInvoicesDialog(false)}>
-              Close
-            </Button>
+            <Button onClick={() => setShowInvoicesDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -749,9 +755,7 @@ export default function OrganizationSettingsPage() {
               <Sparkles className="h-5 w-5 text-primary" />
               Upgrade Your Plan
             </DialogTitle>
-            <DialogDescription>
-              Unlock more features and storage
-            </DialogDescription>
+            <DialogDescription>Unlock more features and storage</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="rounded-lg border p-4">
@@ -802,10 +806,12 @@ export default function OrganizationSettingsPage() {
             <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              window.open('mailto:sales@dms.app?subject=Enterprise Plan Inquiry', '_blank');
-              setShowUpgradeDialog(false);
-            }}>
+            <Button
+              onClick={() => {
+                window.open('mailto:sales@dms.app?subject=Enterprise Plan Inquiry', '_blank');
+                setShowUpgradeDialog(false);
+              }}
+            >
               Contact Sales
             </Button>
           </DialogFooter>

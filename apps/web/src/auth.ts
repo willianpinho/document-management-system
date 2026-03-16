@@ -30,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 email: credentials.email,
                 password: credentials.password,
               }),
-            }
+            },
           );
 
           if (!response.ok) {
@@ -73,7 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   idToken: account.id_token,
                   accessToken: account.access_token,
                 }),
-              }
+              },
             );
 
             if (response.ok) {
@@ -111,7 +111,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             body: JSON.stringify({
               refreshToken: token.refreshToken,
             }),
-          }
+          },
         );
 
         if (!response.ok) {

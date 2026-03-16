@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import {
-  Folder,
-  FolderOpen,
-  ChevronRight,
-  ChevronDown,
-  Loader2,
-  Home,
-} from 'lucide-react';
+import { Folder, FolderOpen, ChevronRight, ChevronDown, Loader2, Home } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -64,10 +57,8 @@ function FolderNode({
     <div>
       <div
         className={cn(
-          'flex items-center gap-1 rounded-md text-sm transition-colors cursor-pointer',
-          isSelected
-            ? 'bg-primary text-primary-foreground'
-            : 'hover:bg-muted'
+          'flex cursor-pointer items-center gap-1 rounded-md text-sm transition-colors',
+          isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
         )}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
@@ -79,8 +70,8 @@ function FolderNode({
             onToggle(folder.id);
           }}
           className={cn(
-            'flex h-6 w-6 items-center justify-center rounded transition-colors shrink-0',
-            hasChildren ? 'hover:bg-black/10' : 'invisible'
+            'flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors',
+            hasChildren ? 'hover:bg-black/10' : 'invisible',
           )}
         >
           {hasChildren &&
@@ -138,12 +129,8 @@ export function FolderPickerDialog({
   excludeFolderId,
   currentFolderId,
 }: FolderPickerDialogProps) {
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(
-    currentFolderId ?? null
-  );
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(currentFolderId ?? null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: folders, isLoading } = useFolderTree();
 
@@ -177,17 +164,14 @@ export function FolderPickerDialog({
     onOpenChange(newOpen);
   };
 
-  const filteredFolders =
-    folders?.filter((f) => f.id !== excludeFolderId) || [];
+  const filteredFolders = folders?.filter((f) => f.id !== excludeFolderId) || [];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && (
-            <DialogDescription>{description}</DialogDescription>
-          )}
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
         <div className="max-h-80 overflow-y-auto rounded-md border">
@@ -195,8 +179,8 @@ export function FolderPickerDialog({
           <button
             type="button"
             className={cn(
-              'w-full flex items-center gap-2 p-3 hover:bg-muted text-left transition-colors',
-              selectedFolderId === null && 'bg-primary text-primary-foreground'
+              'flex w-full items-center gap-2 p-3 text-left transition-colors hover:bg-muted',
+              selectedFolderId === null && 'bg-primary text-primary-foreground',
             )}
             onClick={() => setSelectedFolderId(null)}
           >
@@ -205,9 +189,7 @@ export function FolderPickerDialog({
           </button>
 
           {/* Separator */}
-          {filteredFolders.length > 0 && (
-            <div className="border-t" />
-          )}
+          {filteredFolders.length > 0 && <div className="border-t" />}
 
           {isLoading ? (
             <div className="flex items-center justify-center p-6">
@@ -236,17 +218,11 @@ export function FolderPickerDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isSubmitting}
-          >
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button onClick={handleSelect} disabled={isSubmitting}>
-            {isSubmitting && (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            )}
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Select
           </Button>
         </DialogFooter>

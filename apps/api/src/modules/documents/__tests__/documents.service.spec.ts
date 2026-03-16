@@ -383,17 +383,17 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException when document not found', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should not return deleted documents', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne(mockDocumentId, mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockDocumentId, mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockPrisma.document.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -408,9 +408,9 @@ describe('DocumentsService', () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
       const differentOrgId = 'different-org-id';
-      await expect(
-        service.findOne(mockDocumentId, differentOrgId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockDocumentId, differentOrgId)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockPrisma.document.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -512,9 +512,9 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException when document not found', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.remove('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -538,17 +538,15 @@ describe('DocumentsService', () => {
     it('should generate URL for correct S3 key', async () => {
       await service.getDownloadUrl(mockDocumentId, mockOrganizationId);
 
-      expect(mockStorage.getPresignedDownloadUrlIfExists).toHaveBeenCalledWith(
-        mockDocument.s3Key,
-      );
+      expect(mockStorage.getPresignedDownloadUrlIfExists).toHaveBeenCalledWith(mockDocument.s3Key);
     });
 
     it('should throw NotFoundException when document not found', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getDownloadUrl('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getDownloadUrl('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -575,11 +573,7 @@ describe('DocumentsService', () => {
     it('should call processingService.addJob for each operation', async () => {
       await service.triggerProcessing(mockDocumentId, mockOrganizationId, operations);
 
-      expect(mockProcessing.addJob).toHaveBeenCalledWith(
-        mockDocumentId,
-        'OCR',
-        {},
-      );
+      expect(mockProcessing.addJob).toHaveBeenCalledWith(mockDocumentId, 'OCR', {});
     });
 
     it('should throw NotFoundException when document not found', async () => {
@@ -625,9 +619,9 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException when document not found', async () => {
       mockPrisma.document.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.confirmUpload('non-existent-id', mockOrganizationId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.confirmUpload('non-existent-id', mockOrganizationId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -686,9 +680,7 @@ describe('DocumentsService', () => {
       const buffer1 = Buffer.from('content1');
       const buffer2 = Buffer.from('content2');
 
-      mockPrisma.document.findFirst
-        .mockResolvedValueOnce(doc1)
-        .mockResolvedValueOnce(doc2);
+      mockPrisma.document.findFirst.mockResolvedValueOnce(doc1).mockResolvedValueOnce(doc2);
 
       const createMockStream = (buffer: Buffer) => ({
         async *[Symbol.asyncIterator]() {
@@ -700,10 +692,7 @@ describe('DocumentsService', () => {
         .mockResolvedValueOnce(createMockStream(buffer1))
         .mockResolvedValueOnce(createMockStream(buffer2));
 
-      const result = await service.getDocumentBuffers(
-        ['doc-1', 'doc-2'],
-        mockOrganizationId,
-      );
+      const result = await service.getDocumentBuffers(['doc-1', 'doc-2'], mockOrganizationId);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(buffer1);

@@ -40,10 +40,14 @@ export class StorageService {
 
     const accessKeyId = isValidEnvValue(rawAccessKeyId)
       ? rawAccessKeyId
-      : (isLocalEndpoint ? 'minioadmin' : undefined);
+      : isLocalEndpoint
+        ? 'minioadmin'
+        : undefined;
     const secretAccessKey = isValidEnvValue(rawSecretAccessKey)
       ? rawSecretAccessKey
-      : (isLocalEndpoint ? 'minioadmin' : undefined);
+      : isLocalEndpoint
+        ? 'minioadmin'
+        : undefined;
 
     this.s3Client = new S3Client({
       region: this.configService.get<string>('S3_REGION', 'us-east-1'),
@@ -51,18 +55,21 @@ export class StorageService {
         endpoint,
         forcePathStyle: true,
       }),
-      ...(accessKeyId && secretAccessKey && {
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-        },
-      }),
+      ...(accessKeyId &&
+        secretAccessKey && {
+          credentials: {
+            accessKeyId,
+            secretAccessKey,
+          },
+        }),
     });
 
     // Log credential source for debugging
     const credentialSource = isValidEnvValue(rawAccessKeyId)
       ? 'environment'
-      : (isLocalEndpoint ? 'MinIO defaults' : 'none');
+      : isLocalEndpoint
+        ? 'MinIO defaults'
+        : 'none';
 
     this.logger.log(
       `Storage configured: endpoint=${endpoint || 'AWS S3'}, bucket=${this.bucket}, credentials=${credentialSource}${isLocalEndpoint ? ' (local MinIO)' : ''}`,

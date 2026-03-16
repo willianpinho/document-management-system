@@ -221,7 +221,8 @@ export class SearchQueryDto {
   mimeType?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by creation date (ISO 8601 date, returns documents created on or after this date)',
+    description:
+      'Filter by creation date (ISO 8601 date, returns documents created on or after this date)',
     example: '2025-01-01',
   })
   @IsString()

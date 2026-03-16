@@ -126,39 +126,46 @@ export function FolderShareDialog({
     }
   }, [email, permission, canShare, onShareWithUser]);
 
-  const handleToggleLink = useCallback(async (enabled: boolean) => {
-    setLinkEnabled(enabled);
-    if (enabled && !shares?.link) {
-      try {
-        await onCreateLink({
-          permission: linkPermission,
-          expiresAt: linkExpiry || undefined,
-          password: linkPassword || undefined,
-          maxUses: linkMaxUses ? parseInt(linkMaxUses, 10) : undefined,
-        });
-      } catch {
-        setLinkEnabled(false);
+  const handleToggleLink = useCallback(
+    async (enabled: boolean) => {
+      setLinkEnabled(enabled);
+      if (enabled && !shares?.link) {
+        try {
+          await onCreateLink({
+            permission: linkPermission,
+            expiresAt: linkExpiry || undefined,
+            password: linkPassword || undefined,
+            maxUses: linkMaxUses ? parseInt(linkMaxUses, 10) : undefined,
+          });
+        } catch {
+          setLinkEnabled(false);
+        }
+      } else if (!enabled && shares?.link) {
+        await onDeleteLink();
       }
-    } else if (!enabled && shares?.link) {
-      await onDeleteLink();
-    }
-  }, [shares?.link, linkPermission, linkExpiry, linkPassword, linkMaxUses, onCreateLink, onDeleteLink]);
+    },
+    [
+      shares?.link,
+      linkPermission,
+      linkExpiry,
+      linkPassword,
+      linkMaxUses,
+      onCreateLink,
+      onDeleteLink,
+    ],
+  );
 
   const toggleInheritedExpand = (folderId: string) => {
     setExpandedInherited((prev) =>
-      prev.includes(folderId)
-        ? prev.filter((id) => id !== folderId)
-        : [...prev, folderId]
+      prev.includes(folderId) ? prev.filter((id) => id !== folderId) : [...prev, folderId],
     );
   };
 
-  const shareUrl = shares?.link
-    ? getShareUrl(shares.link.token)
-    : '';
+  const shareUrl = shares?.link ? getShareUrl(shares.link.token) : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderOpen className="h-5 w-5" />
@@ -210,11 +217,7 @@ export function FolderShareDialog({
                   Allow user to share with others
                 </Label>
               </div>
-              <Button
-                onClick={handleShare}
-                disabled={!email.trim() || isSharing}
-                size="sm"
-              >
+              <Button onClick={handleShare} disabled={!email.trim() || isSharing} size="sm">
                 {isSharing ? 'Sharing...' : 'Share'}
               </Button>
             </div>
@@ -232,18 +235,17 @@ export function FolderShareDialog({
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatarUrl || undefined} alt={user.name || user.email} />
+                        <AvatarImage
+                          src={user.avatarUrl || undefined}
+                          alt={user.name || user.email}
+                        />
                         <AvatarFallback>
                           {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">
-                          {user.name || user.email}
-                        </p>
-                        {user.name && (
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
-                        )}
+                        <p className="text-sm font-medium">{user.name || user.email}</p>
+                        {user.name && <p className="text-xs text-muted-foreground">{user.email}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -320,7 +322,9 @@ export function FolderShareDialog({
                               </AvatarFallback>
                             </Avatar>
                             <span>{user.name || user.email}</span>
-                            <span className="text-xs">({permissionLabels[user.permission]?.label || user.permission})</span>
+                            <span className="text-xs">
+                              ({permissionLabels[user.permission]?.label || user.permission})
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -368,7 +372,11 @@ export function FolderShareDialog({
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setShowAdvancedLink(!showAdvancedLink)}
                   >
-                    {showAdvancedLink ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {showAdvancedLink ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
                     Advanced options
                   </button>
 
@@ -427,16 +435,8 @@ export function FolderShareDialog({
             {linkEnabled && shares?.link && (
               <div className="space-y-3 rounded-md bg-muted p-3">
                 <div className="flex items-center gap-2">
-                  <Input
-                    value={shareUrl}
-                    readOnly
-                    className="bg-background text-sm"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={onCopyLink}
-                  >
+                  <Input value={shareUrl} readOnly className="bg-background text-sm" />
+                  <Button variant="outline" size="icon" onClick={onCopyLink}>
                     {linkCopied ? (
                       <Check className="h-4 w-4 text-green-500" />
                     ) : (
@@ -465,7 +465,9 @@ export function FolderShareDialog({
                   {shares.link.maxUses && (
                     <div className="flex items-center gap-1">
                       <Hash className="h-3 w-3" />
-                      <span>{shares.link.useCount}/{shares.link.maxUses} uses</span>
+                      <span>
+                        {shares.link.useCount}/{shares.link.maxUses} uses
+                      </span>
                     </div>
                   )}
                 </div>

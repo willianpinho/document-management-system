@@ -38,9 +38,7 @@ function AuthCallbackContent() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
           <FileText className="h-8 w-8 text-destructive" />
         </div>
-        <h1 className="text-xl font-semibold text-destructive">
-          Authentication Failed
-        </h1>
+        <h1 className="text-xl font-semibold text-destructive">Authentication Failed</h1>
         <p className="text-center text-muted-foreground">{error}</p>
         <button
           onClick={() => router.push('/login')}

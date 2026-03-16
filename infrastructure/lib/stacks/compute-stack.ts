@@ -40,7 +40,15 @@ export class ComputeStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
     super(scope, id, props);
 
-    const { config, vpc, albSecurityGroup, apiSecurityGroup, documentsBucket, databaseSecret, cacheCluster } = props;
+    const {
+      config,
+      vpc,
+      albSecurityGroup,
+      apiSecurityGroup,
+      documentsBucket,
+      databaseSecret,
+      cacheCluster,
+    } = props;
 
     // Create ECR Repository for API
     const apiRepository = new ecr.Repository(this, 'ApiRepository', {
@@ -55,9 +63,8 @@ export class ComputeStack extends cdk.Stack {
           tagStatus: ecr.TagStatus.ANY,
         },
       ],
-      removalPolicy: config.environment === 'production'
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       emptyOnDelete: config.environment !== 'production',
     });
 
@@ -72,12 +79,12 @@ export class ComputeStack extends cdk.Stack {
     // Create Log Group for API
     const apiLogGroup = new logs.LogGroup(this, 'ApiLogGroup', {
       logGroupName: `/ecs/${resourceName(config, 'api')}`,
-      retention: config.environment === 'production'
-        ? logs.RetentionDays.THREE_MONTHS
-        : logs.RetentionDays.ONE_WEEK,
-      removalPolicy: config.environment === 'production'
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
+      retention:
+        config.environment === 'production'
+          ? logs.RetentionDays.THREE_MONTHS
+          : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        config.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
 
     // Create Task Definition
@@ -105,11 +112,8 @@ export class ComputeStack extends cdk.Stack {
           's3:GetObjectVersion',
           's3:ListBucket',
         ],
-        resources: [
-          documentsBucket.bucketArn,
-          `${documentsBucket.bucketArn}/*`,
-        ],
-      })
+        resources: [documentsBucket.bucketArn, `${documentsBucket.bucketArn}/*`],
+      }),
     );
 
     // Add Textract permissions
@@ -124,7 +128,7 @@ export class ComputeStack extends cdk.Stack {
           'textract:GetDocumentAnalysis',
         ],
         resources: ['*'],
-      })
+      }),
     );
 
     // Add SQS permissions for async processing
@@ -136,10 +140,8 @@ export class ComputeStack extends cdk.Stack {
           'sqs:DeleteMessage',
           'sqs:GetQueueAttributes',
         ],
-        resources: [
-          `arn:aws:sqs:${this.region}:${this.account}:${resourceName(config, '*')}`,
-        ],
-      })
+        resources: [`arn:aws:sqs:${this.region}:${this.account}:${resourceName(config, '*')}`],
+      }),
     );
 
     // Add container to task definition
@@ -233,13 +235,14 @@ export class ComputeStack extends cdk.Stack {
     // Add HTTP Listener (redirect to HTTPS in production)
     const httpListener = this.loadBalancer.addListener('HttpListener', {
       port: 80,
-      defaultAction: config.environment === 'production' && config.domain
-        ? elbv2.ListenerAction.redirect({
-            protocol: 'HTTPS',
-            port: '443',
-            permanent: true,
-          })
-        : elbv2.ListenerAction.forward([targetGroup]),
+      defaultAction:
+        config.environment === 'production' && config.domain
+          ? elbv2.ListenerAction.redirect({
+              protocol: 'HTTPS',
+              port: '443',
+              permanent: true,
+            })
+          : elbv2.ListenerAction.forward([targetGroup]),
     });
 
     // Create Fargate Service

@@ -2,30 +2,35 @@
 
 > Cloud-based Document Management System with AI-powered document processing
 >
-> **Status:** Technical Assessment - CultureEngine
-> **Author:** Willian Pinho
+> **Status:** Technical Assessment - CultureEngine **Author:** Willian Pinho
 
 ---
 
 ## Project Overview
 
-This is a cloud-based Document Management System similar to OneDrive/Google Drive, with enhanced document processing capabilities including PDF splitting and AI-based OCR.
+This is a cloud-based Document Management System similar to OneDrive/Google
+Drive, with enhanced document processing capabilities including PDF splitting
+and AI-based OCR.
 
 ### Key Features
 
 #### Core Features
+
 - **Document Storage**: Secure cloud storage with versioning on AWS S3
-- **Document Processing**: PDF split/merge, OCR (AWS Textract), AI classification
+- **Document Processing**: PDF split/merge, OCR (AWS Textract), AI
+  classification
 - **Semantic Search**: AI-powered document search using pgvector embeddings
 - **Multi-tenancy**: Organization-based data isolation with Row-Level Security
 
 #### Collaboration
+
 - **Real-time Presence**: See who's viewing documents in real-time via WebSocket
 - **Comments & Discussions**: Threaded comments with @mentions
 - **Document Sharing**: Share documents with granular permissions
 - **Version History**: Track all document changes with version control
 
 #### User Experience
+
 - **Modern Web UI**: Next.js 15 with App Router and React 19
 - **Drag-and-Drop Uploads**: Intuitive file upload with progress tracking
 - **Resumable Uploads**: Large file uploads with automatic resume
@@ -33,6 +38,7 @@ This is a cloud-based Document Management System similar to OneDrive/Google Driv
 - **Desktop Upload Agent**: Electron app for automated folder syncing
 
 #### Security & Auth
+
 - **OAuth Integration**: Google and Microsoft SSO support
 - **Email/Password Auth**: Traditional authentication with password reset flow
 - **RBAC**: Role-based access control (Viewer, Editor, Admin, Owner)
@@ -42,22 +48,22 @@ This is a cloud-based Document Management System similar to OneDrive/Google Driv
 
 ## Technology Stack
 
-| Layer | Technology | Version |
-|-------|------------|---------|
-| **Frontend** | Next.js (App Router) | 15.5 |
-| **UI Components** | shadcn/ui + Radix | Latest |
-| **Backend** | NestJS | 11+ |
-| **Database** | PostgreSQL + pgvector | 16+ |
-| **ORM** | Prisma | 5.22 |
-| **Cache** | Redis | 7+ |
-| **Queue** | BullMQ | 5+ |
-| **Storage** | AWS S3 + CloudFront | - |
-| **Real-time** | Socket.IO | 4.8 |
-| **AI/ML** | AWS Textract, OpenAI GPT-4 | - |
-| **IaC** | AWS CDK v2 | 2.175 |
-| **Language** | TypeScript | 5.9 |
-| **Styling** | Tailwind CSS | 3.4 |
-| **Package Manager** | pnpm | 9+ |
+| Layer               | Technology                 | Version |
+| ------------------- | -------------------------- | ------- |
+| **Frontend**        | Next.js (App Router)       | 15.5    |
+| **UI Components**   | shadcn/ui + Radix          | Latest  |
+| **Backend**         | NestJS                     | 11+     |
+| **Database**        | PostgreSQL + pgvector      | 16+     |
+| **ORM**             | Prisma                     | 5.22    |
+| **Cache**           | Redis                      | 7+      |
+| **Queue**           | BullMQ                     | 5+      |
+| **Storage**         | AWS S3 + CloudFront        | -       |
+| **Real-time**       | Socket.IO                  | 4.8     |
+| **AI/ML**           | AWS Textract, OpenAI GPT-4 | -       |
+| **IaC**             | AWS CDK v2                 | 2.175   |
+| **Language**        | TypeScript                 | 5.9     |
+| **Styling**         | Tailwind CSS               | 3.4     |
+| **Package Manager** | pnpm                       | 9+      |
 
 ---
 
@@ -198,6 +204,7 @@ apps/web/src/
 ### Row Level Security
 
 Multi-tenant isolation enforced at database level:
+
 ```sql
 CREATE POLICY documents_org_isolation ON documents
     USING (organization_id = current_setting('app.current_organization')::UUID);
@@ -208,27 +215,31 @@ CREATE POLICY documents_org_isolation ON documents
 ## Authentication Strategy
 
 ### Web Application
+
 - **NextAuth.js** with OAuth 2.0 / OIDC
 - Providers: Google OAuth, Microsoft Azure AD, Email/Password
 - Session: JWT in HTTP-only cookies
 
 ### API Authentication
+
 - Bearer Token (JWT)
 - Access Token: 15 min TTL
 - Refresh Token: 7 day TTL with rotation
 
 ### Upload Agent (M2M)
+
 - API Key + Secret with HMAC signature
 - Scoped permissions per key
 - Rate limiting per key
 
 ### Authorization (RBAC)
+
 ```typescript
 enum Role {
-  VIEWER = 'viewer',   // Read-only
-  EDITOR = 'editor',   // Read + Write
-  ADMIN = 'admin',     // Read + Write + Delete + User management
-  OWNER = 'owner',     // Full access + Settings
+  VIEWER = 'viewer', // Read-only
+  EDITOR = 'editor', // Read + Write
+  ADMIN = 'admin', // Read + Write + Delete + User management
+  OWNER = 'owner', // Full access + Settings
 }
 ```
 
@@ -249,25 +260,25 @@ Upload → S3 Event → EventBridge → SQS → Lambda/ECS
 
 ### Processing Job Types
 
-| Job Type | Handler | Purpose |
-|----------|---------|---------|
-| `ocr` | Textract + GPT-4 | Extract text, tables, forms |
-| `pdf_split` | pdf-lib | Split PDF by rules |
-| `thumbnail` | Sharp | Generate previews |
-| `ai_classify` | GPT-4 | Document classification |
-| `embedding` | OpenAI | Generate semantic vectors |
+| Job Type      | Handler          | Purpose                     |
+| ------------- | ---------------- | --------------------------- |
+| `ocr`         | Textract + GPT-4 | Extract text, tables, forms |
+| `pdf_split`   | pdf-lib          | Split PDF by rules          |
+| `thumbnail`   | Sharp            | Generate previews           |
+| `ai_classify` | GPT-4            | Document classification     |
+| `embedding`   | OpenAI           | Generate semantic vectors   |
 
 ---
 
 ## Testing Strategy
 
-| Layer | Tool | Coverage Target |
-|-------|------|-----------------|
-| Unit | Vitest | 90% |
-| Integration | Jest + Supertest | 85% |
-| E2E | Playwright | Critical paths |
-| API Contract | Pact | Consumer-driven |
-| Load | k6 | Performance baselines |
+| Layer        | Tool             | Coverage Target       |
+| ------------ | ---------------- | --------------------- |
+| Unit         | Vitest           | 90%                   |
+| Integration  | Jest + Supertest | 85%                   |
+| E2E          | Playwright       | Critical paths        |
+| API Contract | Pact             | Consumer-driven       |
+| Load         | k6               | Performance baselines |
 
 ### Running Tests
 
@@ -315,6 +326,7 @@ OPENAI_API_KEY=...
 ## API Endpoints
 
 ### Documents
+
 - `GET /documents` - List documents (paginated)
 - `POST /documents` - Create document (get presigned URL)
 - `GET /documents/:id` - Get document details
@@ -324,6 +336,7 @@ OPENAI_API_KEY=...
 - `POST /documents/:id/process` - Trigger processing
 
 ### Folders
+
 - `GET /folders` - List folders
 - `POST /folders` - Create folder
 - `GET /folders/:id` - Get folder with contents
@@ -331,10 +344,12 @@ OPENAI_API_KEY=...
 - `DELETE /folders/:id` - Delete folder
 
 ### Search
+
 - `GET /search` - Full-text search
 - `POST /search/semantic` - AI-powered semantic search
 
 ### Auth
+
 - `POST /auth/login` - Login
 - `POST /auth/refresh` - Refresh tokens
 - `POST /auth/logout` - Logout
@@ -344,26 +359,31 @@ OPENAI_API_KEY=...
 ## Recommended Agents
 
 ### Core Development
+
 - `@backend-architect` - API design, NestJS patterns
 - `@frontend-developer` - React, Next.js components
 - `@typescript-agent` - Type safety, advanced patterns
 
 ### Infrastructure
+
 - `@cloud-architect` - AWS architecture decisions
 - `@terraform-engineer` - CDK infrastructure (uses same patterns)
 - `@devops-engineer` - CI/CD, deployments
 
 ### Quality & Security
+
 - `@code-reviewer` - Code quality reviews
 - `@security-auditor` - Security assessments
 - `@test-automator` - Test coverage
 
 ### AI/ML
+
 - `@ai-engineer` - AI integration patterns
 - `@rag-specialist` - Semantic search optimization
 - `@llm-integration` - GPT-4 usage patterns
 
 ### Database
+
 - `@postgres-pro` - PostgreSQL optimization
 - `@database-optimizer` - Query performance
 
@@ -371,14 +391,14 @@ OPENAI_API_KEY=...
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `docs/PRD.md` | Complete Product Requirements Document |
-| `prisma/schema.prisma` | Database schema |
-| `apps/api/src/app.module.ts` | NestJS root module |
-| `apps/web/src/app/layout.tsx` | Next.js root layout |
-| `infrastructure/lib/stacks/` | CDK infrastructure stacks |
-| `turbo.json` | Monorepo build configuration |
+| File                          | Purpose                                |
+| ----------------------------- | -------------------------------------- |
+| `docs/PRD.md`                 | Complete Product Requirements Document |
+| `prisma/schema.prisma`        | Database schema                        |
+| `apps/api/src/app.module.ts`  | NestJS root module                     |
+| `apps/web/src/app/layout.tsx` | Next.js root layout                    |
+| `infrastructure/lib/stacks/`  | CDK infrastructure stacks              |
+| `turbo.json`                  | Monorepo build configuration           |
 
 ---
 
@@ -424,12 +444,12 @@ git push origin feature/document-upload
 
 ## Performance Targets
 
-| Metric | Target | Alert |
-|--------|--------|-------|
-| API Latency (P99) | < 500ms | > 1000ms |
-| Availability | 99.9% | < 99.5% |
-| Upload Success Rate | > 99% | < 98% |
-| Error Rate | < 0.1% | > 1% |
+| Metric              | Target  | Alert    |
+| ------------------- | ------- | -------- |
+| API Latency (P99)   | < 500ms | > 1000ms |
+| Availability        | 99.9%   | < 99.5%  |
+| Upload Success Rate | > 99%   | < 98%    |
+| Error Rate          | < 0.1%  | > 1%     |
 
 ---
 
@@ -469,12 +489,12 @@ pnpm dev
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Port 3000 in use | `lsof -i :3000` then `kill -9 <PID>` |
-| Database connection | Check `docker compose ps` |
-| Type errors | Run `pnpm db:generate` |
-| Stale cache | Run `pnpm clean && pnpm install` |
+| Issue               | Solution                             |
+| ------------------- | ------------------------------------ |
+| Port 3000 in use    | `lsof -i :3000` then `kill -9 <PID>` |
+| Database connection | Check `docker compose ps`            |
+| Type errors         | Run `pnpm db:generate`               |
+| Stale cache         | Run `pnpm clean && pnpm install`     |
 
 ---
 

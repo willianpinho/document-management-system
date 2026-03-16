@@ -23,7 +23,10 @@ import { EmailModule } from '../email/email.module';
       useFactory: async (configService: ConfigService): Promise<JwtModuleOptions> => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '15m') as `${number}${'s' | 'm' | 'h' | 'd'}`,
+          expiresIn: configService.get<string>(
+            'JWT_EXPIRES_IN',
+            '15m',
+          ) as `${number}${'s' | 'm' | 'h' | 'd'}`,
           issuer: 'dms-api',
           audience: 'dms-client',
         },

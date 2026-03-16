@@ -22,11 +22,7 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(
-    email: string,
-    token: string,
-    name?: string | null,
-  ): Promise<void> {
+  async sendPasswordResetEmail(email: string, token: string, name?: string | null): Promise<void> {
     const appUrl = this.configService.get('APP_URL', 'http://localhost:3000');
     const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
@@ -44,11 +40,7 @@ export class EmailService {
     }
   }
 
-  async sendVerificationEmail(
-    email: string,
-    token: string,
-    name?: string | null,
-  ): Promise<void> {
+  async sendVerificationEmail(email: string, token: string, name?: string | null): Promise<void> {
     const appUrl = this.configService.get('APP_URL', 'http://localhost:3000');
     const verifyUrl = `${appUrl}/verify-email?token=${token}`;
 

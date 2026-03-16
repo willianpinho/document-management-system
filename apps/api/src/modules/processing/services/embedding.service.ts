@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
-import {
-  DocumentEmbedding,
-  EmbeddingOptions,
-} from '../dto/ocr-result.dto';
+import { DocumentEmbedding, EmbeddingOptions } from '../dto/ocr-result.dto';
 
 /**
  * Default embedding options
@@ -116,9 +113,7 @@ export class EmbeddingService {
       createdAt: new Date(),
     };
 
-    this.logger.log(
-      `Generated ${vector.length}-dimensional embedding for document ${documentId}`,
-    );
+    this.logger.log(`Generated ${vector.length}-dimensional embedding for document ${documentId}`);
 
     return embedding;
   }
@@ -126,10 +121,7 @@ export class EmbeddingService {
   /**
    * Generate embedding for text without storing
    */
-  async generateEmbedding(
-    text: string,
-    options?: EmbeddingOptions,
-  ): Promise<number[]> {
+  async generateEmbedding(text: string, options?: EmbeddingOptions): Promise<number[]> {
     if (!this.isAvailable()) {
       throw new Error('Embedding service not available. Configure OPENAI_API_KEY.');
     }
@@ -145,10 +137,7 @@ export class EmbeddingService {
   /**
    * Generate embeddings for multiple texts in batch
    */
-  async generateBatchEmbeddings(
-    texts: string[],
-    options?: EmbeddingOptions,
-  ): Promise<number[][]> {
+  async generateBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<number[][]> {
     if (!this.isAvailable()) {
       throw new Error('Embedding service not available. Configure OPENAI_API_KEY.');
     }
@@ -196,9 +185,7 @@ export class EmbeddingService {
   ): Promise<Array<{ documentId: string; similarity: number }>> {
     const vectorString = `[${queryVector.join(',')}]`;
 
-    const results = await this.prisma.$queryRaw<
-      Array<{ id: string; similarity: number }>
-    >`
+    const results = await this.prisma.$queryRaw<Array<{ id: string; similarity: number }>>`
       SELECT
         id,
         1 - (content_vector <=> ${vectorString}::vector) as similarity
@@ -241,16 +228,10 @@ export class EmbeddingService {
   ): Promise<DocumentEmbedding> {
     const chunks = this.splitIntoChunks(text, opts.maxTokensPerChunk);
 
-    this.logger.log(
-      `Generating ${chunks.length} chunk embeddings for document ${documentId}`,
-    );
+    this.logger.log(`Generating ${chunks.length} chunk embeddings for document ${documentId}`);
 
     // Generate embeddings for all chunks
-    const chunkEmbeddings = await this.callBatchEmbeddingApi(
-      chunks,
-      opts.model,
-      opts.dimensions,
-    );
+    const chunkEmbeddings = await this.callBatchEmbeddingApi(chunks, opts.model, opts.dimensions);
 
     // Average the embeddings
     const aggregatedVector = this.averageVectors(chunkEmbeddings);
@@ -308,7 +289,7 @@ export class EmbeddingService {
       throw new Error(`OpenAI embedding API error: ${response.status} - ${error}`);
     }
 
-    const data = await response.json() as { data: Array<{ embedding: number[] }> };
+    const data = (await response.json()) as { data: Array<{ embedding: number[] }> };
     return data.data[0].embedding;
   }
 
@@ -350,7 +331,9 @@ export class EmbeddingService {
         throw new Error(`OpenAI embedding API error: ${response.status} - ${error}`);
       }
 
-      const data = await response.json() as { data: Array<{ index: number; embedding: number[] }> };
+      const data = (await response.json()) as {
+        data: Array<{ index: number; embedding: number[] }>;
+      };
 
       // Sort by index to maintain order
       const sortedData = data.data.sort(
@@ -429,9 +412,7 @@ export class EmbeddingService {
     }
 
     // Normalize the averaged vector
-    const magnitude = Math.sqrt(
-      averaged.reduce((sum, val) => sum + val * val, 0),
-    );
+    const magnitude = Math.sqrt(averaged.reduce((sum, val) => sum + val * val, 0));
 
     if (magnitude > 0) {
       for (let i = 0; i < dimensions; i++) {

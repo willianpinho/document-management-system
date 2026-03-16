@@ -2,14 +2,7 @@
 
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import {
-  Upload,
-  X,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  FileText,
-} from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle, Loader2, FileText } from 'lucide-react';
 import { Button, Progress, Card, CardContent } from '@dms/ui';
 import { useUpload, type UploadProgress } from '@/hooks/useUpload';
 import { formatBytes, cn } from '@/lib/utils';
@@ -39,8 +32,7 @@ export function DocumentUpload({
   className,
   compact = false,
 }: DocumentUploadProps) {
-  const { uploads, uploadFiles, removeUpload, clearCompleted, isUploading } =
-    useUpload(folderId);
+  const { uploads, uploadFiles, removeUpload, clearCompleted, isUploading } = useUpload(folderId);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -50,16 +42,15 @@ export function DocumentUpload({
         onComplete(successfulIds);
       }
     },
-    [uploadFiles, onComplete]
+    [uploadFiles, onComplete],
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject } =
-    useDropzone({
-      onDrop,
-      accept: ACCEPTED_FILE_TYPES,
-      maxSize: MAX_FILE_SIZE,
-      multiple: true,
-    });
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+    onDrop,
+    accept: ACCEPTED_FILE_TYPES,
+    maxSize: MAX_FILE_SIZE,
+    multiple: true,
+  });
 
   const hasCompleted = uploads.some((u) => u.status === 'completed');
 
@@ -72,7 +63,7 @@ export function DocumentUpload({
             'flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed p-4 transition-colors',
             isDragActive && 'border-primary bg-primary/10',
             isDragReject && 'border-destructive bg-destructive/10',
-            !isDragActive && !isDragReject && 'border-muted-foreground/25 hover:border-primary/50'
+            !isDragActive && !isDragReject && 'border-muted-foreground/25 hover:border-primary/50',
           )}
         >
           <input {...getInputProps()} />
@@ -85,12 +76,7 @@ export function DocumentUpload({
         {uploads.length > 0 && (
           <div className="mt-3 space-y-2">
             {uploads.map((upload) => (
-              <UploadProgressItem
-                key={upload.id}
-                upload={upload}
-                onRemove={removeUpload}
-                compact
-              />
+              <UploadProgressItem key={upload.id} upload={upload} onRemove={removeUpload} compact />
             ))}
           </div>
         )}
@@ -107,7 +93,7 @@ export function DocumentUpload({
             'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
             isDragActive && 'border-primary bg-primary/10',
             isDragReject && 'border-destructive bg-destructive/10',
-            !isDragActive && !isDragReject && 'border-muted-foreground/25 hover:border-primary/50'
+            !isDragActive && !isDragReject && 'border-muted-foreground/25 hover:border-primary/50',
           )}
         >
           <input {...getInputProps()} />
@@ -115,51 +101,36 @@ export function DocumentUpload({
             <Upload className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="mt-4 text-sm font-medium">
-            {isDragActive
-              ? 'Drop your files here'
-              : 'Drag and drop your files here'}
+            {isDragActive ? 'Drop your files here' : 'Drag and drop your files here'}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             or click to browse (max {formatBytes(MAX_FILE_SIZE)} per file)
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-1">
-            {['PDF', 'Images', 'Videos', 'Documents', 'Spreadsheets'].map(
-              (type) => (
-                <span
-                  key={type}
-                  className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                >
-                  {type}
-                </span>
-              )
-            )}
+            {['PDF', 'Images', 'Videos', 'Documents', 'Spreadsheets'].map((type) => (
+              <span
+                key={type}
+                className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                {type}
+              </span>
+            ))}
           </div>
         </div>
 
         {uploads.length > 0 && (
           <div className="mt-6">
             <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-sm font-medium">
-                Uploads ({uploads.length})
-              </h4>
+              <h4 className="text-sm font-medium">Uploads ({uploads.length})</h4>
               {hasCompleted && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearCompleted}
-                  className="h-7 text-xs"
-                >
+                <Button variant="ghost" size="sm" onClick={clearCompleted} className="h-7 text-xs">
                   Clear completed
                 </Button>
               )}
             </div>
             <div className="space-y-3">
               {uploads.map((upload) => (
-                <UploadProgressItem
-                  key={upload.id}
-                  upload={upload}
-                  onRemove={removeUpload}
-                />
+                <UploadProgressItem key={upload.id} upload={upload} onRemove={removeUpload} />
               ))}
             </div>
           </div>
@@ -175,11 +146,7 @@ interface UploadProgressItemProps {
   compact?: boolean;
 }
 
-function UploadProgressItem({
-  upload,
-  onRemove,
-  compact = false,
-}: UploadProgressItemProps) {
+function UploadProgressItem({ upload, onRemove, compact = false }: UploadProgressItemProps) {
   const StatusIcon = {
     pending: Loader2,
     uploading: Loader2,
@@ -196,9 +163,7 @@ function UploadProgressItem({
     error: 'text-destructive',
   }[upload.status];
 
-  const isAnimating = ['pending', 'uploading', 'processing'].includes(
-    upload.status
-  );
+  const isAnimating = ['pending', 'uploading', 'processing'].includes(upload.status);
 
   if (compact) {
     return (
@@ -227,18 +192,10 @@ function UploadProgressItem({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{upload.file.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatBytes(upload.file.size)}
-              </p>
+              <p className="text-xs text-muted-foreground">{formatBytes(upload.file.size)}</p>
             </div>
             <div className="flex items-center gap-1">
-              <StatusIcon
-                className={cn(
-                  'h-4 w-4',
-                  statusColor,
-                  isAnimating && 'animate-spin'
-                )}
-              />
+              <StatusIcon className={cn('h-4 w-4', statusColor, isAnimating && 'animate-spin')} />
               <Button
                 variant="ghost"
                 size="icon"

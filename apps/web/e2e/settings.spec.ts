@@ -107,7 +107,9 @@ test.describe('Settings', () => {
       await expect(page.getByRole('dialog')).toBeVisible();
 
       // Delete button should be disabled until DELETE is typed
-      const deleteButton = page.getByRole('dialog').getByRole('button', { name: /delete my account/i });
+      const deleteButton = page
+        .getByRole('dialog')
+        .getByRole('button', { name: /delete my account/i });
       await expect(deleteButton).toBeDisabled();
 
       // Type DELETE to enable
@@ -145,8 +147,8 @@ test.describe('Settings', () => {
       const themeText = await page.locator('body').textContent();
       expect(
         themeText?.includes('Light') ||
-        themeText?.includes('Dark') ||
-        themeText?.includes('System')
+          themeText?.includes('Dark') ||
+          themeText?.includes('System'),
       ).toBe(true);
     });
   });

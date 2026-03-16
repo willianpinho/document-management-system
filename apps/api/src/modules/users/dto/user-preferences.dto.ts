@@ -7,7 +7,10 @@ export class NotificationPreferencesDto {
   @IsOptional()
   emailOnUpload?: boolean;
 
-  @ApiProperty({ description: 'Email notifications for document processing completion', default: true })
+  @ApiProperty({
+    description: 'Email notifications for document processing completion',
+    default: true,
+  })
   @IsBoolean()
   @IsOptional()
   emailOnProcessingComplete?: boolean;
@@ -34,13 +37,21 @@ export class NotificationPreferencesDto {
 }
 
 export class AppearancePreferencesDto {
-  @ApiProperty({ description: 'Theme preference', enum: ['light', 'dark', 'system'], default: 'system' })
+  @ApiProperty({
+    description: 'Theme preference',
+    enum: ['light', 'dark', 'system'],
+    default: 'system',
+  })
   @IsString()
   @IsOptional()
   @IsIn(['light', 'dark', 'system'])
   theme?: 'light' | 'dark' | 'system';
 
-  @ApiProperty({ description: 'Accent color', enum: ['blue', 'green', 'purple', 'orange', 'red'], default: 'blue' })
+  @ApiProperty({
+    description: 'Accent color',
+    enum: ['blue', 'green', 'purple', 'orange', 'red'],
+    default: 'blue',
+  })
   @IsString()
   @IsOptional()
   @IsIn(['blue', 'green', 'purple', 'orange', 'red'])

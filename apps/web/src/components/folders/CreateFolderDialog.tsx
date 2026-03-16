@@ -94,18 +94,11 @@ export function CreateFolderDialog({
               autoFocus
               disabled={isCreating}
             />
-            {error && (
-              <p className="mt-2 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isCreating}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim() || isCreating}>
@@ -185,9 +178,7 @@ export function RenameFolderDialog({
             <Folder className="h-5 w-5 text-blue-500" />
             Rename folder
           </DialogTitle>
-          <DialogDescription>
-            Enter a new name for this folder
-          </DialogDescription>
+          <DialogDescription>Enter a new name for this folder</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
@@ -206,18 +197,11 @@ export function RenameFolderDialog({
               autoFocus
               disabled={isRenaming}
             />
-            {error && (
-              <p className="mt-2 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isRenaming}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isRenaming}>
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim() || isRenaming}>
@@ -257,8 +241,7 @@ export function DeleteFolderDialog({
             {documentCount > 0 && (
               <span className="mt-2 block text-destructive">
                 This folder contains {documentCount}{' '}
-                {documentCount === 1 ? 'document' : 'documents'} that will also
-                be deleted.
+                {documentCount === 1 ? 'document' : 'documents'} that will also be deleted.
               </span>
             )}
           </DialogDescription>

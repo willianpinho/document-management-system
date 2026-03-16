@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { Request } from 'express';
@@ -98,13 +92,7 @@ export class AuditInterceptor implements NestInterceptor {
 
         // Log the audit event asynchronously (don't await)
         this.auditService
-          .log(
-            auditOptions.action,
-            auditOptions.resourceType,
-            resourceId,
-            metadata,
-            auditContext,
-          )
+          .log(auditOptions.action, auditOptions.resourceType, resourceId, metadata, auditContext)
           .catch((err) => {
             this.logger.error(`Failed to log audit event: ${err.message}`);
           });
@@ -121,13 +109,7 @@ export class AuditInterceptor implements NestInterceptor {
 
         // Log the failed action asynchronously
         this.auditService
-          .log(
-            auditOptions.action,
-            auditOptions.resourceType,
-            resourceId,
-            metadata,
-            auditContext,
-          )
+          .log(auditOptions.action, auditOptions.resourceType, resourceId, metadata, auditContext)
           .catch((err) => {
             this.logger.error(`Failed to log audit event for error: ${err.message}`);
           });
@@ -140,10 +122,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Extract audit context from request
    */
-  private extractContext(
-    request: Request,
-    user: CurrentUserPayload | undefined,
-  ): AuditContext {
+  private extractContext(request: Request, user: CurrentUserPayload | undefined): AuditContext {
     // Get IP address (handle proxies)
     const ipAddress =
       (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
@@ -173,10 +152,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Extract resource ID from request params
    */
-  private extractResourceId(
-    request: Request,
-    options: AuditLogOptions,
-  ): string | null {
+  private extractResourceId(request: Request, options: AuditLogOptions): string | null {
     if (options.resourceIdParam) {
       return (request.params[options.resourceIdParam] as string) || null;
     }
@@ -229,10 +205,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Build metadata object based on options
    */
-  private buildMetadata(
-    request: Request,
-    options: AuditLogOptions,
-  ): Record<string, unknown> {
+  private buildMetadata(request: Request, options: AuditLogOptions): Record<string, unknown> {
     const metadata: Record<string, unknown> = {
       method: request.method,
       path: request.path,
@@ -254,10 +227,7 @@ export class AuditInterceptor implements NestInterceptor {
   /**
    * Redact sensitive fields from an object
    */
-  private redactFields(
-    obj: unknown,
-    fieldsToRedact?: string[],
-  ): unknown {
+  private redactFields(obj: unknown, fieldsToRedact?: string[]): unknown {
     if (!fieldsToRedact || fieldsToRedact.length === 0) {
       return obj;
     }

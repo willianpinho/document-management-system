@@ -356,7 +356,9 @@ export class OrganizationsService {
       },
     });
 
-    this.logger.log(`Member ${memberId} role updated to ${newRole} in organization ${organizationId}`);
+    this.logger.log(
+      `Member ${memberId} role updated to ${newRole} in organization ${organizationId}`,
+    );
     return updated;
   }
 

@@ -2,20 +2,25 @@
 
 ## How to View Diagrams
 
-The architecture diagrams are defined in Mermaid format in `ARCHITECTURE.md`. To render them:
+The architecture diagrams are defined in Mermaid format in `ARCHITECTURE.md`. To
+render them:
 
 ### Option 1: GitHub (Recommended)
+
 - Open `ARCHITECTURE.md` on GitHub - diagrams render automatically
 
 ### Option 2: VS Code
+
 - Install "Markdown Preview Mermaid Support" extension
 - Open `ARCHITECTURE.md` and use Markdown preview (Ctrl+Shift+V)
 
 ### Option 3: Mermaid Live Editor
+
 - Go to https://mermaid.live/
 - Paste the diagram code to render and export as PNG/SVG
 
 ### Option 4: Command Line
+
 ```bash
 npm install -g @mermaid-js/mermaid-cli
 mmdc -i ARCHITECTURE.md -o architecture.png
@@ -217,12 +222,12 @@ For the Loom video, use this simplified ASCII diagram:
 
 ## Quick Reference for Presentation
 
-| Diagram | Use For |
-|---------|---------|
-| Main Architecture | Slide 5: Overview |
+| Diagram             | Use For                      |
+| ------------------- | ---------------------------- |
+| Main Architecture   | Slide 5: Overview            |
 | Processing Pipeline | Slide 6: Document Processing |
-| Semantic Search | Slide 9: Search Demo |
-| Tech Stack | Slide 4: Technology choices |
+| Semantic Search     | Slide 9: Search Demo         |
+| Tech Stack          | Slide 4: Technology choices  |
 
 ### Mermaid Links (Copy to mermaid.live)
 

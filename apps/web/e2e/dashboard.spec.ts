@@ -114,7 +114,10 @@ test.describe('Dashboard', () => {
       await waitForDashboard(page);
 
       // Click the first "View all" link (documents)
-      await page.getByRole('link', { name: /view all/i }).first().click();
+      await page
+        .getByRole('link', { name: /view all/i })
+        .first()
+        .click();
       await expect(page).toHaveURL(/documents/);
     });
 
@@ -124,7 +127,10 @@ test.describe('Dashboard', () => {
       await waitForDashboard(page);
 
       // Click the last "View all" link (folders)
-      await page.getByRole('link', { name: /view all/i }).last().click();
+      await page
+        .getByRole('link', { name: /view all/i })
+        .last()
+        .click();
       await expect(page).toHaveURL(/folders/);
     });
   });
@@ -163,7 +169,10 @@ test.describe('Dashboard', () => {
       const documentCards = page.getByTestId('document-card');
       const emptyState = page.getByText(/no documents yet/i);
 
-      const hasDocuments = await documentCards.first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasDocuments = await documentCards
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
       const hasEmptyState = await emptyState.isVisible({ timeout: 5000 }).catch(() => false);
 
       // One of them should be visible
@@ -177,7 +186,10 @@ test.describe('Dashboard', () => {
       const folderCards = page.locator('[class*="card"]').filter({ hasText: /folder/i });
       const emptyState = page.getByText(/no folders yet/i);
 
-      const hasFolders = await folderCards.first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasFolders = await folderCards
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
       const hasEmptyState = await emptyState.isVisible({ timeout: 5000 }).catch(() => false);
 
       // Page should be in a valid state
@@ -205,7 +217,10 @@ test.describe('Dashboard', () => {
 
       // Find folder cards in the recent folders section
       const folderLinks = page.locator('a[href^="/folders/"]');
-      const hasFolders = await folderLinks.first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasFolders = await folderLinks
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
 
       if (hasFolders) {
         await folderLinks.first().click();

@@ -11,12 +11,7 @@
  * - Cleanup of old jobs
  */
 
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job, JobType } from 'bullmq';
 
@@ -108,18 +103,21 @@ export class ProcessingService {
   /**
    * Convert a Prisma processing job to event data format
    */
-  private toEventData(job: {
-    id: string;
-    documentId: string;
-    jobType: string;
-    status: string;
-    attempts: number;
-    maxAttempts: number;
-    createdAt: Date;
-    startedAt: Date | null;
-    completedAt: Date | null;
-    errorMessage: string | null;
-  }, progress: number = 0): ProcessingJobEventData {
+  private toEventData(
+    job: {
+      id: string;
+      documentId: string;
+      jobType: string;
+      status: string;
+      attempts: number;
+      maxAttempts: number;
+      createdAt: Date;
+      startedAt: Date | null;
+      completedAt: Date | null;
+      errorMessage: string | null;
+    },
+    progress: number = 0,
+  ): ProcessingJobEventData {
     return {
       id: job.id,
       documentId: job.documentId,
@@ -252,18 +250,14 @@ export class ProcessingService {
     };
 
     // Add to queue
-    const queueJob = await queue.add(
-      this.getJobNameForType(jobType),
-      jobData,
-      {
-        jobId: processingJob.id,
-        priority: jobOptions?.priority ?? JOB_TYPE_PRIORITIES[jobType],
-        delay: jobOptions?.delay,
-        attempts: jobOptions?.attempts,
-        removeOnComplete: jobOptions?.removeOnComplete,
-        removeOnFail: jobOptions?.removeOnFail,
-      },
-    );
+    const queueJob = await queue.add(this.getJobNameForType(jobType), jobData, {
+      jobId: processingJob.id,
+      priority: jobOptions?.priority ?? JOB_TYPE_PRIORITIES[jobType],
+      delay: jobOptions?.delay,
+      attempts: jobOptions?.attempts,
+      removeOnComplete: jobOptions?.removeOnComplete,
+      removeOnFail: jobOptions?.removeOnFail,
+    });
 
     this.logger.log(
       `Job ${processingJob.id} (${jobType}) added to ${queueName} for document ${documentId}`,
@@ -367,9 +361,7 @@ export class ProcessingService {
     }
 
     if (job.attempts >= job.maxAttempts) {
-      throw new BadRequestException(
-        `Maximum retry attempts (${job.maxAttempts}) reached`,
-      );
+      throw new BadRequestException(`Maximum retry attempts (${job.maxAttempts}) reached`);
     }
 
     // Get document
@@ -409,11 +401,7 @@ export class ProcessingService {
       options: job.inputParams as Record<string, unknown>,
     };
 
-    await queue.add(
-      this.getJobNameForType(job.jobType as ProcessingJobType),
-      jobData,
-      { jobId },
-    );
+    await queue.add(this.getJobNameForType(job.jobType as ProcessingJobType), jobData, { jobId });
 
     this.logger.log(`Job ${jobId} queued for retry (attempt ${job.attempts + 1})`);
 
@@ -433,9 +421,7 @@ export class ProcessingService {
     }
 
     if (job.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Can only cancel pending jobs. Current status: ${job.status}`,
-      );
+      throw new BadRequestException(`Can only cancel pending jobs. Current status: ${job.status}`);
     }
 
     // Remove from queue
@@ -486,15 +472,14 @@ export class ProcessingService {
 
     // Get stats for each queue
     for (const [name, queue] of this.queues) {
-      const [waiting, active, completed, failed, delayed, isPaused] =
-        await Promise.all([
-          queue.getWaitingCount(),
-          queue.getActiveCount(),
-          queue.getCompletedCount(),
-          queue.getFailedCount(),
-          queue.getDelayedCount(),
-          queue.isPaused(),
-        ]);
+      const [waiting, active, completed, failed, delayed, isPaused] = await Promise.all([
+        queue.getWaitingCount(),
+        queue.getActiveCount(),
+        queue.getCompletedCount(),
+        queue.getFailedCount(),
+        queue.getDelayedCount(),
+        queue.isPaused(),
+      ]);
 
       queueStats[name] = {
         waiting,
@@ -525,15 +510,14 @@ export class ProcessingService {
       throw new NotFoundException(`Queue not found: ${queueName}`);
     }
 
-    const [waiting, active, completed, failed, delayed, isPaused] =
-      await Promise.all([
-        queue.getWaitingCount(),
-        queue.getActiveCount(),
-        queue.getCompletedCount(),
-        queue.getFailedCount(),
-        queue.getDelayedCount(),
-        queue.isPaused(),
-      ]);
+    const [waiting, active, completed, failed, delayed, isPaused] = await Promise.all([
+      queue.getWaitingCount(),
+      queue.getActiveCount(),
+      queue.getCompletedCount(),
+      queue.getFailedCount(),
+      queue.getDelayedCount(),
+      queue.isPaused(),
+    ]);
 
     return { waiting, active, completed, failed, delayed, paused: isPaused };
   }
@@ -541,9 +525,7 @@ export class ProcessingService {
   /**
    * Clean up old completed and failed jobs
    */
-  async cleanOldJobs(
-    olderThanDays: number = 7,
-  ): Promise<{ cleaned: number; errors: string[] }> {
+  async cleanOldJobs(olderThanDays: number = 7): Promise<{ cleaned: number; errors: string[] }> {
     let totalCleaned = 0;
     const errors: string[] = [];
     const cutoffDate = new Date();

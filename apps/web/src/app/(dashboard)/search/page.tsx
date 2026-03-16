@@ -3,16 +3,7 @@
 import { Suspense, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Search,
-  FileText,
-  Folder,
-  Filter,
-  X,
-  Wand2,
-  Clock,
-  ArrowRight,
-} from 'lucide-react';
+import { Search, FileText, Folder, Filter, X, Wand2, Clock, ArrowRight } from 'lucide-react';
 import {
   Button,
   Card,
@@ -87,7 +78,7 @@ function SearchPageContent() {
         setSemanticQuery(value);
       }
     },
-    [searchMode, setStandardQuery, setSemanticQuery]
+    [searchMode, setStandardQuery, setSemanticQuery],
   );
 
   const handleSearch = useCallback(
@@ -101,7 +92,7 @@ function SearchPageContent() {
         router.push(`/search?q=${encodeURIComponent(standardQuery)}`);
       }
     },
-    [searchMode, semanticQuery, standardQuery, runSemanticSearch, router]
+    [searchMode, semanticQuery, standardQuery, runSemanticSearch, router],
   );
 
   const handleModeChange = useCallback(
@@ -111,7 +102,7 @@ function SearchPageContent() {
         clearSemanticResults();
       }
     },
-    [clearSemanticResults]
+    [clearSemanticResults],
   );
 
   const handleResultClick = useCallback(
@@ -122,7 +113,7 @@ function SearchPageContent() {
         router.push(`/folders/${result.id}`);
       }
     },
-    [router]
+    [router],
   );
 
   const activeFiltersCount = [filters.mimeType, filters.dateFrom].filter(Boolean).length;
@@ -131,9 +122,7 @@ function SearchPageContent() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Search</h1>
-        <p className="text-muted-foreground">
-          Find documents and folders across your workspace
-        </p>
+        <p className="text-muted-foreground">Find documents and folders across your workspace</p>
       </div>
 
       {/* Search form */}
@@ -342,7 +331,7 @@ function SearchPageContent() {
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
                       result.type === 'document'
                         ? 'bg-muted text-muted-foreground'
-                        : 'bg-blue-100 text-blue-500'
+                        : 'bg-blue-100 text-blue-500',
                     )}
                   >
                     {result.type === 'document' ? (
@@ -356,19 +345,15 @@ function SearchPageContent() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="font-medium">{result.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {result.path}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{result.path}</p>
                       </div>
                       {result.score && (
-                        <Badge variant="outline">
-                          {Math.round(result.score * 100)}% match
-                        </Badge>
+                        <Badge variant="outline">{Math.round(result.score * 100)}% match</Badge>
                       )}
                     </div>
 
                     {result.snippet && (
-                      <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                         {result.snippet}
                       </p>
                     )}
@@ -390,9 +375,7 @@ function SearchPageContent() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Search className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No results found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search terms or filters
-            </p>
+            <p className="text-muted-foreground">Try adjusting your search terms or filters</p>
           </CardContent>
         </Card>
       ) : null}
@@ -405,9 +388,7 @@ function SearchPageLoading() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Search</h1>
-        <p className="text-muted-foreground">
-          Find documents and folders across your workspace
-        </p>
+        <p className="text-muted-foreground">Find documents and folders across your workspace</p>
       </div>
       <Card className="mb-6">
         <CardContent className="pt-6">
