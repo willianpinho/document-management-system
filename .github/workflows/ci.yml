@@ -157,7 +157,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Run database migrations
-        run: pnpm --filter @dms/api exec prisma migrate deploy
+        run: pnpm --filter @dms/api exec prisma migrate deploy --schema=../../prisma/schema.prisma
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/dms_test
 
