@@ -95,7 +95,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Run unit tests with coverage
-        run: pnpm test:unit --coverage
+        run: pnpm test:unit -- --coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -156,8 +156,8 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
 
-      - name: Run database migrations
-        run: pnpm --filter @dms/api exec prisma migrate deploy --schema=../../prisma/schema.prisma
+      - name: Setup database schema
+        run: pnpm --filter @dms/api exec prisma db push --schema=../../prisma/schema.prisma --accept-data-loss --force-reset
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/dms_test
 
