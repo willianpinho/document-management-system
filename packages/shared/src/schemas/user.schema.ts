@@ -25,16 +25,13 @@ export const passwordSchema = z
   .max(128, 'Password must be at most 128 characters')
   .refine(
     (password) => /[A-Z]/.test(password),
-    'Password must contain at least one uppercase letter'
+    'Password must contain at least one uppercase letter',
   )
   .refine(
     (password) => /[a-z]/.test(password),
-    'Password must contain at least one lowercase letter'
+    'Password must contain at least one lowercase letter',
   )
-  .refine(
-    (password) => /[0-9]/.test(password),
-    'Password must contain at least one number'
-  );
+  .refine((password) => /[0-9]/.test(password), 'Password must contain at least one number');
 
 /**
  * Simple password schema (for login, less strict).
@@ -149,7 +146,10 @@ export const verifyEmailSchema = z.object({
  * Two-factor verification schema.
  */
 export const twoFactorVerifySchema = z.object({
-  code: z.string().length(6, 'Code must be 6 digits').regex(/^\d+$/, 'Code must contain only digits'),
+  code: z
+    .string()
+    .length(6, 'Code must be 6 digits')
+    .regex(/^\d+$/, 'Code must contain only digits'),
   isBackupCode: z.boolean().default(false),
 });
 

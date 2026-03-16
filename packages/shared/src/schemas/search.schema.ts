@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { paginationSchema, uuidSchema } from './common.schema.js';
+import { uuidSchema } from './common.schema.js';
 import { documentCategorySchema, documentStatusSchema, mimeTypeSchema } from './document.schema.js';
 
 /**
@@ -107,10 +107,12 @@ export const saveSearchSchema = z.object({
   query: z.string().min(1).max(500),
   mode: searchModeSchema,
   filters: searchFiltersSchema.optional(),
-  sort: z.object({
-    field: z.string(),
-    order: z.enum(['asc', 'desc']),
-  }).optional(),
+  sort: z
+    .object({
+      field: z.string(),
+      order: z.enum(['asc', 'desc']),
+    })
+    .optional(),
 });
 
 /**
@@ -119,10 +121,12 @@ export const saveSearchSchema = z.object({
 export const updateSavedSearchSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   filters: searchFiltersSchema.optional(),
-  sort: z.object({
-    field: z.string(),
-    order: z.enum(['asc', 'desc']),
-  }).optional(),
+  sort: z
+    .object({
+      field: z.string(),
+      order: z.enum(['asc', 'desc']),
+    })
+    .optional(),
 });
 
 /**

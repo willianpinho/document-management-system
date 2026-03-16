@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { dateRangeSchema, paginationSchema, sortSchema, uuidSchema } from './common.schema.js';
+import { paginationSchema, sortSchema, uuidSchema } from './common.schema.js';
 
 /**
  * Document status schema.
@@ -92,7 +92,11 @@ export const documentMetadataSchema = z.object({
 export const createDocumentSchema = z.object({
   name: documentNameSchema,
   mimeType: mimeTypeSchema,
-  sizeBytes: z.number().int().positive().max(10 * 1024 * 1024 * 1024, 'File too large (max 10GB)'),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(10 * 1024 * 1024 * 1024, 'File too large (max 10GB)'),
   folderId: uuidSchema.optional().nullable(),
   checksum: z.string().optional(),
 });
@@ -149,7 +153,10 @@ export const semanticSearchSchema = z.object({
  * Bulk document operation schema.
  */
 export const bulkDocumentOperationSchema = z.object({
-  documentIds: z.array(uuidSchema).min(1, 'At least one document required').max(100, 'Maximum 100 documents'),
+  documentIds: z
+    .array(uuidSchema)
+    .min(1, 'At least one document required')
+    .max(100, 'Maximum 100 documents'),
   operation: z.enum(['move', 'delete', 'restore', 'download']),
   targetFolderId: uuidSchema.optional().nullable(),
 });

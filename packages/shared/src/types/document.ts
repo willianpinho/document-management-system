@@ -241,7 +241,8 @@ export interface DocumentWithCreator extends Document {
 /**
  * Full document with all relations populated.
  */
-export interface DocumentFull extends DocumentWithVersions, DocumentWithFolder, DocumentWithCreator {}
+export interface DocumentFull
+  extends DocumentWithVersions, DocumentWithFolder, DocumentWithCreator {}
 
 /**
  * Data transfer object for creating a new document (initiating upload).

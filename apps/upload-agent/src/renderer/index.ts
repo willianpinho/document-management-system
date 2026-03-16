@@ -209,7 +209,7 @@ function updateQueueDisplay(queue: any[]) {
         }
       </div>
     </li>
-  `
+  `,
     )
     .join('');
 
@@ -260,7 +260,7 @@ async function handleAddWatchFolder() {
   const folderPath = result.filePaths[0];
 
   try {
-    const config = await window.dms.watcher.addConfig({
+    await window.dms.watcher.addConfig({
       path: folderPath,
       recursive: true,
       patterns: ['*'],
@@ -309,7 +309,7 @@ function updateWatchDisplay(configs: WatchConfig[]) {
         <button class="btn btn-small btn-danger remove-watch-btn">Remove</button>
       </div>
     </li>
-  `
+  `,
     )
     .join('');
 

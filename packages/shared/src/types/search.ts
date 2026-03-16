@@ -3,8 +3,7 @@
  * @module @dms/shared/types/search
  */
 
-import type { Document, DocumentCategory } from './document.js';
-import type { Folder } from './folder.js';
+import type { DocumentCategory } from './document.js';
 
 /**
  * Search result types.

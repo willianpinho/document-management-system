@@ -3,7 +3,7 @@
  * @module @dms/shared/types/auth
  */
 
-import type { AuthProvider, AuthTokens, JwtPayload, MemberRole, User } from './user.js';
+import type { AuthProvider, AuthTokens, MemberRole, User } from './user.js';
 
 /**
  * Data transfer object for email/password login.

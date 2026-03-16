@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { hexColorSchema, sortSchema, uuidSchema } from './common.schema.js';
+import { hexColorSchema, uuidSchema } from './common.schema.js';
 
 /**
  * Folder name validation schema.
@@ -81,7 +81,10 @@ export const folderPathSchema = z.object({
  * Bulk folder operation schema.
  */
 export const bulkFolderOperationSchema = z.object({
-  folderIds: z.array(uuidSchema).min(1, 'At least one folder required').max(50, 'Maximum 50 folders'),
+  folderIds: z
+    .array(uuidSchema)
+    .min(1, 'At least one folder required')
+    .max(50, 'Maximum 50 folders'),
   operation: z.enum(['move', 'delete']),
   targetFolderId: uuidSchema.optional().nullable(),
 });

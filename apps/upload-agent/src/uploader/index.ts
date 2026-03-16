@@ -28,12 +28,6 @@ export interface UploadJob {
   documentId?: string;
 }
 
-interface UploadQueueStore {
-  jobs: UploadJob[];
-  maxConcurrent: number;
-  maxRetries: number;
-}
-
 const uploadQueue: UploadJob[] = [];
 let isProcessing = false;
 let isPaused = false;
@@ -41,6 +35,7 @@ let mainWindow: BrowserWindow | null = null;
 
 const MAX_CONCURRENT = 3;
 const MAX_RETRIES = 3;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for multipart upload
 
 /**
@@ -187,7 +182,7 @@ function updateJobProgress(job: UploadJob, progress: number, uploadedBytes: numb
 async function uploadWithProgress(
   job: UploadJob,
   uploadUrl: string,
-  uploadFields: Record<string, string>
+  uploadFields: Record<string, string>,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const fileStream = fs.createReadStream(job.filePath);
@@ -207,9 +202,7 @@ async function uploadWithProgress(
     // Add file header
     chunks.push(Buffer.from(`--${boundary}\r\n`));
     chunks.push(
-      Buffer.from(
-        `Content-Disposition: form-data; name="file"; filename="${job.fileName}"\r\n`
-      )
+      Buffer.from(`Content-Disposition: form-data; name="file"; filename="${job.fileName}"\r\n`),
     );
     chunks.push(Buffer.from(`Content-Type: ${job.mimeType}\r\n\r\n`));
 
@@ -313,7 +306,7 @@ async function uploadFile(job: UploadJob): Promise<void> {
           ...confirmHeaders,
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
 
     if (!confirmResponse.ok) {
@@ -383,7 +376,7 @@ export function getQueue(): UploadJob[] {
  */
 export function clearCompleted(): void {
   const pendingJobs = uploadQueue.filter(
-    (j) => j.status !== 'completed' && j.status !== 'cancelled'
+    (j) => j.status !== 'completed' && j.status !== 'cancelled',
   );
   uploadQueue.length = 0;
   uploadQueue.push(...pendingJobs);
