@@ -13,7 +13,7 @@
     "diff:prod": "cdk diff --all -c environment=production",
     "destroy:staging": "cdk destroy --all -c environment=staging --force",
     "bootstrap": "cdk bootstrap",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
