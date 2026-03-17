@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://willianpinho@localhost:5432/dms_dev"]
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-docker"]
+    }
+  },
+  "_metadata": {
+    "project": "document-management-system",
+    "description": "Enterprise DMS with AI OCR, NestJS + Next.js + Prisma + pgvector",
+    "tech_stack": {
+      "api": "NestJS 11, Fastify, Prisma 5.20, PostgreSQL 18 (pgvector)",
+      "web": "Next.js 15, React 19, TypeScript, TailwindCSS",
+      "desktop": "Electron (upload agent)",
+      "ci_cd": "GitHub Actions (ci, cd-staging, cd-production, e2e, dependency-scan)"
+    },
+    "recommended_agents": ["nestjs-architect", "prisma-specialist", "fullstack-developer", "test-automator"]
+  }
+}
