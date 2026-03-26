@@ -1,0 +1,43 @@
+# DMS — Web Dashboard (Next.js)
+#
+# Production: runs standalone
+# Dev: included by docker-compose.dev.yml (all services together)
+#
+# Usage (standalone):
+#   docker compose -f docker-compose.web.yml up -d
+#   docker compose -f docker-compose.web.yml down
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  web:
+    image: ${WEB_IMAGE:-dms-web:local}
+    build:
+      context: ../../
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.dms.dev.willianpinho.com}
+    container_name: dms-web
+    ports:
+      - "127.0.0.1:3100:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.dms.dev.willianpinho.com}
+      - API_INTERNAL_URL=${API_INTERNAL_URL:-http://dms-api:4000}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging: *default-logging
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
+      - "service=dms-web"

@@ -1,0 +1,55 @@
+# DMS — Dev Environment (API + Web)
+#
+# Infrastructure services (monitoring, databases) are managed
+# separately under ~/infra/.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down
+
+include:
+  - docker-compose.api.yml
+  - docker-compose.web.yml
+
+services:
+  # --- API overrides ---
+  api:
+    networks:
+      - default
+      - shared-db
+      - traefik-network
+      - monitoring-internal
+    labels:
+      - "logging=promtail"
+      - "service=dms-api"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.dms-api.rule=Host(`api.dms.dev.willianpinho.com`)"
+      - "traefik.http.routers.dms-api.tls=true"
+      - "traefik.http.services.dms-api.loadbalancer.server.port=4000"
+
+  # --- Web overrides ---
+  web:
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - default
+      - traefik-network
+    labels:
+      - "logging=promtail"
+      - "service=dms-web"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      - "traefik.http.routers.dms-web.rule=Host(`app.dms.dev.willianpinho.com`)"
+      - "traefik.http.routers.dms-web.tls=true"
+      - "traefik.http.services.dms-web.loadbalancer.server.port=3000"
+
+networks:
+  traefik-network:
+    external: true
+  shared-db:
+    external: true
+  monitoring-internal:
+    external: true
+    name: monitoring_monitoring-internal
