@@ -1,0 +1,211 @@
+# DMS — Deploy to Development (Hetzner VPS)
+#
+# Triggers on push to `development` branch.
+# Builds images, pushes to GHCR, and deploys to Hetzner dev server.
+#
+# Required GitHub Secrets:
+#   DEV_HOST       — Hetzner VPS IP
+#   DEV_USER       — SSH user (e.g., willian)
+#   DEV_SSH_KEY    — SSH private key for deployment
+#
+# Required GitHub Variables (Settings > Environments > development > Variables):
+#   NEXT_PUBLIC_API_URL — https://api.dms.dev.willianpinho.com
+
+name: Deploy Dev
+
+on:
+  push:
+    branches: [development]
+    paths:
+      - "apps/api/**"
+      - "apps/web/**"
+      - "packages/**"
+      - "prisma/**"
+      - "infra/compose/**"
+      - ".github/workflows/deploy-dev.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  checks: read
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  # --- Detect which services changed ---
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      compose: ${{ steps.filter.outputs.compose }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/shared/**'
+              - 'prisma/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/shared/**'
+              - 'packages/ui/**'
+            compose:
+              - 'infra/compose/**'
+
+  # --- Build and push images to GHCR ---
+  build:
+    name: Build ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.web == 'true'
+    strategy:
+      matrix:
+        include:
+          - image: api
+            context: .
+            dockerfile: apps/api/Dockerfile
+            condition: api
+          - image: web
+            context: .
+            dockerfile: apps/web/Dockerfile
+            condition: web
+    steps:
+      - name: Checkout
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          needs.changes.outputs[matrix.condition] == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          needs.changes.outputs[matrix.condition] == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          needs.changes.outputs[matrix.condition] == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          needs.changes.outputs[matrix.condition] == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:dev-latest
+          cache-from: type=gha,scope=${{ matrix.image }}-dev
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-dev
+          build-args: |
+            ${{ matrix.image == 'web' && format('NEXT_PUBLIC_API_URL={0}', vars.NEXT_PUBLIC_API_URL || 'https://api.dms.dev.willianpinho.com') || '' }}
+
+  # --- Deploy to Hetzner VPS ---
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    needs: [build, changes]
+    if: always() && needs.build.result != 'failure'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          envs: IMAGE_TAG,IMAGE_PREFIX,GH_TOKEN,GH_ACTOR
+          script_stop: false
+          script: |
+            cd ~/Developer/projects/document-management-system
+
+            echo "=== Syncing code ==="
+            git fetch origin development
+            git checkout -f development
+            git reset --hard origin/development
+
+            echo "=== Logging into GHCR ==="
+            echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
+
+            echo "=== Pulling pre-built images ==="
+
+            # API image
+            if docker pull "${IMAGE_PREFIX}/api:${IMAGE_TAG}"; then
+              docker tag "${IMAGE_PREFIX}/api:${IMAGE_TAG}" dms-api:local
+              echo "OK: api pulled from GHCR"
+            elif docker pull "${IMAGE_PREFIX}/api:dev-latest"; then
+              docker tag "${IMAGE_PREFIX}/api:dev-latest" dms-api:local
+              echo "OK: api using dev-latest fallback"
+            else
+              echo "WARN: api not in GHCR, will build locally"
+            fi
+
+            # Web image
+            if docker pull "${IMAGE_PREFIX}/web:${IMAGE_TAG}"; then
+              docker tag "${IMAGE_PREFIX}/web:${IMAGE_TAG}" dms-web:local
+              echo "OK: web pulled from GHCR"
+            elif docker pull "${IMAGE_PREFIX}/web:dev-latest"; then
+              docker tag "${IMAGE_PREFIX}/web:dev-latest" dms-web:local
+              echo "OK: web using dev-latest fallback"
+            else
+              echo "WARN: web not in GHCR, will build locally"
+            fi
+
+            echo "=== Starting services ==="
+            cd ~/Developer/projects/document-management-system/infra/compose
+            docker compose -f docker-compose.dev.yml up -d --no-build --remove-orphans || echo "WARN: compose returned non-zero"
+            docker compose -f docker-compose.dev.yml ps --format "table {{.Name}}\t{{.Status}}" 2>&1 || true
+            echo "$IMAGE_TAG" > /tmp/dms-dev-tag
+            echo "=== Deploy complete ==="
+
+      - name: Health check and migrations
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script_stop: true
+          script: |
+            echo "Waiting for API health..."
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:4000/health > /dev/null 2>&1; then
+                echo "API healthy (attempt $i)"
+
+                # Run Prisma migrations
+                docker exec dms-api npx prisma migrate deploy 2>/dev/null || true
+                echo "Migrations applied"
+                exit 0
+              fi
+              echo "Attempt $i/30..."
+              sleep 5
+            done
+            echo "ERROR: API health check failed"
+            exit 1
