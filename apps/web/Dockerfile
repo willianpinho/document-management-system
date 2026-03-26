@@ -34,7 +34,9 @@ COPY tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
-COPY packages/config/package.json ./packages/config/
+COPY packages/config/eslint/package.json ./packages/config/eslint/
+COPY packages/config/tailwind/package.json ./packages/config/tailwind/
+COPY packages/config/typescript/package.json ./packages/config/typescript/
 
 # Install dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
