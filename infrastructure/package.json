@@ -18,18 +18,18 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.175.0",
-    "constructs": "^10.4.2"
+    "aws-cdk-lib": "^2.244.0",
+    "constructs": "^10.6.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.5",
-    "@typescript-eslint/eslint-plugin": "^8.20.0",
-    "@typescript-eslint/parser": "^8.20.0",
-    "aws-cdk": "^2.175.0",
-    "eslint": "^9.18.0",
+    "@types/node": "^22.19.15",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "aws-cdk": "^2.1114.0",
+    "eslint": "^9.39.4",
     "source-map-support": "^0.5.21",
-    "typescript": "^5.9.0-dev.20250108",
-    "vitest": "^2.1.8"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=20.0.0"

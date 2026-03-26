@@ -15,16 +15,16 @@
   },
   "dependencies": {
     "@dms/shared": "workspace:*",
-    "chokidar": "^4.0.0",
+    "chokidar": "^4.0.3",
     "electron-squirrel-startup": "^1.0.1",
-    "electron-store": "^10.0.0"
+    "electron-store": "^10.1.0"
   },
   "devDependencies": {
     "@dms/eslint-config": "workspace:*",
     "@dms/typescript-config": "workspace:*",
-    "@types/node": "^22.10.0",
-    "electron": "^33.2.0",
+    "@types/node": "^22.19.15",
+    "electron": "^33.4.11",
     "electron-vite": "^2.3.0",
-    "typescript": "^5.9.0-beta"
+    "typescript": "^5.9.3"
   }
 }

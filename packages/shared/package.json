@@ -33,14 +33,14 @@
     "clean": "rm -rf dist .turbo coverage"
   },
   "dependencies": {
-    "zod": "^3.24.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@dms/eslint-config": "workspace:*",
     "@dms/typescript-config": "workspace:*",
-    "@vitest/coverage-v8": "^2.1.0",
-    "tsup": "^8.3.0",
-    "typescript": "^5.9.0-beta",
-    "vitest": "^2.1.0"
+    "@vitest/coverage-v8": "^2.1.9",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
   }
 }
