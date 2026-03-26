@@ -12,7 +12,7 @@
 FROM node:22-alpine AS base
 
 # Install dependencies for native modules
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 
 # Install pnpm globally
 ENV PNPM_HOME="/pnpm"
@@ -38,6 +38,9 @@ COPY packages/config/eslint/package.json ./packages/config/eslint/
 COPY packages/config/tailwind/package.json ./packages/config/tailwind/
 COPY packages/config/typescript/package.json ./packages/config/typescript/
 
+# Copy prisma schema (needed by postinstall)
+COPY prisma ./prisma
+
 # Install dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
@@ -60,11 +63,13 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED}
 
-# Copy dependencies
+# Copy dependencies (including config packages needed for build)
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
+COPY --from=deps /app/packages/config/tailwind/node_modules ./packages/config/tailwind/node_modules
+COPY --from=deps /app/packages/config/eslint/node_modules ./packages/config/eslint/node_modules
 
 # Copy source code
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
