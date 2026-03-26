@@ -34,6 +34,9 @@ COPY tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
+# Copy prisma schema (needed by postinstall)
+COPY prisma ./prisma
+
 # Install dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
