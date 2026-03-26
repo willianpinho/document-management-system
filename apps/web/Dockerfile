@@ -34,7 +34,7 @@ COPY tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
-COPY packages/config/package.json ./packages/config/ 2>/dev/null || true
+COPY packages/config/package.json ./packages/config/
 
 # Install dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
@@ -62,7 +62,7 @@ ENV NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED}
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules 2>/dev/null || true
+COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 
 # Copy source code
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
@@ -70,11 +70,11 @@ COPY tsconfig.base.json ./
 COPY apps/web ./apps/web
 COPY packages/shared ./packages/shared
 COPY packages/ui ./packages/ui
-COPY packages/config ./packages/config 2>/dev/null || true
+COPY packages/config ./packages/config
 
 # Build shared packages first
-RUN pnpm --filter @dms/shared build 2>/dev/null || true
-RUN pnpm --filter @dms/ui build 2>/dev/null || true
+RUN pnpm --filter @dms/shared build || true
+RUN pnpm --filter @dms/ui build || true
 
 # Build the Next.js application with standalone output
 RUN pnpm --filter @dms/web build
