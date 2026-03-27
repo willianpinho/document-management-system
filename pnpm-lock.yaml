@@ -154,8 +154,8 @@ importers:
         specifier: ^17.13.3
         version: 17.13.3
       nodemailer:
-        specifier: ^7.0.13
-        version: 7.0.13
+        specifier: ^8.0.4
+        version: 8.0.4
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -3905,6 +3905,7 @@ packages:
   aws-cdk@2.1114.0:
     resolution: {integrity: sha512-qaEIVjlDb7nFb6pjZQezMaRgex7qixUU9WM1FYVlBs8Ishp5yzYkTVABGi6MNy2B0PN82gliI26vBYIdKslYUw==}
     engines: {node: '>= 18.0.0'}
+    deprecated: Version is broken in certain environments
     hasBin: true
 
   axe-core@4.11.1:
@@ -5994,8 +5995,8 @@ packages:
   node-releases@2.0.36:
     resolution: {integrity: sha512-TdC8FSgHz8Mwtw9g5L4gR/Sh9XhSP/0DEkQxfEFXOpiul5IiHgHan2VhYYb6agDSfp4KuvltmGApc8HMgUrIkA==}
 
-  nodemailer@7.0.13:
-    resolution: {integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==}
+  nodemailer@8.0.4:
+    resolution: {integrity: sha512-k+jf6N8PfQJ0Fe8ZhJlgqU5qJU44Lpvp2yvidH3vp1lPnVQMgi4yEEMPXg5eJS1gFIJTVq1NHBk7Ia9ARdSBdQ==}
     engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
@@ -13673,7 +13674,7 @@ snapshots:
 
   node-releases@2.0.36: {}
 
-  nodemailer@7.0.13: {}
+  nodemailer@8.0.4: {}
 
   normalize-path@3.0.0: {}
 
