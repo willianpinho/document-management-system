@@ -8,3 +8,4 @@ coverage
 pnpm-lock.yaml
 *.min.js
 *.min.css
+.mcp.json
