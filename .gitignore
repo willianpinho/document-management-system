@@ -15,9 +15,10 @@ tsconfig.tsbuildinfo
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
+!.env.*.example
+!.env.*.template
 
 # IDE
 .idea
