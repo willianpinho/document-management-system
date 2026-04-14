@@ -27,6 +27,10 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.dms.dev.willianpinho.com}
       - API_INTERNAL_URL=${API_INTERNAL_URL:-http://dms-api:4000}
+      # AuthJS v5: secret MUST come from env. NEVER commit a literal.
+      # The app also accepts NEXTAUTH_SECRET as a fallback (see apps/web/src/auth.ts).
+      - AUTH_SECRET=${AUTH_SECRET:?AUTH_SECRET is required - generate with: openssl rand -hex 32}
+      - AUTH_TRUST_HOST=true
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
       interval: 15s
