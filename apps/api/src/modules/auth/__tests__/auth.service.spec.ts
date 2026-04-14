@@ -21,23 +21,48 @@ vi.mock('bcryptjs', () => ({
 // Import bcrypt after mocking
 import * as bcrypt from 'bcryptjs';
 
-// Mock PrismaService
-const createMockPrismaService = () => ({
-  refreshToken: {
-    create: vi.fn(),
-    findFirst: vi.fn(),
-    update: vi.fn(),
-    updateMany: vi.fn(),
-    findMany: vi.fn(),
-  },
-  organization: {
-    create: vi.fn(),
-  },
-  user: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-});
+// Mock PrismaService. register() runs inside $transaction(async (tx) => ...),
+// so the mock forwards the callback with a tx proxy that exposes the same
+// user / organization mocks used by the parent prisma instance. Individual
+// tests override the underlying `user.create` / `organization.create` mocks.
+const createMockPrismaService = () => {
+  const prisma: {
+    refreshToken: {
+      create: Mock;
+      findFirst: Mock;
+      update: Mock;
+      updateMany: Mock;
+      findMany: Mock;
+    };
+    organization: { create: Mock };
+    user: { create: Mock; findUnique: Mock; update: Mock };
+    $transaction: Mock;
+  } = {
+    refreshToken: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+      findMany: vi.fn(),
+    },
+    organization: {
+      create: vi.fn(),
+    },
+    user: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => {
+      const tx = {
+        user: prisma.user,
+        organization: prisma.organization,
+      };
+      return cb(tx);
+    }),
+  };
+  return prisma;
+};
 
 // Mock UsersService
 const createMockUsersService = () => ({
@@ -111,7 +136,20 @@ describe('AuthService', () => {
     // Reset modules to ensure fresh imports
     vi.resetModules();
 
-    // Mock @prisma/client
+    // Minimal @prisma/client mock. We expose a stub
+    // `PrismaClientKnownRequestError` class so the service's slug-collision
+    // retry path (`error instanceof Prisma.PrismaClientKnownRequestError`)
+    // can be exercised without pulling in the real Prisma runtime.
+    class PrismaClientKnownRequestError extends Error {
+      code: string;
+      clientVersion: string;
+      constructor(message: string, opts: { code: string; clientVersion: string }) {
+        super(message);
+        this.name = 'PrismaClientKnownRequestError';
+        this.code = opts.code;
+        this.clientVersion = opts.clientVersion;
+      }
+    }
     vi.doMock('@prisma/client', () => ({
       PrismaClient: vi.fn().mockImplementation(() => ({})),
       AuthProvider: {
@@ -125,7 +163,9 @@ describe('AuthService', () => {
         EDITOR: 'EDITOR',
         VIEWER: 'VIEWER',
       },
-      Prisma: {},
+      Prisma: {
+        PrismaClientKnownRequestError,
+      },
     }));
 
     // Create fresh mocks for each test
@@ -161,16 +201,24 @@ describe('AuthService', () => {
       name: 'New User',
     };
 
-    it('should register new user and return tokens', async () => {
-      const hashedPassword = '$2a$12$newhashedpassword';
-      const newUser = { ...mockUser, email: registerDto.email, name: registerDto.name };
+    const mockOrganization = {
+      id: '770e8400-e29b-41d4-a716-446655440002',
+      name: "New User's Workspace",
+      slug: 'new-user-abcdef12',
+    };
 
+    const primeRegisterMocks = (overrides?: { user?: typeof mockUser }) => {
       usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as Mock).mockResolvedValue(hashedPassword);
-      usersService.create.mockResolvedValue(newUser);
-      prismaService.organization.create.mockResolvedValue({});
+      (bcrypt.hash as Mock).mockResolvedValue('hashed');
+      prismaService.user.create.mockResolvedValue(overrides?.user ?? mockUser);
+      prismaService.organization.create.mockResolvedValue(mockOrganization);
       jwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
       prismaService.refreshToken.create.mockResolvedValue({});
+    };
+
+    it('should register new user and return tokens plus default organization', async () => {
+      const newUser = { ...mockUser, email: registerDto.email, name: registerDto.name };
+      primeRegisterMocks({ user: newUser });
 
       const result = await service.register(registerDto);
 
@@ -179,22 +227,53 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refreshToken');
       expect(result).toHaveProperty('expiresIn');
       expect(result.user.email).toBe(registerDto.email);
+      expect(result.organization).toEqual({
+        id: mockOrganization.id,
+        name: mockOrganization.name,
+        slug: mockOrganization.slug,
+        role: 'OWNER',
+      });
+    });
+
+    it('should create user and organization inside a transaction', async () => {
+      primeRegisterMocks();
+
+      await service.register(registerDto);
+
+      expect(prismaService.$transaction).toHaveBeenCalledTimes(1);
+      expect(prismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          email: registerDto.email,
+          password: 'hashed',
+          name: registerDto.name,
+        }),
+      });
+      expect(prismaService.organization.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "New User's Workspace",
+            plan: 'FREE',
+            members: {
+              create: expect.objectContaining({
+                userId: mockUser.id,
+                role: 'OWNER',
+              }),
+            },
+          }),
+          select: { id: true, name: true, slug: true },
+        }),
+      );
     });
 
     it('should hash password before storing', async () => {
-      usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as Mock).mockResolvedValue('hashed');
-      usersService.create.mockResolvedValue(mockUser);
-      prismaService.organization.create.mockResolvedValue({});
-      jwtService.sign.mockReturnValue('token');
-      prismaService.refreshToken.create.mockResolvedValue({});
+      primeRegisterMocks();
 
       await service.register(registerDto);
 
       expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 12);
-      expect(usersService.create).toHaveBeenCalledWith(
+      expect(prismaService.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          password: 'hashed',
+          data: expect.objectContaining({ password: 'hashed' }),
         }),
       );
     });
@@ -204,16 +283,13 @@ describe('AuthService', () => {
 
       await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
 
-      expect(usersService.create).not.toHaveBeenCalled();
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(prismaService.user.create).not.toHaveBeenCalled();
+      expect(prismaService.organization.create).not.toHaveBeenCalled();
     });
 
     it('should store refresh token hash in database', async () => {
-      usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as Mock).mockResolvedValue('hashed');
-      usersService.create.mockResolvedValue(mockUser);
-      prismaService.organization.create.mockResolvedValue({});
-      jwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
-      prismaService.refreshToken.create.mockResolvedValue({});
+      primeRegisterMocks();
 
       await service.register(registerDto);
 
@@ -227,16 +303,36 @@ describe('AuthService', () => {
     });
 
     it('should not include password in returned user object', async () => {
-      usersService.findByEmail.mockResolvedValue(null);
-      (bcrypt.hash as Mock).mockResolvedValue('hashed');
-      usersService.create.mockResolvedValue(mockUser);
-      prismaService.organization.create.mockResolvedValue({});
-      jwtService.sign.mockReturnValue('token');
-      prismaService.refreshToken.create.mockResolvedValue({});
+      primeRegisterMocks();
 
       const result = await service.register(registerDto);
 
       expect(result.user).not.toHaveProperty('password');
+    });
+
+    it('should retry once on slug collision and still return the organization', async () => {
+      primeRegisterMocks();
+      const prismaModule = (await import('@prisma/client')) as unknown as {
+        Prisma: {
+          PrismaClientKnownRequestError: new (
+            msg: string,
+            opts: { code: string; clientVersion: string },
+          ) => Error;
+        };
+      };
+      const collision = new prismaModule.Prisma.PrismaClientKnownRequestError('slug taken', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+
+      prismaService.organization.create
+        .mockRejectedValueOnce(collision)
+        .mockResolvedValueOnce(mockOrganization);
+
+      const result = await service.register(registerDto);
+
+      expect(prismaService.organization.create).toHaveBeenCalledTimes(2);
+      expect(result.organization.id).toBe(mockOrganization.id);
     });
   });
 
@@ -542,8 +638,12 @@ describe('AuthService', () => {
     it('should use bcrypt with cost factor 12', async () => {
       usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.hash as Mock).mockResolvedValue('hashed');
-      usersService.create.mockResolvedValue(mockUser);
-      prismaService.organization.create.mockResolvedValue({});
+      prismaService.user.create.mockResolvedValue(mockUser);
+      prismaService.organization.create.mockResolvedValue({
+        id: 'org-id',
+        name: 'Test Workspace',
+        slug: 'test-abcdef12',
+      });
       jwtService.sign.mockReturnValue('token');
       prismaService.refreshToken.create.mockResolvedValue({});
 

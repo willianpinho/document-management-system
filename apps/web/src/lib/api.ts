@@ -206,6 +206,26 @@ export interface Session {
   current: boolean;
 }
 
+export interface RegisteredOrganizationResponse {
+  id: string;
+  name: string;
+  slug: string;
+  role: 'OWNER';
+}
+
+export interface RegisterResponse {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+  organization: RegisteredOrganizationResponse;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
 export const authApi = {
   login: (email: string, password: string) =>
     request<{ accessToken: string; refreshToken: string; expiresIn: number }>('/auth/login', {
@@ -215,7 +235,7 @@ export const authApi = {
     }),
 
   register: (name: string, email: string, password: string) =>
-    request<{ accessToken: string; refreshToken: string; expiresIn: number }>('/auth/register', {
+    request<RegisterResponse>('/auth/register', {
       method: 'POST',
       body: { name, email, password },
       skipAuth: true,

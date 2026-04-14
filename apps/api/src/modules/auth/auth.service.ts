@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -31,6 +32,13 @@ export interface SanitizedUser {
   updatedAt: Date;
 }
 
+export interface RegisteredOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  role: 'OWNER';
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -44,7 +52,14 @@ export class AuthService {
   ) {}
 
   /**
-   * Register a new user
+   * Register a new user.
+   *
+   * Creates the user and a default personal organization atomically, making
+   * the user the OWNER so subsequent API calls have a valid organization
+   * context (required by OrganizationGuard). The organization is returned in
+   * the response so the frontend can persist it to localStorage immediately
+   * and avoid a race where /documents hits multi-tenant endpoints before the
+   * organizations list query resolves.
    */
   async register(registerDto: RegisterDto) {
     const existingUser = await this.usersService.findByEmail(registerDto.email);
@@ -53,39 +68,93 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 12);
-    const user = await this.usersService.create({
-      email: registerDto.email,
-      password: hashedPassword,
-      name: registerDto.name,
-    });
+    const displayName = registerDto.name?.trim() || null;
+    const workspaceLabel = displayName ? `${displayName}'s Workspace` : 'My Workspace';
 
-    // Create a default personal organization for the new user
-    const orgSlug = this.generateOrgSlug(registerDto.name || registerDto.email);
-    await this.prisma.organization.create({
-      data: {
-        name: `${registerDto.name || 'My'}'s Workspace`,
-        slug: orgSlug,
-        plan: 'FREE',
-        storageQuotaBytes: BigInt(5368709120), // 5GB
-        storageUsedBytes: BigInt(0),
-        members: {
-          create: {
-            userId: user.id,
-            role: 'OWNER',
-            joinedAt: new Date(),
-          },
+    // Atomically create user + organization + membership. If any step fails,
+    // the whole flow rolls back so we never leave an orphan user without an
+    // organization (which would trip OrganizationGuard on every request).
+    const { user, organization } = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: registerDto.email,
+          password: hashedPassword,
+          name: displayName,
         },
-      },
+      });
+
+      const createdOrg = await this.createPersonalOrganization(tx, {
+        userId: createdUser.id,
+        name: workspaceLabel,
+        slugSeed: displayName || registerDto.email,
+      });
+
+      return { user: createdUser, organization: createdOrg };
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
 
-    this.logger.log(`User registered: ${user.email}`);
+    this.logger.log(
+      `User registered: ${user.email} (org: ${organization.id} "${organization.slug}")`,
+    );
+
+    const registeredOrg: RegisteredOrganization = {
+      id: organization.id,
+      name: organization.name,
+      slug: organization.slug,
+      role: 'OWNER',
+    };
 
     return {
       user: this.sanitizeUser(user),
+      organization: registeredOrg,
       ...tokens,
     };
+  }
+
+  /**
+   * Create a default personal organization for a freshly registered user.
+   * Retries once on slug collision (extremely unlikely given the random
+   * suffix, but cheap to guard against).
+   */
+  private async createPersonalOrganization(
+    tx: Prisma.TransactionClient,
+    args: { userId: string; name: string; slugSeed: string },
+  ): Promise<{ id: string; name: string; slug: string }> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const slug = this.generateOrgSlug(args.slugSeed);
+      try {
+        return await tx.organization.create({
+          data: {
+            name: args.name,
+            slug,
+            plan: 'FREE',
+            storageQuotaBytes: BigInt(5368709120), // 5GB
+            storageUsedBytes: BigInt(0),
+            members: {
+              create: {
+                userId: args.userId,
+                role: 'OWNER',
+                joinedAt: new Date(),
+              },
+            },
+          },
+          select: { id: true, name: true, slug: true },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002' &&
+          attempt === 0
+        ) {
+          // Unique constraint on slug — regenerate and retry once.
+          continue;
+        }
+        throw error;
+      }
+    }
+    // Unreachable, but keeps TypeScript happy without a non-null assertion.
+    throw new Error('Failed to create personal organization after retry');
   }
 
   /**

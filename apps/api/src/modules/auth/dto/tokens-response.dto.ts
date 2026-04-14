@@ -24,9 +24,37 @@ export class UserResponseDto {
   updatedAt: Date;
 }
 
+export class RegisteredOrganizationDto {
+  @ApiProperty({
+    description: 'Organization ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  id: string;
+
+  @ApiProperty({ description: 'Organization display name', example: "Alice's Workspace" })
+  name: string;
+
+  @ApiProperty({ description: 'Organization slug', example: 'alice-3f2a1b9c' })
+  slug: string;
+
+  @ApiProperty({
+    description: 'Role of the registered user in this organization',
+    example: 'OWNER',
+  })
+  role: 'OWNER';
+}
+
 export class TokensResponseDto {
   @ApiProperty({ type: UserResponseDto })
   user: UserResponseDto;
+
+  @ApiProperty({
+    type: RegisteredOrganizationDto,
+    required: false,
+    description:
+      'Default organization created for the user during registration. Only present on register responses.',
+  })
+  organization?: RegisteredOrganizationDto;
 
   @ApiProperty({
     description: 'JWT access token (15 min expiry)',
