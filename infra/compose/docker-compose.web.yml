@@ -23,7 +23,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.dms.dev.willianpinho.com}
     container_name: dms-web
     ports:
-      - "127.0.0.1:3100:3000"
+      - "127.0.0.1:3600:3000"
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.dms.dev.willianpinho.com}
       - API_INTERNAL_URL=${API_INTERNAL_URL:-http://dms-api:4000}
