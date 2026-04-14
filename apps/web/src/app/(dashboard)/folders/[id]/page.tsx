@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { ArrowLeft, FolderPlus, Upload, Folder, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import {
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -32,10 +30,10 @@ import {
   useCreateFolder,
   useUpdateFolder,
   useDeleteFolder,
-  type FolderListItem,
 } from '@/hooks/useFolders';
 import { useDeleteDocument } from '@/hooks/useDocuments';
-import { formatBytes, formatRelativeTime, downloadFile } from '@/lib/utils';
+import { documentsApi } from '@/lib/api';
+import { formatBytes, downloadFile } from '@/lib/utils';
 
 export default function FolderDetailPage() {
   const params = useParams();
@@ -97,15 +95,10 @@ export default function FolderDetailPage() {
   const handleDownloadDocument = useCallback(
     async (id: string) => {
       try {
-        const response = await fetch(`/api/v1/documents/${id}/download`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        });
-        const data = await response.json();
-        if (data.data?.url) {
+        const { data } = await documentsApi.getDownloadUrl(id);
+        if (data?.url) {
           const doc = folder?.documents.find((d) => d.id === id);
-          downloadFile(data.data.url, doc?.name || 'download');
+          downloadFile(data.url, doc?.name || 'download');
         }
       } catch (error) {
         console.error('Download failed:', error);
