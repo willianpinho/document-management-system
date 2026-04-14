@@ -10,12 +10,25 @@ export interface JwtPayload {
   email: string;
   iat?: number;
   exp?: number;
+  aud?: string;
+  iss?: string;
 }
 
 export interface ValidatedUser {
   id: string;
   email: string;
 }
+
+/**
+ * JWT issuer and audience constants.
+ *
+ * These MUST match the values used when signing tokens in `AuthModule` so that
+ * `passport-jwt` verifies both claims on every request. Without these, a token
+ * signed for a different service that happens to share the secret would be
+ * accepted as valid.
+ */
+export const JWT_ISSUER = 'dms-api';
+export const JWT_AUDIENCE = 'dms-client';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -32,10 +45,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
     });
   }
 
   async validate(payload: JwtPayload): Promise<ValidatedUser> {
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
     const user = await this.usersService.findById(payload.sub);
 
     if (!user) {
