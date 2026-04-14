@@ -230,6 +230,19 @@ pnpm infra:deploy:staging
 pnpm infra:deploy:prod
 ```
 
+### Dev deployment (VPS)
+
+Dev deploys to the portfolio VPS are currently manual. SSH to the VPS and run:
+
+```bash
+cd ~/infra/portfolio
+docker compose up -d --build dms-web dms-api
+```
+
+The previous `deploy-dev.yml` GitHub Actions workflow is archived (see
+`.github/workflows/_archived/deploy-dev.yml.bak`) because its SSH secret went
+stale. It may be restored later — see issue #18 for context and restore steps.
+
 ## Contributing
 
 1. Create a feature branch from `master`
