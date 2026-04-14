@@ -80,3 +80,6 @@ temp
 *.db
 *.db-shm
 *.db-wal
+
+# Claude Code factory state
+.claude/
