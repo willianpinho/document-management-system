@@ -75,6 +75,18 @@ RUN pnpm --filter @dms/api build
 # Prune dev dependencies
 RUN pnpm --filter @dms/api --prod deploy /app/pruned
 
+# `pnpm deploy --prod` strips the schema-specific Prisma client from the
+# pruned tree, leaving only the vanilla defaults without project enums.
+# Overwrite the pruned copy with the schema-aware client that was generated
+# against prisma/schema.prisma in the builder stage, so runtime `require
+# ('@prisma/client')` resolves enums like SharePermission.
+RUN rm -rf /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+    && cp -a /app/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+       /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+    && rm -rf /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client \
+    && cp -a /app/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client \
+       /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client
+
 # ------------------------------------------------------------------------------
 # Stage 4: Production
 # ------------------------------------------------------------------------------
@@ -112,9 +124,11 @@ COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.j
 # `pnpm deploy`, so no extra COPY is required here.
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 
-# Health check
+# Health check. Nest exposes the health endpoint at the versioned prefix
+# (`/api/v1/health`), so the probe must match or the container will never
+# become healthy and Traefik will keep routing to the 502 fallback.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
 
 # Switch to non-root user
 USER nestjs
