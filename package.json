@@ -63,5 +63,14 @@
   },
   "dependencies": {
     "@prisma/client": "5.20.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "path-to-regexp": ">=8.4.0",
+      "picomatch": ">=4.0.4",
+      "esbuild": ">=0.25.0",
+      "lodash": ">=4.17.23",
+      "js-yaml": ">=4.1.1"
+    }
   }
 }

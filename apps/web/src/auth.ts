@@ -3,6 +3,33 @@ import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import 'next-auth/jwt';
 
+// Resolves the backend API host for server-side calls (NextAuth callbacks).
+// Order of precedence:
+// 1. API_URL  — server-only var, lets us point to an internal docker hostname
+//               (e.g. http://portfolio-dms-api:4000) to avoid the public TLS hop.
+// 2. NEXT_PUBLIC_API_URL — same value as the browser uses; safe fallback so the
+//                          server side never silently falls back to localhost.
+// 3. http://localhost:4000 — local dev fallback only.
+const API_HOST = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+interface BackendAuthSuccess {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+interface BackendEnvelope<T> {
+  success?: boolean;
+  data?: T;
+  error?: { code?: string; message?: string };
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
@@ -20,34 +47,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const loginUrl = `${API_HOST}/api/v1/auth/login`;
+
         try {
-          const response = await fetch(
-            `${process.env.API_URL || 'http://localhost:4000'}/api/v1/auth/login`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: credentials.email,
-                password: credentials.password,
-              }),
-            },
-          );
+          const response = await fetch(loginUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
 
           if (!response.ok) {
+            console.error(
+              `[next-auth][credentials] backend login returned ${response.status} for ${loginUrl}`,
+            );
             return null;
           }
 
-          const data = await response.json();
+          const json = (await response.json()) as
+            | BackendEnvelope<BackendAuthSuccess>
+            | BackendAuthSuccess;
+          // Backend wraps success responses in { success, data, ... } via
+          // TransformInterceptor, but tolerate an unwrapped shape too.
+          const payload: BackendAuthSuccess | undefined =
+            'data' in json && json.data
+              ? (json.data as BackendAuthSuccess)
+              : (json as BackendAuthSuccess);
+
+          if (!payload?.user?.id || !payload.accessToken) {
+            console.error(
+              '[next-auth][credentials] unexpected backend response shape',
+              JSON.stringify(json).slice(0, 300),
+            );
+            return null;
+          }
 
           return {
-            id: data.data.user.id,
-            email: data.data.user.email,
-            name: data.data.user.name,
-            image: data.data.user.avatarUrl,
-            accessToken: data.data.accessToken,
-            refreshToken: data.data.refreshToken,
+            id: payload.user.id,
+            email: payload.user.email,
+            name: payload.user.name,
+            image: payload.user.avatarUrl,
+            accessToken: payload.accessToken,
+            refreshToken: payload.refreshToken,
           };
-        } catch {
+        } catch (err) {
+          console.error(
+            `[next-auth][credentials] failed to reach ${loginUrl}:`,
+            err instanceof Error ? err.message : err,
+          );
           return null;
         }
       },
@@ -64,17 +113,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account && user) {
         if (account.provider === 'google') {
           try {
-            const response = await fetch(
-              `${process.env.API_URL || 'http://localhost:4000'}/api/v1/auth/oauth/google`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  idToken: account.id_token,
-                  accessToken: account.access_token,
-                }),
-              },
-            );
+            const response = await fetch(`${API_HOST}/api/v1/auth/oauth/google`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                idToken: account.id_token,
+                accessToken: account.access_token,
+              }),
+            });
 
             if (response.ok) {
               const data = await response.json();
@@ -103,16 +149,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       try {
-        const response = await fetch(
-          `${process.env.API_URL || 'http://localhost:4000'}/api/v1/auth/refresh`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              refreshToken: token.refreshToken,
-            }),
-          },
-        );
+        const response = await fetch(`${API_HOST}/api/v1/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            refreshToken: token.refreshToken,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error('Failed to refresh token');

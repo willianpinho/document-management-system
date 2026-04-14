@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@dms/ui';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { authApi, ApiError } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -17,20 +18,16 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/v1/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error?.message || 'Failed to send reset email');
-      }
-
+      await authApi.forgotPassword(email);
       setIsSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Failed to send reset email';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
