@@ -7,7 +7,13 @@ import type {
   SemanticSearchParams,
 } from '@dms/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+// The API version prefix is enforced in code so NEXT_PUBLIC_API_URL only
+// needs to carry the host (e.g. https://api.dms.dev.willianpinho.com). The
+// NestJS backend uses app.setGlobalPrefix('api') + URI versioning, so every
+// route lives under /api/v1/*. Keeping the prefix here makes the client
+// resilient to env misconfig.
+const API_HOST = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE_URL = `${API_HOST}/api/v1`;
 
 // Organization context management
 function getCurrentOrganizationId(): string | null {
