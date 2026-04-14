@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtStrategy, JWT_AUDIENCE, JWT_ISSUER } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { ApiKeyStrategy } from './strategies/api-key.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
@@ -27,8 +27,8 @@ import { EmailModule } from '../email/email.module';
             'JWT_EXPIRES_IN',
             '15m',
           ) as `${number}${'s' | 'm' | 'h' | 'd'}`,
-          issuer: 'dms-api',
-          audience: 'dms-client',
+          issuer: JWT_ISSUER,
+          audience: JWT_AUDIENCE,
         },
       }),
       inject: [ConfigService],
