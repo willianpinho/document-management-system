@@ -25,12 +25,7 @@ import {
   RenameFolderDialog,
   DeleteFolderDialog,
 } from '@/components/folders/CreateFolderDialog';
-import {
-  useFolder,
-  useCreateFolder,
-  useUpdateFolder,
-  useDeleteFolder,
-} from '@/hooks/useFolders';
+import { useFolder, useCreateFolder, useUpdateFolder, useDeleteFolder } from '@/hooks/useFolders';
 import { useDeleteDocument } from '@/hooks/useDocuments';
 import { documentsApi } from '@/lib/api';
 import { formatBytes, downloadFile } from '@/lib/utils';

@@ -10,8 +10,7 @@ import 'next-auth/jwt';
 // 2. NEXT_PUBLIC_API_URL — same value as the browser uses; safe fallback so the
 //                          server side never silently falls back to localhost.
 // 3. http://localhost:4000 — local dev fallback only.
-const API_HOST =
-  process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_HOST = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 interface BackendAuthSuccess {
   user: {
@@ -73,7 +72,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Backend wraps success responses in { success, data, ... } via
           // TransformInterceptor, but tolerate an unwrapped shape too.
           const payload: BackendAuthSuccess | undefined =
-            'data' in json && json.data ? (json.data as BackendAuthSuccess) : (json as BackendAuthSuccess);
+            'data' in json && json.data
+              ? (json.data as BackendAuthSuccess)
+              : (json as BackendAuthSuccess);
 
           if (!payload?.user?.id || !payload.accessToken) {
             console.error(
@@ -112,17 +113,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account && user) {
         if (account.provider === 'google') {
           try {
-            const response = await fetch(
-              `${API_HOST}/api/v1/auth/oauth/google`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  idToken: account.id_token,
-                  accessToken: account.access_token,
-                }),
-              },
-            );
+            const response = await fetch(`${API_HOST}/api/v1/auth/oauth/google`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                idToken: account.id_token,
+                accessToken: account.access_token,
+              }),
+            });
 
             if (response.ok) {
               const data = await response.json();
@@ -151,16 +149,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       try {
-        const response = await fetch(
-          `${API_HOST}/api/v1/auth/refresh`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              refreshToken: token.refreshToken,
-            }),
-          },
-        );
+        const response = await fetch(`${API_HOST}/api/v1/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            refreshToken: token.refreshToken,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error('Failed to refresh token');
