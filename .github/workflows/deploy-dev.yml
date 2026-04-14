@@ -132,7 +132,7 @@ jobs:
     if: always() && needs.build.result != 'failure'
     steps:
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           IMAGE_TAG: ${{ github.sha }}
           IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
@@ -140,6 +140,7 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.DEV_HOST }}
+          port: 22
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           envs: IMAGE_TAG,IMAGE_PREFIX,GH_TOKEN,GH_ACTOR
@@ -187,9 +188,10 @@ jobs:
             echo "=== Deploy complete ==="
 
       - name: Health check and migrations
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.DEV_HOST }}
+          port: 22
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
           script_stop: true
