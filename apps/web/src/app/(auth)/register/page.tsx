@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@dms/ui';
-import { authApi } from '@/lib/api';
+import { authApi, setAuthTokens, setCurrentOrganizationId } from '@/lib/api';
 import { isValidEmail } from '@/lib/utils';
 
 export default function RegisterPage() {
@@ -50,10 +50,24 @@ export default function RegisterPage() {
     }
 
     try {
-      // First register the user via API
-      await authApi.register(name.trim(), email, password);
+      // First register the user via API. The backend creates a default
+      // personal organization as part of the same transaction and returns it
+      // in the response so we can persist the org context immediately.
+      const response = await authApi.register(name.trim(), email, password);
+      const registered = response.data;
 
-      // Then sign in using NextAuth to create a session
+      // Persist tokens and organization BEFORE navigating to /documents so the
+      // first request the dashboard makes (folders/tree, documents) already
+      // carries the X-Organization-ID header. Without this, the multi-tenant
+      // OrganizationGuard rejects the request with 403.
+      if (registered?.accessToken && registered?.refreshToken) {
+        setAuthTokens(registered.accessToken, registered.refreshToken);
+      }
+      if (registered?.organization?.id) {
+        setCurrentOrganizationId(registered.organization.id);
+      }
+
+      // Then sign in using NextAuth to create a session (JWT cookie).
       const result = await signIn('credentials', {
         email,
         password,
