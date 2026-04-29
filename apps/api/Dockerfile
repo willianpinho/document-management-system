@@ -30,9 +30,14 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY tsconfig.base.json ./
 
-# Copy package.json files for all packages
+# Copy package.json files for all workspace packages the API depends on.
+# pnpm --frozen-lockfile needs every workspace:* entry resolvable, and
+# @dms/typescript-config / @dms/eslint-config are required at build time for
+# the NestJS tsconfig extension (decorators) to resolve.
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/config/typescript/package.json ./packages/config/typescript/
+COPY packages/config/eslint/package.json ./packages/config/eslint/
 
 # Copy prisma schema (needed by postinstall)
 COPY prisma ./prisma
@@ -52,11 +57,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 
-# Copy source code
+# Copy source code, including the workspace config packages that provide
+# the shared NestJS tsconfig (emitDecoratorMetadata + experimentalDecorators).
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY tsconfig.base.json ./
 COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
+COPY packages/config ./packages/config
 COPY prisma ./prisma
 
 # Generate Prisma client
@@ -67,6 +74,18 @@ RUN pnpm --filter @dms/api build
 
 # Prune dev dependencies
 RUN pnpm --filter @dms/api --prod deploy /app/pruned
+
+# `pnpm deploy --prod` strips the schema-specific Prisma client from the
+# pruned tree, leaving only the vanilla defaults without project enums.
+# Overwrite the pruned copy with the schema-aware client that was generated
+# against prisma/schema.prisma in the builder stage, so runtime `require
+# ('@prisma/client')` resolves enums like SharePermission.
+RUN rm -rf /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+    && cp -a /app/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+       /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/.prisma \
+    && rm -rf /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client \
+    && cp -a /app/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client \
+       /app/pruned/node_modules/.pnpm/@prisma+client@5.20.0_prisma@5.20.0/node_modules/@prisma/client
 
 # ------------------------------------------------------------------------------
 # Stage 4: Production
@@ -100,14 +119,16 @@ COPY --from=builder --chown=nestjs:nodejs /app/pruned/node_modules ./node_module
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
 
-# Copy Prisma schema and migrations for runtime
+# Copy Prisma schema and migrations for runtime. The generated Prisma
+# client and engine are already inside the pruned node_modules produced by
+# `pnpm deploy`, so no extra COPY is required here.
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/node_modules/@prisma ./node_modules/@prisma
 
-# Health check
+# Health check. Nest exposes the health endpoint at the versioned prefix
+# (`/api/v1/health`), so the probe must match or the container will never
+# become healthy and Traefik will keep routing to the 502 fallback.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
 
 # Switch to non-root user
 USER nestjs
