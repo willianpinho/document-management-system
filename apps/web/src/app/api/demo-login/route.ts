@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthError } from 'next-auth';
 
 import { signIn } from '@/auth';
+import { getPublicBaseUrl } from '@/lib/public-url';
 
 // Route: /api/demo-login
 // Render mode: force-dynamic (auth side effect, never cached)
@@ -21,9 +22,10 @@ export async function GET(request: NextRequest) {
   const demoModeEnabled = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   const email = process.env.DEMO_USER_EMAIL;
   const password = process.env.DEMO_USER_PASSWORD;
+  const baseUrl = getPublicBaseUrl(request);
 
   if (!demoModeEnabled || !email || !password) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/login', baseUrl));
   }
 
   const redirectTo = sanitizeRedirectTarget(request.nextUrl.searchParams.get('redirectTo'));
@@ -35,12 +37,12 @@ export async function GET(request: NextRequest) {
     // this environment's DB). Anything else is the internal NEXT_REDIRECT
     // signal from a successful signIn() and must propagate.
     if (error instanceof AuthError) {
-      return NextResponse.redirect(new URL('/login?demoError=1', request.url));
+      return NextResponse.redirect(new URL('/login?demoError=1', baseUrl));
     }
     throw error;
   }
 
-  return NextResponse.redirect(new URL(redirectTo, request.url));
+  return NextResponse.redirect(new URL(redirectTo, baseUrl));
 }
 
 // Only allow same-app relative paths — prevents an open redirect via
