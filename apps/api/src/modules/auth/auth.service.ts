@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
   BadRequestException,
   Logger,
@@ -62,6 +63,11 @@ export class AuthService {
    * organizations list query resolves.
    */
   async register(registerDto: RegisterDto) {
+    const registrationEnabled = this.configService.get<string>('REGISTRATION_ENABLED', 'true');
+    if (registrationEnabled === 'false') {
+      throw new ForbiddenException('Public registration is disabled');
+    }
+
     const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
       throw new ConflictException('An account with this email already exists');

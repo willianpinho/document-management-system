@@ -6,7 +6,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 
 // Mock bcrypt module
 vi.mock('bcryptjs', () => ({
@@ -85,6 +90,7 @@ const createMockConfigService = () => ({
       REFRESH_TOKEN_SECRET: 'refresh-secret-key',
       REFRESH_TOKEN_EXPIRES_IN: '7d',
       JWT_SECRET: 'jwt-secret-key',
+      REGISTRATION_ENABLED: 'true',
     };
     return config[key] || defaultValue;
   }),
@@ -286,6 +292,27 @@ describe('AuthService', () => {
       expect(prismaService.$transaction).not.toHaveBeenCalled();
       expect(prismaService.user.create).not.toHaveBeenCalled();
       expect(prismaService.organization.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException and never touch the DB when registration is disabled', async () => {
+      configService.get.mockImplementation((key: string, defaultValue?: string) =>
+        key === 'REGISTRATION_ENABLED' ? 'false' : defaultValue,
+      );
+
+      await expect(service.register(registerDto)).rejects.toThrow(ForbiddenException);
+
+      expect(usersService.findByEmail).not.toHaveBeenCalled();
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(prismaService.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow registration when REGISTRATION_ENABLED is unset (defaults to enabled)', async () => {
+      configService.get.mockImplementation((key: string, defaultValue?: string) =>
+        key === 'REGISTRATION_ENABLED' ? undefined : defaultValue,
+      );
+      primeRegisterMocks();
+
+      await expect(service.register(registerDto)).resolves.toHaveProperty('accessToken');
     });
 
     it('should store refresh token hash in database', async () => {
