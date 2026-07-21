@@ -18,7 +18,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.244.0",
+    "aws-cdk-lib": "^2.260.0",
     "constructs": "^10.6.0"
   },
   "devDependencies": {
