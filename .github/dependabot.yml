@@ -8,8 +8,14 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
       production-dependencies:
         dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
     ignore:
       # infrastructure/ is an unused AWS CDK artifact from the original
       # take-home assessment — it is never deployed (no AWS secrets are
