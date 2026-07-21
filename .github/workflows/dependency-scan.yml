@@ -237,7 +237,7 @@ jobs:
           echo '```' >> audit-report.md
 
       - name: Upload audit report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-audit-report
           path: audit-report.md
@@ -277,7 +277,7 @@ jobs:
           npx license-checker --production --csv > license-report.csv
 
       - name: Upload license report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: license-report
           path: license-report.csv
