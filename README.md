@@ -11,6 +11,9 @@
 ![pgvector](https://img.shields.io/badge/pgvector-semantic%20search-4169E1)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 
+🔗 **Live Demo:**
+[https://document-management.dev.willianpinho.com](https://document-management.dev.willianpinho.com)
+
 Cloud-based Document Management System with AI-powered document processing,
 real-time collaboration, and enterprise-grade security.
 
