@@ -37,17 +37,17 @@
     "@dms/eslint-config": "workspace:*",
     "@dms/tailwind-config": "workspace:*",
     "@dms/typescript-config": "workspace:*",
-    "@playwright/test": "^1.58.2",
-    "@tailwindcss/postcss": "^4.2.2",
-    "@types/node": "^22.19.15",
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitest/coverage-v8": "^2.1.9",
-    "autoprefixer": "^10.4.27",
+    "@vitest/coverage-v8": "^4.1.10",
+    "autoprefixer": "^10.5.4",
     "eslint": "^9.39.4",
     "postcss": "^8.5.10",
-    "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3",
-    "vitest": "^2.1.9"
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

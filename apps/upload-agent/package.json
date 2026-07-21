@@ -22,9 +22,9 @@
   "devDependencies": {
     "@dms/eslint-config": "workspace:*",
     "@dms/typescript-config": "workspace:*",
-    "@types/node": "^22.19.15",
-    "electron": "^39.8.5",
-    "electron-vite": "^2.3.0",
-    "typescript": "^5.9.3"
+    "@types/node": "^26.1.1",
+    "electron": "^43.2.0",
+    "electron-vite": "^5.0.0",
+    "typescript": "^7.0.2"
   }
 }
