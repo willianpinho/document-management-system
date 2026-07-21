@@ -33,7 +33,7 @@
     "clean": "rm -rf dist .turbo coverage"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@dms/eslint-config": "workspace:*",
