@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
+import { getPublicBaseUrl } from '@/lib/public-url';
 
 // Demo mode: the live showcase deployment skips the login screen entirely.
 // See apps/web/src/app/api/demo-login/route.ts for the actual sign-in.
@@ -36,7 +37,7 @@ export default auth((req) => {
     !isAuthenticated &&
     (pathname === '/' || pathname === '/login' || !isPublicRoute)
   ) {
-    const demoLoginUrl = new URL('/api/demo-login', req.url);
+    const demoLoginUrl = new URL('/api/demo-login', getPublicBaseUrl(req));
     const target = pathname === '/' || pathname === '/login' ? '/documents' : pathname;
     demoLoginUrl.searchParams.set('redirectTo', target);
     return NextResponse.redirect(demoLoginUrl);
@@ -45,7 +46,9 @@ export default auth((req) => {
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && !isPublicRoute) {
     const callbackUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, req.url));
+    return NextResponse.redirect(
+      new URL(`/login?callbackUrl=${callbackUrl}`, getPublicBaseUrl(req)),
+    );
   }
 
   return NextResponse.next();
