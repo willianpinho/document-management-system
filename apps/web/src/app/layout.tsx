@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import { Providers } from './providers';
+import { DemoModeBanner } from '@/components/demo/demo-mode-banner';
 import '@dms/ui/styles';
 import './globals.css';
 
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <DemoModeBanner />
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -1,6 +1,10 @@
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 
+// Demo mode: the live showcase deployment skips the login screen entirely.
+// See apps/web/src/app/api/demo-login/route.ts for the actual sign-in.
+const DEMO_MODE_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
 export default auth((req) => {
   const isAuthenticated = !!req.auth;
   const { pathname } = req.nextUrl;
@@ -8,10 +12,6 @@ export default auth((req) => {
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/terms', '/privacy'];
   const isPublicRoute = publicRoutes.includes(pathname);
-
-  // Auth routes (login, register)
-  const authRoutes = ['/login', '/register', '/forgot-password'];
-  const isAuthRoute = authRoutes.includes(pathname);
 
   // API routes should be handled by the API itself
   if (pathname.startsWith('/api')) {
@@ -26,6 +26,21 @@ export default auth((req) => {
   // Don't redirect authenticated users away from auth pages
   // This allows the signOut flow to complete properly
   // The login/register pages will handle their own redirects if user is authenticated
+
+  // Demo mode: an unauthenticated visitor never sees the login form — the
+  // marketing home page, the login page, and every protected route all
+  // route through the auto sign-in handler instead. /register,
+  // /forgot-password, /terms and /privacy stay untouched and public.
+  if (
+    DEMO_MODE_ENABLED &&
+    !isAuthenticated &&
+    (pathname === '/' || pathname === '/login' || !isPublicRoute)
+  ) {
+    const demoLoginUrl = new URL('/api/demo-login', req.url);
+    const target = pathname === '/' || pathname === '/login' ? '/documents' : pathname;
+    demoLoginUrl.searchParams.set('redirectTo', target);
+    return NextResponse.redirect(demoLoginUrl);
+  }
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && !isPublicRoute) {
