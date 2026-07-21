@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: 'development'
+      production-dependencies:
+        dependency-type: 'production'
+    ignore:
+      # infrastructure/ is an unused AWS CDK artifact from the original
+      # take-home assessment — it is never deployed (no AWS secrets are
+      # configured and the cd-staging / cd-production workflows have never
+      # run). Don't churn PRs for CDK deps that back un-run scaffolding.
+      - dependency-name: 'aws-cdk-lib'
+      - dependency-name: 'aws-cdk'
+      - dependency-name: 'constructs'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
