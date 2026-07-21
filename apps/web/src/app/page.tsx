@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { Button } from '@dms/ui';
 
+// Public registration: defaults to enabled. See apps/web/src/middleware.ts
+// for the matching /register redirect and .env.example for the flag doc.
+const REGISTRATION_ENABLED = process.env.NEXT_PUBLIC_REGISTRATION_ENABLED !== 'false';
+
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -16,11 +20,13 @@ export default function HomePage() {
           <Link href="/login">
             <Button size="lg">Get started</Button>
           </Link>
-          <Link href="/register">
-            <Button variant="outline" size="lg">
-              Create account
-            </Button>
-          </Link>
+          {REGISTRATION_ENABLED && (
+            <Link href="/register">
+              <Button variant="outline" size="lg">
+                Create account
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </main>

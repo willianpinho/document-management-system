@@ -6,6 +6,12 @@ import { getPublicBaseUrl } from '@/lib/public-url';
 // See apps/web/src/app/api/demo-login/route.ts for the actual sign-in.
 const DEMO_MODE_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
+// Public registration: defaults to enabled. The public demo sets this to
+// 'false' to stop the self-signup abuse it doesn't need (visitors already
+// land signed-in via demo mode above). The real gate is the api's
+// REGISTRATION_ENABLED — this only keeps the disabled form from rendering.
+const REGISTRATION_ENABLED = process.env.NEXT_PUBLIC_REGISTRATION_ENABLED !== 'false';
+
 export default auth((req) => {
   const isAuthenticated = !!req.auth;
   const { pathname } = req.nextUrl;
@@ -22,6 +28,12 @@ export default auth((req) => {
   // Static files and Next.js internals
   if (pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.includes('.')) {
     return NextResponse.next();
+  }
+
+  // Registration disabled: send visitors straight to /login instead of
+  // rendering the signup form. The route/component stay intact behind the flag.
+  if (!REGISTRATION_ENABLED && pathname === '/register') {
+    return NextResponse.redirect(new URL('/login', getPublicBaseUrl(req)));
   }
 
   // Don't redirect authenticated users away from auth pages
