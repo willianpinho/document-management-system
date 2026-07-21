@@ -31,7 +31,11 @@ export default auth((req) => {
   // marketing home page, the login page, and every protected route all
   // route through the auto sign-in handler instead. /register,
   // /forgot-password, /terms and /privacy stay untouched and public.
-  if (DEMO_MODE_ENABLED && !isAuthenticated && (pathname === '/' || pathname === '/login' || !isPublicRoute)) {
+  if (
+    DEMO_MODE_ENABLED &&
+    !isAuthenticated &&
+    (pathname === '/' || pathname === '/login' || !isPublicRoute)
+  ) {
     const demoLoginUrl = new URL('/api/demo-login', req.url);
     const target = pathname === '/' || pathname === '/login' ? '/documents' : pathname;
     demoLoginUrl.searchParams.set('redirectTo', target);
