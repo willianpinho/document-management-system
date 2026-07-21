@@ -1,7 +1,91 @@
 # Document Management System (DMS)
 
+> Cloud document platform with AI OCR (AWS Textract), pgvector semantic search, and
+> real-time collaboration, in a Next.js 15 + NestJS 11 Turborepo monorepo.
+
+[![CI](https://github.com/willianpinho/document-management-system/actions/workflows/ci.yml/badge.svg)](https://github.com/willianpinho/document-management-system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![pgvector](https://img.shields.io/badge/pgvector-semantic%20search-4169E1)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+
 Cloud-based Document Management System with AI-powered document processing,
 real-time collaboration, and enterprise-grade security.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Clients["Client Applications"]
+        WEB["Web App<br/>(Next.js 15)"]
+        AGENT["Upload Agent<br/>(Electron)"]
+        API_CLIENT["API Clients<br/>(M2M)"]
+    end
+
+    subgraph CDN["Content Delivery"]
+        CF["CloudFront CDN"]
+    end
+
+    subgraph LB["Load Balancing"]
+        ALB["Application<br/>Load Balancer"]
+    end
+
+    subgraph Compute["Compute Layer"]
+        subgraph ECS["ECS Fargate"]
+            API["API Service<br/>(NestJS)"]
+            WORKER["Worker Service<br/>(BullMQ)"]
+        end
+    end
+
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL<br/>+ pgvector")]
+        REDIS[("Redis<br/>Cache/Queue")]
+    end
+
+    subgraph Storage["Object Storage"]
+        S3["S3 Bucket<br/>(Documents)"]
+    end
+
+    subgraph Processing["Processing Pipeline"]
+        SQS["SQS Queue"]
+        TEXTRACT["AWS Textract<br/>(OCR)"]
+        OPENAI["OpenAI API<br/>(Embeddings)"]
+    end
+
+    subgraph Auth["Authentication"]
+        COGNITO["OAuth Providers<br/>(Google, Microsoft)"]
+    end
+
+    WEB --> CF
+    WEB --> ALB
+    AGENT --> ALB
+    API_CLIENT --> ALB
+
+    CF --> S3
+
+    ALB --> API
+
+    API --> PG
+    API --> REDIS
+    API --> S3
+    API --> COGNITO
+
+    WORKER --> PG
+    WORKER --> REDIS
+    WORKER --> S3
+    WORKER --> TEXTRACT
+    WORKER --> OPENAI
+
+    REDIS --> WORKER
+    S3 -.-> SQS
+    SQS --> WORKER
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full diagram set (component
+architecture, data flow, and deployment topology) and [docs/DIAGRAMS.md](docs/DIAGRAMS.md)
+for the processing-pipeline and semantic-search flows.
 
 ## Features
 
@@ -253,4 +337,4 @@ stale. It may be restored later — see issue #18 for context and restore steps.
 
 ## License
 
-Private - All rights reserved.
+MIT — see [LICENSE](./LICENSE).
