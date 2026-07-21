@@ -78,7 +78,7 @@ jobs:
 
       - name: Process and create issue
         if: steps.check-token.outputs.has_token == 'true' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
