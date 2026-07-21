@@ -47,7 +47,7 @@
     "pdf-lib": "^1.17.1",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "prisma": "5.20.0",
+    "prisma": "7.9.0",
     "tsx": "^4.21.0",
     "turbo": "^2.9.14",
     "typescript": "^5.9.3"
