@@ -62,6 +62,10 @@ ARG NEXT_TELEMETRY_DISABLED=1
 # server-only, read from process.env at request time, so they belong in
 # docker-compose's `environment:` instead and rotate without a rebuild.
 ARG NEXT_PUBLIC_DEMO_MODE=false
+# Defaults to enabled so other environments keep working unchanged; only the
+# public demo build passes false to stop self-signup abuse. Must be kept in
+# sync with the api's REGISTRATION_ENABLED (the actual authoritative gate).
+ARG NEXT_PUBLIC_REGISTRATION_ENABLED=true
 
 # Set environment variables for build
 ENV NODE_ENV=${NODE_ENV}
@@ -69,6 +73,7 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED}
 ENV NEXT_PUBLIC_DEMO_MODE=${NEXT_PUBLIC_DEMO_MODE}
+ENV NEXT_PUBLIC_REGISTRATION_ENABLED=${NEXT_PUBLIC_REGISTRATION_ENABLED}
 
 # Copy dependencies (including config packages needed for build)
 COPY --from=deps /app/node_modules ./node_modules
