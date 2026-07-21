@@ -56,12 +56,19 @@ ARG NODE_ENV=production
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* values are inlined at build time, not read at container
+# runtime, so demo mode needs its own build arg here — the actual demo
+# credentials (DEMO_USER_EMAIL/DEMO_USER_PASSWORD) do NOT: they're
+# server-only, read from process.env at request time, so they belong in
+# docker-compose's `environment:` instead and rotate without a rebuild.
+ARG NEXT_PUBLIC_DEMO_MODE=false
 
 # Set environment variables for build
 ENV NODE_ENV=${NODE_ENV}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED}
+ENV NEXT_PUBLIC_DEMO_MODE=${NEXT_PUBLIC_DEMO_MODE}
 
 # Copy dependencies (including config packages needed for build)
 COPY --from=deps /app/node_modules ./node_modules
