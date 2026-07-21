@@ -24,6 +24,11 @@ export const validationSchema = Joi.object({
   REFRESH_TOKEN_SECRET: Joi.string().required().min(32).description('Refresh token secret'),
   REFRESH_TOKEN_EXPIRES_IN: Joi.string().default('7d'),
 
+  // Registration — defaults to enabled so other environments keep working
+  // unchanged; set to 'false' only where public signup must be blocked
+  // (e.g. the public demo deployment).
+  REGISTRATION_ENABLED: Joi.string().valid('true', 'false').default('true'),
+
   // AWS
   AWS_REGION: Joi.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: Joi.string().optional(),

@@ -8,6 +8,10 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
+// Public registration: defaults to enabled. See apps/web/src/middleware.ts
+// for the matching /register redirect and .env.example for the flag doc.
+const REGISTRATION_ENABLED = process.env.NEXT_PUBLIC_REGISTRATION_ENABLED !== 'false';
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -178,12 +182,14 @@ function LoginContent() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
+          {REGISTRATION_ENABLED && (
+            <div className="mt-6 text-center text-sm">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="font-medium text-primary hover:underline">
+                Sign up
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
