@@ -63,7 +63,7 @@ export class StorageStack extends cdk.Stack {
           allowedOrigins:
             config.environment === 'production'
               ? ['https://*.yourdomain.com'] // Replace with actual domain
-              : ['http://localhost:3000', 'http://localhost:4000', 'https://*.vercel.app'],
+              : ['http://localhost:3000', 'http://localhost:4000'],
           allowedHeaders: [
             'Authorization',
             'Content-Type',
