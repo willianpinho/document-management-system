@@ -2,7 +2,8 @@
 
 > Cloud-based Document Management System with AI-powered document processing
 >
-> **Status:** Portfolio showcase (originally a technical assessment; deliverables archived in `docs/assessment/`) **Author:** Willian Pinho
+> **Status:** Portfolio showcase (originally a technical assessment;
+> deliverables archived in `docs/assessment/`) **Author:** Willian Pinho
 
 ---
 

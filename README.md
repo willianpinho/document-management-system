@@ -1,7 +1,7 @@
 # Document Management System (DMS)
 
-> Cloud document platform with AI OCR (AWS Textract), pgvector semantic search, and
-> real-time collaboration, in a Next.js 15 + NestJS 11 Turborepo monorepo.
+> Cloud document platform with AI OCR (AWS Textract), pgvector semantic search,
+> and real-time collaboration, in a Next.js 15 + NestJS 11 Turborepo monorepo.
 
 [![CI](https://github.com/willianpinho/document-management-system/actions/workflows/ci.yml/badge.svg)](https://github.com/willianpinho/document-management-system/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -83,9 +83,10 @@ flowchart TB
     SQS --> WORKER
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full diagram set (component
-architecture, data flow, and deployment topology) and [docs/DIAGRAMS.md](docs/DIAGRAMS.md)
-for the processing-pipeline and semantic-search flows.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full diagram set
+(component architecture, data flow, and deployment topology) and
+[docs/DIAGRAMS.md](docs/DIAGRAMS.md) for the processing-pipeline and
+semantic-search flows.
 
 ## Features
 
