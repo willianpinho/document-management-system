@@ -98,7 +98,7 @@ jobs:
         run: pnpm test:unit -- --coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./apps/api/coverage/lcov.info,./apps/web/coverage/lcov.info
@@ -172,7 +172,7 @@ jobs:
           JWT_REFRESH_EXPIRES_IN: 7d
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./apps/api/coverage/lcov.info
