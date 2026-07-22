@@ -44,7 +44,7 @@
     "@radix-ui/react-tooltip": "^1.2.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.460.0",
+    "lucide-react": "^1.25.0",
     "tailwind-merge": "^2.6.1"
   },
   "devDependencies": {
