@@ -6,7 +6,7 @@ info: |
   ## Document Management System
   Cloud-based DMS with AI-powered Processing
 
-  Technical Assessment - CultureEngine
+  Technical Assessment
 class: text-center
 highlighter: shiki
 drawings:
@@ -477,7 +477,7 @@ I'm excited to dive deeper into any of these areas during our interview. Thanks 
 
 **Willian Pinho**
 
-Technical Assessment - CultureEngine
+Technical Assessment
 
 <!--
 END OF PRESENTATION
