@@ -7,7 +7,7 @@
     ".": "./tailwind.config.ts"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/typography": "^0.5.20",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
