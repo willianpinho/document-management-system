@@ -29,7 +29,7 @@
     "eslint": "^9.39.4",
     "source-map-support": "^0.5.21",
     "typescript": "^5.9.3",
-    "vitest": "^2.1.9"
+    "vitest": "^3.2.6"
   },
   "engines": {
     "node": ">=20.0.0"
