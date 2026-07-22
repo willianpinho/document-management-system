@@ -281,6 +281,10 @@ Upload → S3 Event → EventBridge → SQS → Lambda/ECS
 | API Contract | Pact             | Consumer-driven       |
 | Load         | k6               | Performance baselines |
 
+Coverage Target is aspirational, not measured coverage. Current state: unit
+specs exist for 5 of 14 API modules (`auth`, `documents`, `folders`,
+`processing`, `search`); the web app has no test files yet.
+
 ### Running Tests
 
 ```bash
@@ -457,9 +461,9 @@ git push origin feature/document-upload
 ## Documentation
 
 - **PRD**: `docs/PRD.md` - Full product requirements
-- **API**: Auto-generated Swagger at `/api/docs`
+- **API**: Auto-generated Swagger at `/api/docs` (dev/local only — disabled in
+  production by design, see `apps/api/src/main.ts`)
 - **Architecture**: `docs/ARCHITECTURE.md`
-- **Runbook**: `docs/RUNBOOK.md` - Operations guide
 
 ---
 

@@ -14,10 +14,16 @@
 🔗 **Live Demo:**
 [https://document-management.dev.willianpinho.com](https://document-management.dev.willianpinho.com)
 
-Cloud-based Document Management System with AI-powered document processing,
-real-time collaboration, and enterprise-grade security.
+Document Management System with AI-powered document processing, real-time
+collaboration, and enterprise-grade security. The live demo runs as a single
+Docker Compose deployment on one VPS — see [Deployment](#deployment) below for
+what's actually running versus the target AWS architecture.
 
-## Architecture
+## Target Architecture (not currently deployed)
+
+The diagram below is the reference/target AWS architecture from the CDK stacks
+in `infrastructure/`. It is **not** what powers the live demo — see
+[Deployment](#deployment) for the real setup.
 
 ```mermaid
 flowchart TB
@@ -301,35 +307,37 @@ pnpm --filter @dms/web test:e2e:ui
 
 ## Deployment
 
-The infrastructure is managed with AWS CDK v2. Stacks include:
+### Live demo (VPS) — what's actually running
 
-- **NetworkStack**: VPC, subnets, security groups
-- **DatabaseStack**: RDS PostgreSQL with pgvector
-- **CacheStack**: ElastiCache Redis cluster
-- **StorageStack**: S3 buckets and CloudFront CDN
-- **ComputeStack**: ECS Fargate services
-- **QueueStack**: SQS queues for async processing
-
-```bash
-# Deploy to staging
-pnpm infra:deploy:staging
-
-# Deploy to production
-pnpm infra:deploy:prod
-```
-
-### Dev deployment (VPS)
-
-Dev deploys to the portfolio VPS are currently manual. SSH to the VPS and run:
+The live demo runs as plain Docker containers on a single VPS, deployed
+manually:
 
 ```bash
 cd ~/infra/portfolio
 docker compose up -d --build dms-web dms-api
 ```
 
-The previous `deploy-dev.yml` GitHub Actions workflow is archived (see
-`.github/workflows/_archived/deploy-dev.yml.bak`) because its SSH secret went
-stale. It may be restored later — see issue #18 for context and restore steps.
+The API uses the real AWS Textract client for OCR
+(`apps/api/src/modules/processing`), but the live demo has no AWS credentials
+configured, so it transparently falls back to a local `pdf-parse`-based
+extractor. Both paths share the same processing pipeline and job model — only
+the OCR backend differs. The previous `deploy-dev.yml` GitHub Actions workflow
+is archived (see `.github/workflows/_archived/deploy-dev.yml.bak`) because its
+SSH secret went stale; deploys are manual until it's restored — see issue #18.
+
+Swagger (`/api/docs`) is disabled in production by design (see `main.ts`) and is
+only available in local/dev. The health check is live at
+`https://api.document-management.dev.willianpinho.com/api/v1/health`.
+
+### Target architecture (AWS, not deployed)
+
+The `infrastructure/` directory contains a real AWS CDK v2 stack set
+(NetworkStack, DatabaseStack, CacheStack, StorageStack, ComputeStack,
+QueueStack) matching the
+[target architecture diagram](#target-architecture-not-currently-deployed)
+above. It's kept as a reference implementation and has not been deployed —
+`pnpm infra:deploy:staging` / `pnpm infra:deploy:prod` are not wired to any live
+AWS account.
 
 ## Contributing
 
