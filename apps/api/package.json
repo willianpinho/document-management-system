@@ -10,7 +10,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "test": "vitest run --passWithNoTests",
-    "test:unit": "vitest run --dir src --passWithNoTests",
+    "test:unit": "vitest run src",
     "test:integration": "vitest run --dir test/integration --passWithNoTests",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
