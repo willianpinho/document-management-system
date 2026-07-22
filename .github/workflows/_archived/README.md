@@ -24,3 +24,16 @@ To restore this workflow:
 3. `gh secret set DEV_SSH_KEY < newkey.priv`
 4. `git mv .github/workflows/_archived/deploy-dev.yml.bak .github/workflows/deploy-dev.yml`
 5. Manually trigger the workflow to verify authentication
+
+## cd-production.yml.bak / cd-staging.yml.bak
+
+**Archived**: 2026-07-21 **Reason**: Dead on arrival — they trigger on
+`push: branches: [main]` / `[develop]`, but this repo's default branch is
+`master` and no `main` or `develop` branch exists, so neither workflow has ever
+run. Both target a full AWS ECS Fargate deployment (ECR, CDK, blue-green, RDS
+snapshot) that has never been provisioned; the live demo runs on a single VPS
+via `docker compose` (see README.md "Deployment").
+
+To restore either workflow: provision the AWS stack in `infrastructure/` first,
+then `git mv` it back to `.github/workflows/` and point the trigger branch at
+whatever branch actually maps to that environment.
