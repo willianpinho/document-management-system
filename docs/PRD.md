@@ -3,7 +3,7 @@
 ## Cloud-Based Document Management System (DMS)
 
 **Version:** 1.2 **Author:** Willian Pinho **Date:** January 2026 **Status:**
-Technical Assessment - CultureEngine
+Technical Assessment
 
 ---
 
