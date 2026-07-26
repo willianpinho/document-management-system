@@ -24,7 +24,7 @@
     "date-fns": "^4.4.0",
     "lucide-react": "^1.25.0",
     "next": "^15.5.18",
-    "next-auth": "5.0.0-beta.30",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-dropzone": "^14.4.1",
