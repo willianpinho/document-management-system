@@ -1,31 +1,47 @@
+# Dependency policy: SECURITY UPDATES ONLY.
+#
+# Portfolio repo, not under active development, so routine version-bump PRs are
+# pure queue noise (9 were open at once). `open-pull-requests-limit: 0`
+# disables Dependabot VERSION updates for each ecosystem below.
+#
+# Dependabot SECURITY updates are NOT affected: security PRs are exempt from
+# this limit and do not count toward it, so advisories still open PRs.
+# Repo-level Dependabot alerts + automated security fixes stay enabled.
+#
+# The `groups:` and `ignore:` blocks are kept intentionally: `ignore:` also
+# governs security updates, and keeping `groups:` makes resuming version
+# updates a one-line change.
+#
+# To resume version updates: raise the limits back above zero.
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'weekly'
-    open-pull-requests-limit: 5
+      interval: "weekly"
+    open-pull-requests-limit: 0
     groups:
       dev-dependencies:
-        dependency-type: 'development'
+        dependency-type: "development"
         update-types:
-          - 'minor'
-          - 'patch'
+          - "minor"
+          - "patch"
       production-dependencies:
-        dependency-type: 'production'
+        dependency-type: "production"
         update-types:
-          - 'minor'
-          - 'patch'
+          - "minor"
+          - "patch"
     ignore:
       # infrastructure/ is an unused AWS CDK artifact from the original
       # take-home assessment — it is never deployed (no AWS secrets are
       # configured and the cd-staging / cd-production workflows have never
       # run). Don't churn PRs for CDK deps that back un-run scaffolding.
-      - dependency-name: 'aws-cdk-lib'
-      - dependency-name: 'aws-cdk'
-      - dependency-name: 'constructs'
+      - dependency-name: "aws-cdk-lib"
+      - dependency-name: "aws-cdk"
+      - dependency-name: "constructs"
 
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: 'weekly'
+      interval: "weekly"
+    open-pull-requests-limit: 0
